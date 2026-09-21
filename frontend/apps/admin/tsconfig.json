@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@dataviz/shared-utils": ["../../packages/shared-utils/src"],
+      "@dataviz/shared-types": ["../../packages/shared-types/src"],
+      "@dataviz/api-client": ["../../packages/api-client/src"],
+      "@dataviz/permission": ["../../packages/permission/src"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts"]
+}

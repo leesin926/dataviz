@@ -1,0 +1,34 @@
+// 应用级补充样式：设计令牌与组件主题统一由 @dataviz/shared-styles 提供，
+// 这里只保留 pc-web 独有的路由过渡与历史工具类。
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+// 历史工具类（各页面已在引用）
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mt-16 {
+  margin-top: 16px;
+}
+.mb-16 {
+  margin-bottom: 16px;
+}

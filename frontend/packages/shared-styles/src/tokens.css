@@ -1,0 +1,118 @@
+/*
+ * 各端公共设计令牌：颜色 / 间距 / 圆角 / 字号 / 阴影 / 渐变
+ * 浅色为默认；html[data-dv-theme='dark'] 切换为暗色科技风。
+ * uni 端只取 :root 的浅色令牌（App.vue 内 @import tokens.css）。
+ */
+:root {
+  /* —— 品牌色 —— */
+  --dv-primary: #2f7cff;
+  --dv-primary-soft: rgba(47, 124, 255, 0.12);
+  --dv-accent: #22b8ff;
+  --dv-success: #23b98a;
+  --dv-warning: #f5a524;
+  --dv-danger: #f25555;
+  --dv-info: #8a94a6;
+
+  /* —— 大屏科技蓝 —— */
+  --dv-screen-accent: #3fdaff;
+  --dv-screen-bg: #0a1929;
+  --dv-screen-panel: rgba(26, 58, 95, 0.5);
+  --dv-screen-border: rgba(63, 218, 255, 0.15);
+  --dv-screen-text: #e0e6ed;
+  --dv-screen-text-dim: #cfd8e3;
+
+  /* —— 渐变 —— */
+  --dv-grad-brand: linear-gradient(135deg, #2f7cff 0%, #22b8ff 100%);
+  --dv-grad-glow: linear-gradient(135deg, rgba(47, 124, 255, 0.22), rgba(34, 184, 255, 0.08));
+  --dv-grad-page: radial-gradient(1200px 600px at 12% -10%, rgba(47, 124, 255, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(34, 184, 255, 0.08), transparent 55%);
+
+  /* —— 中性面（浅色）—— */
+  --dv-surface-0: #f5f7fb;
+  --dv-surface-1: #ffffff;
+  --dv-surface-2: #fbfcfe;
+  --dv-surface-sunken: #eef1f7;
+  --dv-glass: rgba(255, 255, 255, 0.72);
+
+  --dv-text-1: #16202f;
+  --dv-text-2: #4a5568;
+  --dv-text-3: #8a94a6;
+  --dv-text-4: #b3bccb;
+
+  --dv-border: #e2e7f0;
+  --dv-border-soft: rgba(22, 32, 47, 0.06);
+  --dv-border-strong: #cdd5e3;
+
+  /* —— 兼容旧变量名 —— */
+  --dv-bg: var(--dv-surface-0);
+  --dv-bg-card: var(--dv-surface-1);
+  --dv-text: var(--dv-text-1);
+  --dv-text-secondary: var(--dv-text-2);
+  --dv-text-muted: var(--dv-text-3);
+
+  /* —— 深色暗区（编辑器画布等，不随主题切换）—— */
+  --dv-dark-bg: #0b1220;
+  --dv-dark-panel: #131c2b;
+  --dv-dark-panel-2: #1a2434;
+  --dv-dark-border: #26324a;
+
+  /* —— 间距 —— */
+  --dv-space-xs: 4px;
+  --dv-space-sm: 8px;
+  --dv-space-md: 12px;
+  --dv-space-lg: 16px;
+  --dv-space-xl: 24px;
+  --dv-space-2xl: 32px;
+
+  /* —— 圆角 —— */
+  --dv-radius-sm: 6px;
+  --dv-radius-md: 10px;
+  --dv-radius-lg: 14px;
+  --dv-radius-xl: 20px;
+
+  /* —— 字号 —— */
+  --dv-font-xs: 12px;
+  --dv-font-sm: 13px;
+  --dv-font-md: 14px;
+  --dv-font-lg: 16px;
+  --dv-font-xl: 20px;
+  --dv-font-2xl: 26px;
+
+  /* —— 阴影 —— */
+  --dv-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --dv-shadow-md: 0 4px 16px rgba(16, 24, 40, 0.08), 0 2px 6px rgba(16, 24, 40, 0.05);
+  --dv-shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.14), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --dv-glow: 0 0 0 1px rgba(34, 184, 255, 0.28), 0 8px 24px rgba(47, 124, 255, 0.18);
+
+  /* —— 布局尺度 —— */
+  --dv-sidebar-w: 228px;
+  --dv-header-h: 56px;
+
+  /* —— 字体栈 —— */
+  --dv-font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  --dv-font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+/* 暗色科技主题（Web 端；uni 端不使用） */
+html[data-dv-theme='dark'] {
+  --dv-surface-0: #080d16;
+  --dv-surface-1: #101827;
+  --dv-surface-2: #16202f;
+  --dv-surface-sunken: #0b1220;
+  --dv-glass: rgba(16, 24, 39, 0.72);
+
+  --dv-text-1: #e8f0fb;
+  --dv-text-2: #b3c0d4;
+  --dv-text-3: #7d8ba3;
+  --dv-text-4: #5a6780;
+
+  --dv-border: #223049;
+  --dv-border-soft: rgba(160, 200, 255, 0.08);
+  --dv-border-strong: #2d3f5e;
+
+  --dv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --dv-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --dv-shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
+  --dv-grad-page: radial-gradient(1100px 560px at 10% -12%, rgba(47, 124, 255, 0.18), transparent 60%),
+    radial-gradient(900px 480px at 100% 0%, rgba(34, 184, 255, 0.12), transparent 55%);
+}

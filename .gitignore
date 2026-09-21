@@ -1,0 +1,117 @@
+# ============================================================
+# DataViz monorepo .gitignore
+# 口径：只排除"可再生"的产物与机器本地态；源码、SQL、docs、_archive 一律入库
+# ============================================================
+
+# ---------- Java / Maven ----------
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+# mvn shade/flatten 与 IDEA 编译输出
+.flattened-pom.xml
+dependency-reduced-pom.xml
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+out/
+# 服务运行时工作目录（Tomcat work、临时解压）
+work/
+*.original
+
+# ---------- Node / pnpm workspace ----------
+node_modules/
+dist/
+dist-ssr/
+build/
+.output/
+.nuxt/
+.turbo/
+.vite/
+coverage/
+*.lcov
+# 缓存与增量编译产物
+.pnpm-store/
+.pnpm-debug.log*
+*.tsbuildinfo
+.eslintcache
+.prettiercache
+stats.html
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ---------- uni-app（mobile / tablet / mini-program） ----------
+unpackage/
+.hbuilderx/
+.uni/
+
+# ---------- Electron（pc-desktop） ----------
+release/
+dist_electron/
+*.asar
+*.asar[.]unpacked/
+
+# ---------- 运行期产物（日志 / 上传 / 导出） ----------
+logs/
+*.log
+# file-service 本地存储根目录（file.storage.local.base-path 默认 ./uploads）
+uploads/
+# 自助分析/报表导出落盘
+exports/
+
+# ---------- 环境变量与密钥（前端 .env.development / .env.production 刻意保留入库） ----------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+secrets/
+# 本地覆盖用的 Spring 配置（真口令写这里，不要写 application.yml）
+application-local.yml
+application-*.local.yml
+
+# ---------- IDE / 编辑器 ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.cursor/
+.fleet/
+*.launch
+.gradle/
+
+# ---------- 工具与索引数据 ----------
+# Qoder 本地数据（会话/额度统计，29M 且含本机路径，不要上传）
+.qoder-credits/
+
+# ---------- 临时脚本与验证截图（本项目调试过程留下的） ----------
+*.tmp
+tmp_*.cjs
+_check-*.cjs
+_scan-*.cjs
+cap-tmp*
+login-tmp*
+*.bak
+*.bak-[0-9]*
+*.pid
+
+# ---------- 误建的重定向垃圾 ----------
+deploy/apisix;D/
+deploy/apisix/config.yaml;D
+
+# ---------- 操作系统 ----------
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

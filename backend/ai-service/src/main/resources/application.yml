@@ -1,0 +1,44 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: ai-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_ai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${DB_PASSWORD:root123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:redis123456}
+    database: 0
+    timeout: 5000ms
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+# AI / LLM configuration
+ai:
+  llm:
+    model: ${LLM_MODEL:gpt-4}
+    api-key: ${LLM_API_KEY:your-api-key-here}
+    api-url: ${LLM_API_URL:https://api.openai.com/v1/chat/completions}
+    temperature: ${LLM_TEMPERATURE:0.7}
+    max-tokens: ${LLM_MAX_TOKENS:4096}
+
+logging:
+  level:
+    com.dataviz.ai: debug

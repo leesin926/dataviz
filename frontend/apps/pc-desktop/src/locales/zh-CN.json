@@ -1,0 +1,28 @@
+{
+  "common": {
+    "appName": "DataViz 桌面端",
+    "appSubtitle": "可视化数据分析及大屏展示系统"
+  },
+  "login": {
+    "tabPassword": "账号登录",
+    "tabSms": "短信登录",
+    "username": "用户名",
+    "password": "密码",
+    "captcha": "验证码",
+    "phone": "手机号",
+    "smsCode": "短信验证码",
+    "login": "登录",
+    "getCode": "获取验证码",
+    "retryAfter": "{sec}s 后重发",
+    "smsMockTip": "短信登录为前端模拟功能，任意验证码均可登录",
+    "errUsernameRequired": "请输入用户名",
+    "errPasswordRequired": "请输入密码",
+    "errPhoneRequired": "请输入手机号",
+    "errPhoneFormat": "手机号格式不正确",
+    "errCodeRequired": "请输入验证码",
+    "loginSuccess": "登录成功",
+    "loginFailed": "登录失败",
+    "codeSent": "验证码已发送至 {phone}",
+    "sendFailed": "发送失败"
+  }
+}

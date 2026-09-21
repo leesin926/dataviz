@@ -1,0 +1,44 @@
+/* 各端公共基础样式：依赖 tokens.css，需先引入令牌再引入本文件 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--dv-font-family);
+  font-size: var(--dv-font-md);
+  color: var(--dv-text-1);
+  background: var(--dv-surface-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 哀悼模式：任何端在根容器加 .dv-mourning 即整页灰度 */
+.dv-mourning {
+  filter: grayscale(100%);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--dv-border-strong);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dv-text-4);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -1,0 +1,54 @@
+server:
+  port: 8095
+
+spring:
+  application:
+    name: schedule-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_schedule?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${DB_PASSWORD:root123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:redis123456}
+    database: 0
+    timeout: 5000ms
+
+# XXL-Job配置
+xxl:
+  job:
+    admin:
+      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://localhost:8080/xxl-job-admin}
+    accessToken: ${XXL_JOB_ACCESS_TOKEN:}
+    executor:
+      appname: ${spring.application.name}
+      port: ${XXL_JOB_EXECUTOR_PORT:9901}
+      logpath: ./logs/xxl-job
+      logretentiondays: 30
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    com.dataviz.schedule: debug

@@ -1,0 +1,161 @@
+# 通用微服务 K8s 部署模板
+# 使用方式: envsubst < k8s/service-template.yaml | kubectl apply -f -
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: dataviz
+  labels:
+    app: ${SERVICE_NAME}
+    version: ${IMAGE_TAG}
+spec:
+  replicas: ${REPLICAS:-2}
+  selector:
+    matchLabels:
+      app: ${SERVICE_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${SERVICE_NAME}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "${SERVICE_PORT}"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      serviceAccountName: dataviz-sa
+      containers:
+        - name: ${SERVICE_NAME}
+          image: registry.dataviz.com/${SERVICE_NAME}:${IMAGE_TAG}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: ${SERVICE_PORT}
+              name: http
+              protocol: TCP
+          env:
+            - name: SERVICE_NAME
+              value: ${SERVICE_NAME}
+            - name: SERVICE_PORT
+              value: "${SERVICE_PORT}"
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError"
+            - name: TZ
+              value: Asia/Shanghai
+            - name: NACOS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: dataviz-config
+                  key: nacos-addr
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: dataviz-config
+                  key: mysql-host
+            - name: MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: dataviz-config
+                  key: mysql-port
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dataviz-secret
+                  key: mysql-password
+            - name: REDIS_NODES
+              valueFrom:
+                configMapKeyRef:
+                  name: dataviz-config
+                  key: redis-nodes
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dataviz-secret
+                  key: redis-password
+            - name: KAFKA_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: dataviz-config
+                  key: kafka-servers
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: dataviz-secret
+                  key: jwt-secret
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1536Mi"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: ${SERVICE_PORT}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: ${SERVICE_PORT}
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: ${SERVICE_PORT}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: dataviz
+  labels:
+    app: ${SERVICE_NAME}
+spec:
+  selector:
+    app: ${SERVICE_NAME}
+  ports:
+    - port: ${SERVICE_PORT}
+      targetPort: ${SERVICE_PORT}
+      protocol: TCP
+      name: http
+  type: ClusterIP
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ${SERVICE_NAME}-hpa
+  namespace: dataviz
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ${SERVICE_NAME}
+  minReplicas: ${MIN_REPLICAS:-2}
+  maxReplicas: ${MAX_REPLICAS:-10}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

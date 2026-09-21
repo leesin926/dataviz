@@ -1,0 +1,238 @@
+stages:
+  - lint
+  - build
+  - test
+  - docker
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "-B --errors --fail-at-end"
+  DOCKER_REGISTRY: registry.dataviz.com
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .m2/repository
+    - frontend/node_modules
+
+# ==================== Lint ====================
+backend:lint:
+  stage: lint
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - cd backend
+    - mvn $MAVEN_CLI_OPTS checkstyle:check spotbugs:check
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+
+frontend:lint:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - cd frontend
+    - npm install -g pnpm
+    - pnpm install --frozen-lockfile
+    - pnpm lint
+    - pnpm typecheck
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ==================== Build ====================
+backend:build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - cd backend
+    - mvn $MAVEN_CLI_OPTS clean package -DskipTests
+  artifacts:
+    paths:
+      - backend/*/target/*.jar
+    expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+
+frontend:build:
+  stage: build
+  image: node:18-alpine
+  script:
+    - cd frontend
+    - npm install -g pnpm
+    - pnpm install --frozen-lockfile
+    - pnpm build:all
+  artifacts:
+    paths:
+      - frontend/packages/*/dist
+      - frontend/apps/*/dist
+    expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+
+# ==================== Test ====================
+backend:test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  services:
+    - name: mysql:8.0
+      alias: mysql
+      variables:
+        MYSQL_ROOT_PASSWORD: test
+        MYSQL_DATABASE: test
+    - name: redis:7-alpine
+      alias: redis
+  variables:
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/test?useSSL=false
+    SPRING_DATASOURCE_USERNAME: root
+    SPRING_DATASOURCE_PASSWORD: test
+    SPRING_DATA_REDIS_HOST: redis
+  script:
+    - cd backend
+    - mvn $MAVEN_CLI_OPTS verify
+  artifacts:
+    reports:
+      junit:
+        - backend/*/target/surefire-reports/TEST-*.xml
+    paths:
+      - backend/*/target/site/jacoco
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ==================== Docker ====================
+docker:build:
+  stage: docker
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $DOCKER_REGISTRY
+  script:
+    - |
+      SERVICES=(
+        "gateway-service:8080"
+        "auth-service:8081"
+        "user-service:8082"
+        "datasource-service:8083"
+        "etl-service:8084"
+        "model-service:8085"
+        "analysis-service:8086"
+        "dashboard-service:8087"
+        "screen-service:8088"
+        "collab-service:8089"
+        "alert-service:8090"
+        "ai-service:8091"
+        "openapi-service:8092"
+        "admin-service:8093"
+        "file-service:8094"
+        "schedule-service:8095"
+        "monitor-service:8096"
+      )
+      for svc in "${SERVICES[@]}"; do
+        name="${svc%%:*}"
+        port="${svc##*:}"
+        echo "Building Docker image for ${name}..."
+        docker build \
+          --build-arg SERVICE_PORT=${port} \
+          -t ${DOCKER_REGISTRY}/${name}:${IMAGE_TAG} \
+          -t ${DOCKER_REGISTRY}/${name}:latest \
+          -f backend/Dockerfile \
+          --build-arg JAR_FILE=backend/${name}/target/*.jar \
+          backend/
+        docker push ${DOCKER_REGISTRY}/${name}:${IMAGE_TAG}
+        docker push ${DOCKER_REGISTRY}/${name}:latest
+      done
+    - |
+      docker build \
+        -t ${DOCKER_REGISTRY}/pc-web:${IMAGE_TAG} \
+        -t ${DOCKER_REGISTRY}/pc-web:latest \
+        -f frontend/apps/pc-web/Dockerfile \
+        frontend/
+      docker push ${DOCKER_REGISTRY}/pc-web:${IMAGE_TAG}
+      docker push ${DOCKER_REGISTRY}/pc-web:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+
+# ==================== Deploy ====================
+deploy:dev:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - |
+      SERVICES=(
+        "gateway-service:8080:2"
+        "auth-service:8081:2"
+        "user-service:8082:2"
+        "datasource-service:8083:2"
+        "etl-service:8084:2"
+        "model-service:8085:2"
+        "analysis-service:8086:2"
+        "dashboard-service:8087:2"
+        "screen-service:8088:2"
+        "collab-service:8089:2"
+        "alert-service:8090:2"
+        "ai-service:8091:2"
+        "openapi-service:8092:2"
+        "admin-service:8093:2"
+        "file-service:8094:2"
+        "schedule-service:8095:2"
+        "monitor-service:8096:2"
+      )
+      for svc in "${SERVICES[@]}"; do
+        IFS=':' read -r name port replicas <<< "$svc"
+        export SERVICE_NAME=$name
+        export SERVICE_PORT=$port
+        export REPLICAS=$replicas
+        export IMAGE_TAG
+        envsubst < deploy/k8s/service-template.yaml | kubectl apply -f -
+      done
+    - kubectl rollout restart deployment -n dataviz
+  environment:
+    name: dev
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+deploy:prod:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - |
+      SERVICES=(
+        "gateway-service:8080:3"
+        "auth-service:8081:3"
+        "user-service:8082:3"
+        "datasource-service:8083:2"
+        "etl-service:8084:3"
+        "model-service:8085:2"
+        "analysis-service:8086:3"
+        "dashboard-service:8087:2"
+        "screen-service:8088:2"
+        "collab-service:8089:2"
+        "alert-service:8090:2"
+        "ai-service:8091:2"
+        "openapi-service:8092:2"
+        "admin-service:8093:2"
+        "file-service:8094:2"
+        "schedule-service:8095:2"
+        "monitor-service:8096:2"
+      )
+      for svc in "${SERVICES[@]}"; do
+        IFS=':' read -r name port replicas <<< "$svc"
+        export SERVICE_NAME=$name
+        export SERVICE_PORT=$port
+        export REPLICAS=$replicas
+        export IMAGE_TAG
+        envsubst < deploy/k8s/service-template.yaml | kubectl apply -f -
+      done
+    - kubectl rollout restart deployment -n dataviz
+  environment:
+    name: production
+  when: manual
+  rules:
+    - if: $CI_COMMIT_TAG

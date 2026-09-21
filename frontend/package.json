@@ -1,0 +1,32 @@
+{
+  "name": "data-viz-platform-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "可视化数据分析及大屏展示系统 - 前端",
+  "scripts": {
+    "dev:pc": "pnpm --filter @dataviz/pc-web dev",
+    "dev:admin": "pnpm --filter @dataviz/admin dev",
+    "dev:portal": "pnpm --filter @dataviz/portal dev",
+    "dev:desktop": "pnpm --filter @dataviz/pc-desktop dev:electron",
+    "dev:mobile": "pnpm --filter @dataviz/mobile-app dev:h5",
+    "dev:miniapp": "pnpm --filter @dataviz/mini-program dev:h5",
+    "dev:tablet": "pnpm --filter @dataviz/tablet-app dev:h5",
+    "build:pc": "pnpm --filter @dataviz/pc-web build",
+    "build:admin": "pnpm --filter @dataviz/admin build",
+    "build:all": "pnpm -r build",
+    "lint": "eslint . --ext .vue,.ts,.tsx",
+    "format": "prettier --write \"**/*.{vue,ts,tsx,js,jsx,json,css,scss}\"",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "vue-demi"
+    ]
+  }
+}

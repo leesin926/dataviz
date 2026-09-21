@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dataviz
+  labels:
+    app.kubernetes.io/part-of: dataviz-platform
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dataviz-config
+  namespace: dataviz
+data:
+  nacos-addr: "nacos.dataviz.svc.cluster.local:8848"
+  mysql-host: "mysql.dataviz.svc.cluster.local"
+  mysql-port: "3306"
+  redis-nodes: "redis.dataviz.svc.cluster.local:6379"
+  kafka-servers: "kafka.dataviz.svc.cluster.local:9092"
+  es-host: "elasticsearch.dataviz.svc.cluster.local:9200"
+  minio-endpoint: "http://minio.dataviz.svc.cluster.local:9000"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dataviz-secret
+  namespace: dataviz
+type: Opaque
+stringData:
+  mysql-password: "root123456"
+  redis-password: "redis123456"
+  jwt-secret: "your-256-bit-secret-key-change-in-production-!!"
+  minio-access-key: "minioadmin"
+  minio-secret-key: "minioadmin123"
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dataviz-sa
+  namespace: dataviz
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dataviz-gateway
+  namespace: dataviz
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.dataviz.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-service
+                port:
+                  number: 8080
+    - host: dataviz.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pc-web
+                port:
+                  number: 80

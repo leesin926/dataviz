@@ -1,0 +1,19 @@
+{
+  "name": "@dataviz/chart-engine",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "echarts": "^5.5.0",
+    "vue": "^3.4.21",
+    "@dataviz/shared-types": "workspace:*",
+    "@dataviz/shared-utils": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "common": {
+    "appName": "DataViz 桌面端",
+    "appSubtitle": "Visual data analysis & large-screen display system"
+  },
+  "login": {
+    "tabPassword": "Account",
+    "tabSms": "SMS Code",
+    "username": "Username",
+    "password": "Password",
+    "captcha": "Captcha",
+    "phone": "Phone number",
+    "smsCode": "SMS code",
+    "login": "Sign in",
+    "getCode": "Get code",
+    "retryAfter": "Retry in {sec}s",
+    "smsMockTip": "SMS login is a frontend mock; any code works",
+    "errUsernameRequired": "Please enter your username",
+    "errPasswordRequired": "Please enter your password",
+    "errPhoneRequired": "Please enter your phone number",
+    "errPhoneFormat": "Invalid phone number format",
+    "errCodeRequired": "Please enter the code",
+    "loginSuccess": "Signed in",
+    "loginFailed": "Sign-in failed",
+    "codeSent": "Code sent to {phone}",
+    "sendFailed": "Send failed"
+  }
+}

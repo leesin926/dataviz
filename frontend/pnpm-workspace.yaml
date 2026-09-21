@@ -1,0 +1,23 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+
+# pnpm 10+ 起 .npmrc 中的安装配置已迁移到本文件（v12 忽略 .npmrc 的 shamefully-hoist）
+shamefullyHoist: true
+strictPeerDependencies: false
+autoInstallPeers: true
+
+# uni H5 运行时由 uni-h5-vite 的 resolveId 插件把 'vue' 别名到 @dcloudio/uni-h5-vue（内含 injectHook 等内部导出）；
+# 未被别名覆盖的裸 'vue' 解析（依赖预构建等）需与 fork 同版本 3.4.21，故仅在三个 uni 端锁 vue=3.4.21，Web 端不受影响
+overrides:
+  "@dataviz/mobile-app>vue": 3.4.21
+  "@dataviz/mini-program>vue": 3.4.21
+  "@dataviz/tablet-app>vue": 3.4.21
+
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true
+  core-js-pure: true
+  electron: true
+  esbuild: true
+  vue-demi: true

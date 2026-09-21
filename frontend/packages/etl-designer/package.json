@@ -1,0 +1,19 @@
+{
+  "name": "@dataviz/etl-designer",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@antv/x6": "^3.1.8",
+    "@dataviz/shared-types": "workspace:*",
+    "@dataviz/shared-utils": "workspace:*",
+    "vue": "^3.4.21"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  }
+}

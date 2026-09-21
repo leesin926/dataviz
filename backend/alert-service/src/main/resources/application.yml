@@ -1,0 +1,50 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: alert-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_alert?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${DB_PASSWORD:root123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:redis123456}
+    database: 0
+    timeout: 5000ms
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.dataviz.alert: debug
+
+# 指标取数走 datasource-service 的内部只读查询端点（不自己持 JDBC 连接与口令）
+datasource-service:
+  base-url: ${DATASOURCE_SERVICE_URL:http://localhost:8083}
+
+# 与各服务配成同一个值，否则内部端点会回 403
+internal:
+  api:
+    token: ${INTERNAL_API_TOKEN:dataviz-internal-dev-token}
+
+alert:
+  # 定时评估总开关，默认关闭：打开后每 60s 会真实查询数据源，并在越界达到 duration 时派发通知
+  # （DINGTALK/WEBHOOK 会发出真实 HTTP 请求，请先把 notify_channel 里的地址换成可信目标）
+  check:
+    enabled: ${ALERT_CHECK_ENABLED:false}

@@ -1,0 +1,50 @@
+apisix:
+  node_listen: 9080
+
+deployment:
+  role: traditional
+  admin:
+    admin_key:
+      - name: admin
+        key: dataviz-admin-key
+        role: admin
+
+etcd:
+  host:
+    - "http://etcd:2379"
+  prefix: "/apisix"
+
+plugins:
+  - real-ip
+  - client-control
+  - request-id
+  - zipkin
+  - ext-plugin-pre-req
+  - fault-injection
+  - cors
+  - ip-restriction
+  - ua-restriction
+  - referer-restriction
+  - csrf
+  - public-api
+  - uri-blocker
+  - request-validation
+  - consumer-restriction
+  - authorization
+  - proxy-cache
+  - proxy-mirror
+  - proxy-rewrite
+  - api-breaker
+  - key-auth
+  - basic-auth
+  - hmac-auth
+  - jwt-auth
+  - serverless-post-function
+  - ext-plugin-post-req
+  - ext-plugin-post-resp
+  - limit-conn
+  - limit-req
+  - limit-count
+  - gzip
+  - echo
+  - prometheus

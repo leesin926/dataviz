@@ -1,0 +1,293 @@
+/*
+ * Element Plus 主题适配 + 公共页面骨架类
+ * 目标：各端共享同一套现代/科技感视觉，改这里即可全局生效。
+ * 引入顺序：tokens.css → base.css → element.css（且必须在 element-plus/dist/index.css 之后）
+ */
+
+:root {
+  --el-color-primary: var(--dv-primary);
+  --el-color-success: var(--dv-success);
+  --el-color-warning: var(--dv-warning);
+  --el-color-danger: var(--dv-danger);
+  --el-color-info: var(--dv-info);
+  --el-border-radius-base: var(--dv-radius-sm);
+  --el-border-radius-small: 4px;
+  --el-bg-color: var(--dv-surface-1);
+  --el-bg-color-page: var(--dv-surface-0);
+  --el-bg-color-overlay: var(--dv-surface-1);
+  --el-text-color-primary: var(--dv-text-1);
+  --el-text-color-regular: var(--dv-text-2);
+  --el-text-color-secondary: var(--dv-text-3);
+  --el-text-color-placeholder: var(--dv-text-4);
+  --el-border-color: var(--dv-border);
+  --el-border-color-light: var(--dv-border);
+  --el-border-color-lighter: var(--dv-border-soft);
+  --el-border-color-extra-light: var(--dv-border-soft);
+  --el-fill-color-blank: var(--dv-surface-1);
+  --el-fill-color-light: var(--dv-surface-sunken);
+  --el-fill-color-lighter: var(--dv-surface-2);
+  --el-box-shadow-light: var(--dv-shadow-sm);
+  --el-box-shadow: var(--dv-shadow-md);
+  --el-font-family: var(--dv-font-family);
+  --el-font-size-base: var(--dv-font-md);
+}
+
+/* —— 按钮：主按钮用品牌渐变 —— */
+.el-button {
+  font-weight: 500;
+  border-radius: var(--dv-radius-sm);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.el-button--primary {
+  background: var(--dv-grad-brand);
+  border: none;
+  box-shadow: 0 2px 10px rgba(47, 124, 255, 0.28);
+}
+.el-button--primary:hover {
+  box-shadow: 0 6px 18px rgba(47, 124, 255, 0.36);
+  filter: brightness(1.05);
+}
+.el-button--small {
+  border-radius: var(--dv-radius-sm);
+}
+
+/* —— 卡片：去硬边框，用分层阴影 —— */
+.el-card {
+  --el-card-border-radius: var(--dv-radius-md);
+  border: 1px solid var(--dv-border-soft);
+  background: var(--dv-surface-1);
+  box-shadow: var(--dv-shadow-sm) !important;
+  transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+}
+.el-card:hover {
+  box-shadow: var(--dv-shadow-md);
+  border-color: var(--dv-border);
+}
+.el-card__header {
+  border-bottom: 1px solid var(--dv-border-soft);
+  font-weight: 600;
+  color: var(--dv-text-1);
+}
+
+/* —— 表格：轻底色表头 + 悬浮高亮 —— */
+.el-table {
+  --el-table-border-color: var(--dv-border-soft);
+  --el-table-header-bg-color: var(--dv-surface-sunken);
+  --el-table-row-hover-bg-color: var(--dv-primary-soft);
+  background: transparent;
+  color: var(--dv-text-1);
+}
+.el-table th.el-table__cell {
+  font-weight: 600;
+  font-size: var(--dv-font-sm);
+  color: var(--dv-text-2);
+}
+.el-table tr {
+  background: transparent;
+}
+.el-table__inner-wrapper::before {
+  background: var(--dv-border-soft);
+}
+
+/* —— 输入/选择 —— */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: var(--dv-radius-sm);
+  background: var(--dv-surface-1);
+  box-shadow: 0 0 0 1px var(--dv-border) inset;
+  transition: box-shadow 0.18s ease;
+}
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--dv-primary) inset, 0 0 0 3px var(--dv-primary-soft);
+}
+
+/* —— 弹层 —— */
+.el-dialog,
+.el-drawer {
+  border-radius: var(--dv-radius-lg);
+  overflow: hidden;
+}
+.el-dialog__header {
+  margin-right: 0;
+  padding-bottom: var(--dv-space-md);
+  border-bottom: 1px solid var(--dv-border-soft);
+  font-weight: 600;
+}
+.el-dropdown-menu__item:hover,
+.el-dropdown-menu__item--focus {
+  background: var(--dv-primary-soft);
+  color: var(--dv-primary);
+}
+.el-tag {
+  border-radius: 999px;
+  font-weight: 500;
+}
+.el-tabs__item {
+  font-weight: 500;
+}
+.el-tabs__active-bar {
+  background: var(--dv-grad-brand);
+  height: 3px;
+  border-radius: 3px;
+}
+.el-menu {
+  --el-menu-bg-color: transparent;
+  --el-menu-text-color: var(--dv-text-2);
+  --el-menu-hover-bg-color: var(--dv-primary-soft);
+  --el-menu-active-color: var(--dv-primary);
+}
+.el-pagination {
+  --el-pagination-bg-color: transparent;
+  font-weight: 500;
+}
+
+/* ================= 公共页面骨架类 ================= */
+
+/* 页面容器：渐变氛围底 + 内容限宽 */
+.dv-page {
+  position: relative;
+  padding: var(--dv-space-xl);
+  color: var(--dv-text-1);
+}
+.dv-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--dv-grad-page);
+  pointer-events: none;
+}
+.dv-page > * {
+  position: relative;
+}
+
+/* 页头：标题 + 说明 + 操作区 */
+.dv-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--dv-space-lg);
+  margin-bottom: var(--dv-space-xl);
+}
+.dv-page-head h2 {
+  margin: 0;
+  font-size: var(--dv-font-xl);
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  color: var(--dv-text-1);
+}
+.dv-page-head .dv-page-desc {
+  margin: 6px 0 0;
+  font-size: var(--dv-font-sm);
+  color: var(--dv-text-3);
+}
+.dv-page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--dv-space-sm);
+  flex-shrink: 0;
+}
+
+/* 工具条（筛选/搜索） */
+.dv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--dv-space-md);
+  flex-wrap: wrap;
+  padding: var(--dv-space-md) var(--dv-space-lg);
+  margin-bottom: var(--dv-space-lg);
+  background: var(--dv-surface-1);
+  border: 1px solid var(--dv-border-soft);
+  border-radius: var(--dv-radius-md);
+  box-shadow: var(--dv-shadow-sm);
+}
+
+/* 卡片栅格 */
+.dv-grid {
+  display: grid;
+  gap: var(--dv-space-lg);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* 可悬浮卡片（列表项） */
+.dv-item-card {
+  position: relative;
+  padding: var(--dv-space-lg);
+  background: var(--dv-surface-1);
+  border: 1px solid var(--dv-border-soft);
+  border-radius: var(--dv-radius-md);
+  box-shadow: var(--dv-shadow-sm);
+  transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+}
+.dv-item-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(47, 124, 255, 0.4);
+  box-shadow: var(--dv-shadow-lg);
+}
+.dv-item-card .dv-item-title {
+  font-size: var(--dv-font-lg);
+  font-weight: 600;
+  color: var(--dv-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dv-item-card .dv-item-meta {
+  margin-top: 6px;
+  font-size: var(--dv-font-xs);
+  color: var(--dv-text-3);
+}
+.dv-item-card .dv-item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dv-space-sm);
+  margin-top: var(--dv-space-lg);
+  padding-top: var(--dv-space-md);
+  border-top: 1px solid var(--dv-border-soft);
+}
+
+/* 指标块 */
+.dv-stat {
+  padding: var(--dv-space-lg);
+  background: var(--dv-surface-1);
+  border: 1px solid var(--dv-border-soft);
+  border-radius: var(--dv-radius-md);
+  box-shadow: var(--dv-shadow-sm);
+}
+.dv-stat .dv-stat-label {
+  font-size: var(--dv-font-xs);
+  color: var(--dv-text-3);
+}
+.dv-stat .dv-stat-value {
+  margin-top: 6px;
+  font-size: 24px;
+  font-weight: 680;
+  letter-spacing: 0.4px;
+  background: var(--dv-grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 文本层级工具类 */
+.dv-pager {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--dv-space-lg);
+}
+.dv-text-1 {
+  color: var(--dv-text-1);
+}
+.dv-text-3 {
+  color: var(--dv-text-3);
+}
+.dv-mono {
+  font-family: var(--dv-font-mono);
+}
+.dv-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,51 @@
+// Element Plus overrides
+.el-button {
+  border-radius: 4px;
+}
+
+.el-card {
+  border-radius: 6px;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  &__header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+.el-table {
+  border-radius: 6px;
+  overflow: hidden;
+  th.el-table__cell {
+    background: #fafafa !important;
+    color: #666;
+    font-weight: 600;
+  }
+}
+
+.el-dialog {
+  border-radius: 8px;
+  &__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  &__body {
+    padding: 20px;
+  }
+  &__footer {
+    padding: 12px 20px;
+    border-top: 1px solid #f0f0f0;
+  }
+}
+
+.el-menu {
+  border-right: none !important;
+}
+
+.el-tag {
+  border-radius: 4px;
+}
+
+.el-pagination {
+  padding: 12px 0;
+}
