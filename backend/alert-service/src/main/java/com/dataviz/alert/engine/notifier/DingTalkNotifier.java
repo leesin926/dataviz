@@ -45,9 +45,8 @@ public class DingTalkNotifier implements AlertNotifier {
 
     @Override
     public String recipientOf(NotifyChannel channelConfig) {
-        Map<String, Object> config = NotifierSupport.parseConfig(objectMapper, channelConfig);
         // 群机器人地址里带 access_token，日志和告警记录只留前缀，不把口令落库
-        String webhook = NotifierSupport.requireText(config, "webhook", channelConfig.getName());
+        String webhook = webhookUrlOf(channelConfig);
         int tokenAt = webhook.indexOf("access_token=");
         return tokenAt < 0 ? webhook : webhook.substring(0, tokenAt) + "access_token=***";
     }
@@ -56,7 +55,9 @@ public class DingTalkNotifier implements AlertNotifier {
     @SuppressWarnings("unchecked")
     public void send(NotifyChannel channelConfig, AlertRule rule, AlertEvent event) {
         Map<String, Object> config = NotifierSupport.parseConfig(objectMapper, channelConfig);
-        String webhook = NotifierSupport.requireText(config, "webhook", channelConfig.getName());
+        String webhook = OutboundUrlGuard.requireAllowed(
+                NotifierSupport.requireText(config, "webhook", channelConfig.getName()),
+                channelConfig.getName());
 
         Map<String, Object> text = new LinkedHashMap<>();
         text.put("content", NotifierSupport.formatMessage(rule, event));
@@ -84,6 +85,13 @@ public class DingTalkNotifier implements AlertNotifier {
                     "钉钉机器人拒绝消息: errcode=" + errcode + ", body=" + safeBody(response.getBody()));
         }
         log.info("钉钉通知已发送: eventId={}, ruleId={}, atAll={}", event.getId(), rule.getId(), at.get("isAtAll"));
+    }
+
+    private String webhookUrlOf(NotifyChannel channelConfig) {
+        Map<String, Object> config = NotifierSupport.parseConfig(objectMapper, channelConfig);
+        return OutboundUrlGuard.requireAllowed(
+                NotifierSupport.requireText(config, "webhook", channelConfig.getName()),
+                channelConfig.getName());
     }
 
     private Integer readErrcode(String body) {

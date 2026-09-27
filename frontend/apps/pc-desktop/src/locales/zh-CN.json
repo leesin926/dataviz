@@ -14,7 +14,7 @@
     "login": "登录",
     "getCode": "获取验证码",
     "retryAfter": "{sec}s 后重发",
-    "smsMockTip": "短信登录为前端模拟功能，任意验证码均可登录",
+    "smsTip": "演示环境未接入短信渠道，验证码固定为 123123",
     "errUsernameRequired": "请输入用户名",
     "errPasswordRequired": "请输入密码",
     "errPhoneRequired": "请输入手机号",

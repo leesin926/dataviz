@@ -7,7 +7,7 @@ import java.util.List;
 public interface DeptService {
     List<DeptTreeVO> getDeptTree(Long tenantId);
     Long createDept(DeptCreateDTO dto, Long tenantId);
-    void updateDept(Long id, DeptCreateDTO dto);
-    void deleteDept(Long id);
-    DeptTreeVO getDeptById(Long id);
+    void updateDept(Long id, DeptCreateDTO dto, Long tenantId);
+    void deleteDept(Long id, Long tenantId);
+    DeptTreeVO getDeptById(Long id, Long tenantId);
 }

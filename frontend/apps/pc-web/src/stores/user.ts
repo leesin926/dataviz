@@ -24,7 +24,8 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function smsLogin(phone: string, code: string) {
-    const result = await apiSmsLogin(phone, code)
+    // 终端标识要与发码那一次一致（后端按"手机号+终端"存验证码），见 api-client/sms 的 SmsTerminal
+    const result = await apiSmsLogin(phone, code, 'pc-web')
     token.value = result.accessToken
     setToken(result.accessToken, result.refreshToken)
     const userInfo = {

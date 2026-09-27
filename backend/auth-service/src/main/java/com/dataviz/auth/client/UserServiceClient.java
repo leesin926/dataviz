@@ -55,6 +55,14 @@ public class UserServiceClient {
         return call(HttpMethod.GET, uri, null, new ParameterizedTypeReference<R<AuthUserDTO>>() { }, "查询用户 " + username);
     }
 
+    /** @return null 表示该手机号下没有账号 */
+    public AuthUserDTO findByPhone(String phone) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl + PREFIX + "/by-phone")
+                .queryParam("phone", phone)
+                .build().encode().toUri();
+        return call(HttpMethod.GET, uri, null, new ParameterizedTypeReference<R<AuthUserDTO>>() { }, "按手机号查询用户");
+    }
+
     /** @return null 表示用户不存在 */
     public AuthUserDTO findById(Long userId) {
         URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl + PREFIX + "/" + userId).build().toUri();

@@ -12,13 +12,13 @@ import '@dataviz/shared-styles'
 import { watchGlobalMourning } from '@dataviz/shared-styles'
 import './styles/index.scss'
 import { i18n, t } from './locales'
-import { getPublicConfig, MOURNING_CONFIG_KEY, setAuthMessageResolver } from '@dataviz/api-client'
+import { getPublicConfig, MOURNING_CONFIG_KEY, setAuthMessageResolver, subscribeMourningPush } from '@dataviz/api-client'
 
 // 401/演示态等认证提示走应用层词典，避免 api-client 依赖 vue-i18n
-setAuthMessageResolver((key) => t(key === 'demoMode' ? 'common.demoMode' : 'common.sessionExpired'))
+setAuthMessageResolver(() => t('common.sessionExpired'))
 
-// 全局哀悼模式由管理端系统配置驱动；读不到或未开启都按不灰度处理
-watchGlobalMourning(() => getPublicConfig(MOURNING_CONFIG_KEY))
+// 全局哀悼模式由管理端系统配置驱动；首屏一次 HTTP 定初值，之后走免登推送通道
+watchGlobalMourning(() => getPublicConfig(MOURNING_CONFIG_KEY), subscribeMourningPush)
 
 const app = createApp(App)
 const pinia = createPinia()

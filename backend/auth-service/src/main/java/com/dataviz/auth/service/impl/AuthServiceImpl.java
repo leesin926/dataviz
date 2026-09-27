@@ -4,17 +4,20 @@ import com.dataviz.auth.client.UserServiceClient;
 import com.dataviz.auth.client.dto.AuthUserDTO;
 import com.dataviz.auth.dto.LoginDTO;
 import com.dataviz.auth.dto.RefreshTokenDTO;
+import com.dataviz.auth.dto.SmsLoginDTO;
 import com.dataviz.auth.entity.SysLoginLog;
 import com.dataviz.auth.mapper.LoginLogMapper;
 import com.dataviz.auth.service.AuthService;
+import com.dataviz.auth.service.SmsCodeService;
 import com.dataviz.auth.vo.CaptchaVO;
 import com.dataviz.auth.vo.LoginVO;
+import com.dataviz.auth.vo.SmsSendVO;
 import com.dataviz.auth.vo.TokenVO;
 import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.redis.util.CacheHelper;
-import com.dataviz.common.security.context.SecurityContextHolder;
 import com.dataviz.common.security.model.LoginUser;
 import com.dataviz.common.security.util.JwtHelper;
+import com.dataviz.common.security.util.LoginSessionCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -54,10 +57,13 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
     private final CacheHelper cacheHelper;
+    private final SmsCodeService smsCodeService;
 
     private static final String CAPTCHA_PREFIX = "captcha:";
-    private static final String USER_CACHE_PREFIX = "login:user:";
+    /** 与 {@code sys_login_log.login_type} 的注释同词表：1-密码 2-短信 3-SSO */
     private static final int LOGIN_TYPE_PASSWORD = 1;
+    private static final int LOGIN_TYPE_SMS = 2;
+    private static final int LOGIN_TYPE_SSO = 3;
     private static final long DEFAULT_TENANT_ID = 1L;
     private static final String TOKEN_BLACKLIST_PREFIX = "token:blacklist:";
     private static final String USER_TOKEN_PREFIX = "user:token:";
@@ -72,13 +78,13 @@ public class AuthServiceImpl implements AuthService {
         // 2. Load user by username
         AuthUserDTO user = userServiceClient.findByUsername(loginDTO.getUsername());
         if (user == null) {
-            recordLoginLog(null, null, loginDTO.getUsername(), false, "User not found");
+            recordLoginLog(null, null, loginDTO.getUsername(), LOGIN_TYPE_PASSWORD, false, "User not found");
             throw new BizException("Invalid username or password");
         }
 
         // 3. Check user status
         if (user.getStatus() != null && user.getStatus() == 0) {
-            recordLoginLog(user.getId(), user.getTenantId(), loginDTO.getUsername(), false, "Account disabled");
+            recordLoginLog(user.getId(), user.getTenantId(), loginDTO.getUsername(), LOGIN_TYPE_PASSWORD, false, "Account disabled");
             throw new BizException("Account is disabled");
         }
 
@@ -86,80 +92,66 @@ public class AuthServiceImpl implements AuthService {
         // 空哈希必须当场拒绝：不能依赖 matches() 对非法格式返回 false 的巧合，
         // 否则一条被清空口令的记录就成了任何人都进不去/或意外进得去的灰区。
         if (!StringUtils.hasText(user.getPassword())) {
-            recordLoginLog(user.getId(), user.getTenantId(), loginDTO.getUsername(), false, "Password not set");
+            recordLoginLog(user.getId(), user.getTenantId(), loginDTO.getUsername(), LOGIN_TYPE_PASSWORD, false, "Password not set");
             log.warn("用户未设置登录口令，已拒绝登录: {}", loginDTO.getUsername());
             throw new BizException("Invalid username or password");
         }
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-            recordLoginLog(user.getId(), user.getTenantId(), loginDTO.getUsername(), false, "Wrong password");
+            recordLoginLog(user.getId(), user.getTenantId(), loginDTO.getUsername(), LOGIN_TYPE_PASSWORD, false, "Wrong password");
             throw new BizException("Invalid username or password");
         }
 
-        // 5. Load roles and permissions
-        List<String> roles = userServiceClient.findRoleCodes(user.getId());
-        List<String> permissions = userServiceClient.findPermissionCodes(user.getId());
-
-        // 6. Generate JWT tokens
-        LoginUser loginUser = new LoginUser();
-        loginUser.setUserId(user.getId());
-        loginUser.setUsername(user.getUsername());
-        loginUser.setNickname(user.getNickname());
-        loginUser.setTenantId(user.getTenantId() != null ? user.getTenantId().toString() : null);
-        loginUser.setDeptId(user.getDeptId());
-        loginUser.setRoles(new HashSet<>(roles));
-        loginUser.setPermissions(new HashSet<>(permissions));
-
-        String accessToken = JwtHelper.createToken(loginUser);
-        String refreshToken = generateRefreshToken(user.getId().toString());
-
-        // 7. Update login info —— 统计字段，回写失败不该把一次已认证的登录判为失败
-        try {
-            userServiceClient.recordLoginInfo(user.getId());
-        } catch (Exception e) {
-            log.warn("登录时间回写失败: userId={}, {}", user.getId(), e.getMessage());
-        }
-
-        // 8. Cache user token mapping for logout
-        redisTemplate.opsForValue().set(
-                USER_TOKEN_PREFIX + user.getId(), accessToken, Duration.ofHours(2));
-
-        // Cache LoginUser for the service-layer AuthInterceptor
-        cacheHelper.setSeconds(USER_CACHE_PREFIX + user.getUsername(), loginUser, 7200);
-
-        // 9. Record login log
-        recordLoginLog(user.getId(), user.getTenantId(), user.getUsername(), true, "Login success");
-
-        log.info("User [{}] logged in successfully", user.getUsername());
-
-        // 10. Build response
-        LoginVO loginVO = new LoginVO();
-        loginVO.setAccessToken(accessToken);
-        loginVO.setRefreshToken(refreshToken);
-        loginVO.setUserId(user.getId());
-        loginVO.setUsername(user.getUsername());
-        loginVO.setRoles(roles);
-        loginVO.setPermissions(permissions);
-        return loginVO;
+        // 5. 发会话——与短信登录共用同一条路，见 issueSession
+        return issueSession(user, LOGIN_TYPE_PASSWORD);
     }
 
     @Override
-    public void logout(String userId, String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
+    public SmsSendVO sendSmsCode(String phone, String terminal) {
+        return smsCodeService.send(phone, terminal);
+    }
+
+    /**
+     * 短信登录。<strong>口令这条凭证被验证码整体替代</strong>，所以除"不查口令"之外，
+     * 后面发 token、写会话快照、记登录日志与密码登录一字不差（同一个 {@link #issueSession}）。
+     */
+    @Override
+    public LoginVO smsLogin(SmsLoginDTO smsLoginDTO) {
+        String phone = smsLoginDTO.getPhone();
+        AuthUserDTO user = userServiceClient.findByPhone(phone);
+        if (user == null) {
+            // 发码时查得到、登录时查不到 = 中间被改库或删号，按"未绑定"处理并留一条日志
+            recordLoginLog(null, null, phone, LOGIN_TYPE_SMS, false, "Phone not bound");
+            throw new BizException("该手机号未绑定任何账号");
         }
-        if (token != null && !token.trim().isEmpty()) {
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            recordLoginLog(user.getId(), user.getTenantId(), user.getUsername(), LOGIN_TYPE_SMS, false, "Account disabled");
+            throw new BizException("Account is disabled");
+        }
+        try {
+            smsCodeService.verify(phone, smsLoginDTO.getTerminal(), smsLoginDTO.getCode());
+        } catch (BizException e) {
+            recordLoginLog(user.getId(), user.getTenantId(), user.getUsername(), LOGIN_TYPE_SMS, false, e.getMessage());
+            throw e;
+        }
+        return issueSession(user, LOGIN_TYPE_SMS);
+    }
+
+    @Override
+    public void logout(LoginUser currentUser, String authorization) {
+        String token = bearerOf(authorization);
+        if (token != null) {
             // Blacklist the token
             redisTemplate.opsForValue().set(
                     TOKEN_BLACKLIST_PREFIX + token, "1", Duration.ofHours(2));
         }
-        if (userId != null) {
-            redisTemplate.delete(USER_TOKEN_PREFIX + userId);
+        if (currentUser == null) {
+            // 没有主体就不猜 userId —— 猜的来源只能是调用方给的头，那正是本次要关掉的口子
+            log.warn("登出请求缺少登录主体，已跳过会话清理");
+            return;
         }
-        LoginUser current = SecurityContextHolder.getLoginUser();
-        if (current != null) {
-            cacheHelper.delete(USER_CACHE_PREFIX + current.getUsername());
-        }
-        log.info("User [{}] logged out", userId);
+        redisTemplate.delete(USER_TOKEN_PREFIX + currentUser.getUserId());
+        LoginSessionCache.evict(cacheHelper, currentUser.getUsername());
+        log.info("User [{}] logged out", currentUser.getUserId());
     }
 
     @Override
@@ -179,12 +171,22 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Generate new tokens
+        List<String> roles = userServiceClient.findRoleCodes(user.getId());
+        List<String> permissions = userServiceClient.findPermissionCodes(user.getId());
+
         LoginUser loginUser = new LoginUser();
         loginUser.setUserId(user.getId());
         loginUser.setUsername(user.getUsername());
         loginUser.setNickname(user.getNickname());
         loginUser.setTenantId(user.getTenantId() != null ? user.getTenantId().toString() : null);
         loginUser.setDeptId(user.getDeptId());
+        loginUser.setRoles(new HashSet<>(roles));
+        loginUser.setPermissions(new HashSet<>(permissions));
+
+        // 必须回写快照：各服务拦截器判"登录态是否存在 + 有哪些权限"读的是这份 Redis 数据而不是 JWT。
+        // 不写就有两个后果——快照一旦到期，换新 token 也永远 401（刷新这条自救路是死的）；
+        // 以及授权变更后，会话会一直沿用登录那一刻的旧权限。
+        cacheHelper.setSeconds(LoginSessionCache.key(user.getUsername()), loginUser, LoginSessionCache.TTL_SECONDS);
 
         String newAccessToken = JwtHelper.createToken(loginUser);
         String newRefreshToken = generateRefreshToken(user.getId().toString());
@@ -229,30 +231,10 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             throw new BizException("SSO user not found in system: " + username);
         }
-
-        List<String> roles = userServiceClient.findRoleCodes(user.getId());
-        List<String> permissions = userServiceClient.findPermissionCodes(user.getId());
-
-        LoginUser loginUser = new LoginUser();
-        loginUser.setUserId(user.getId());
-        loginUser.setUsername(user.getUsername());
-        loginUser.setNickname(user.getNickname());
-        loginUser.setTenantId(user.getTenantId() != null ? user.getTenantId().toString() : null);
-        loginUser.setDeptId(user.getDeptId());
-        loginUser.setRoles(new HashSet<>(roles));
-        loginUser.setPermissions(new HashSet<>(permissions));
-
-        String accessToken = JwtHelper.createToken(loginUser);
-        String refreshToken = generateRefreshToken(user.getId().toString());
-
-        LoginVO loginVO = new LoginVO();
-        loginVO.setAccessToken(accessToken);
-        loginVO.setRefreshToken(refreshToken);
-        loginVO.setUserId(user.getId());
-        loginVO.setUsername(user.getUsername());
-        loginVO.setRoles(roles);
-        loginVO.setPermissions(permissions);
-        return loginVO;
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            throw new BizException("Account is disabled");
+        }
+        return issueSession(user, LOGIN_TYPE_SSO);
     }
 
     @Override
@@ -295,6 +277,63 @@ public class AuthServiceImpl implements AuthService {
 
     // ==================== Private helpers ====================
 
+    /**
+     * 一次已认证通过的登录 → 会话。<strong>密码登录与短信登录共用这一份</strong>，
+     * 因为"怎么发 token"和"用什么凭证换的 token"是两件事，后者已经在调用方判完了。
+     * <p>
+     * 这里每一行都不能省：{@code login:user:{username}} 快照和各服务读的是同一份，
+     * 不写它，签出来的 JWT 会在第一个业务请求上就被 AuthInterceptor 判 401；
+     * {@code user:token:{userId}} 少了，登出就拉不黑映射。
+     * </p>
+     */
+    private LoginVO issueSession(AuthUserDTO user, int loginType) {
+        // 1. Load roles and permissions
+        List<String> roles = userServiceClient.findRoleCodes(user.getId());
+        List<String> permissions = userServiceClient.findPermissionCodes(user.getId());
+
+        // 2. Generate JWT tokens
+        LoginUser loginUser = new LoginUser();
+        loginUser.setUserId(user.getId());
+        loginUser.setUsername(user.getUsername());
+        loginUser.setNickname(user.getNickname());
+        loginUser.setTenantId(user.getTenantId() != null ? user.getTenantId().toString() : null);
+        loginUser.setDeptId(user.getDeptId());
+        loginUser.setRoles(new HashSet<>(roles));
+        loginUser.setPermissions(new HashSet<>(permissions));
+
+        String accessToken = JwtHelper.createToken(loginUser);
+        String refreshToken = generateRefreshToken(user.getId().toString());
+
+        // 3. Update login info —— 统计字段，回写失败不该把一次已认证的登录判为失败
+        try {
+            userServiceClient.recordLoginInfo(user.getId());
+        } catch (Exception e) {
+            log.warn("登录时间回写失败: userId={}, {}", user.getId(), e.getMessage());
+        }
+
+        // 4. Cache user token mapping for logout
+        redisTemplate.opsForValue().set(
+                USER_TOKEN_PREFIX + user.getId(), accessToken, Duration.ofHours(2));
+
+        // Cache LoginUser for the service-layer AuthInterceptor
+        cacheHelper.setSeconds(LoginSessionCache.key(user.getUsername()), loginUser, LoginSessionCache.TTL_SECONDS);
+
+        // 5. Record login log
+        recordLoginLog(user.getId(), user.getTenantId(), user.getUsername(), loginType, true, "Login success");
+
+        log.info("User [{}] logged in successfully (loginType={})", user.getUsername(), loginType);
+
+        // 6. Build response
+        LoginVO loginVO = new LoginVO();
+        loginVO.setAccessToken(accessToken);
+        loginVO.setRefreshToken(refreshToken);
+        loginVO.setUserId(user.getId());
+        loginVO.setUsername(user.getUsername());
+        loginVO.setRoles(roles);
+        loginVO.setPermissions(permissions);
+        return loginVO;
+    }
+
     private void verifyCaptcha(String captchaKey, String captchaCode) {
         if (captchaKey == null || captchaCode == null) {
             throw new BizException("Captcha key and code are required");
@@ -316,12 +355,12 @@ public class AuthServiceImpl implements AuthService {
         return refreshToken;
     }
 
-    private void recordLoginLog(Long userId, Long tenantId, String username, boolean success, String message) {
+    private void recordLoginLog(Long userId, Long tenantId, String username, int loginType, boolean success, String message) {
         SysLoginLog loginLog = new SysLoginLog();
         loginLog.setTenantId(tenantId != null ? tenantId : DEFAULT_TENANT_ID);
         loginLog.setUserId(userId);
         loginLog.setUsername(username);
-        loginLog.setLoginType(LOGIN_TYPE_PASSWORD);
+        loginLog.setLoginType(loginType);
         loginLog.setStatus(success);
         loginLog.setIp(getClientIp());
         loginLog.setUserAgent(truncate(getUserAgent(), 512));
@@ -359,7 +398,15 @@ public class AuthServiceImpl implements AuthService {
         return attributes != null ? attributes.getRequest() : null;
     }
 
-    private static String truncate(String value, int maxLength) {
+    private static String bearerOf(String authorization) {
+        if (authorization == null) {
+            return null;
+        }
+        String value = authorization.startsWith("Bearer ") ? authorization.substring(7) : authorization;
+        return value.trim().isEmpty() ? null : value;
+    }
+
+    private String truncate(String value, int maxLength) {
         if (value == null || value.isEmpty()) {
             return "";
         }

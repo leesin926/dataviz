@@ -8,8 +8,11 @@ import com.dataviz.common.core.result.PageResult;
 import com.dataviz.user.dto.UserCreateDTO;
 import com.dataviz.user.dto.UserQueryDTO;
 import com.dataviz.user.dto.UserUpdateDTO;
+import com.dataviz.user.entity.SysRole;
 import com.dataviz.user.entity.SysUser;
+import com.dataviz.user.mapper.RoleMapper;
 import com.dataviz.user.mapper.UserMapper;
+import com.dataviz.user.service.LoginSessionEvictor;
 import com.dataviz.user.service.UserService;
 import com.dataviz.user.vo.AuthUserVO;
 import com.dataviz.user.vo.UserVO;
@@ -31,7 +34,9 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
+    private final LoginSessionEvictor sessionEvictor;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -55,30 +60,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateUser(Long id, UserUpdateDTO dto) {
-        SysUser user = userMapper.selectById(id);
-        if (user == null) {
-            throw new BizException("User not found");
-        }
+    public void updateUser(Long id, UserUpdateDTO dto, Long tenantId) {
+        SysUser user = requireUserInTenant(id, tenantId);
         BeanUtils.copyProperties(dto, user);
         userMapper.updateById(user);
+        // 昵称/头像存在登录态快照里，不驱逐就是"改了资料但界面上还是旧的"
+        sessionEvictor.evictUsername(user.getUsername());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteUser(Long id) {
-        if (userMapper.selectById(id) == null) {
-            throw new BizException("User not found");
-        }
+    public void deleteUser(Long id, Long tenantId) {
+        SysUser user = requireUserInTenant(id, tenantId);
         userMapper.deleteById(id);
+        // 用户名必须在删除前取：逻辑删除之后按 @TableLogic 已经查不回来
+        sessionEvictor.evictUsername(user.getUsername());
     }
 
     @Override
-    public UserVO getUserById(Long id) {
-        SysUser user = userMapper.selectById(id);
-        if (user == null) {
-            throw new BizException("User not found");
-        }
+    public UserVO getUserById(Long id, Long tenantId) {
+        SysUser user = requireUserInTenant(id, tenantId);
         UserVO vo = new UserVO();
         BeanUtils.copyProperties(user, vo);
         vo.setRoleIds(userMapper.selectRoleIdsByUserId(id));
@@ -112,32 +113,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void toggleStatus(Long id, Integer status) {
-        SysUser user = userMapper.selectById(id);
-        if (user == null) {
-            throw new BizException("User not found");
-        }
+    public void toggleStatus(Long id, Integer status, Long tenantId) {
+        SysUser user = requireUserInTenant(id, tenantId);
         user.setStatus(status);
         userMapper.updateById(user);
+        // 拦截器只看 Redis 里有没有快照，不查账号状态 ⇒ "停用账号"必须靠驱逐才真能踢人
+        sessionEvictor.evictUsername(user.getUsername());
     }
 
     @Override
-    public void resetPassword(Long id, String newPassword) {
-        SysUser user = userMapper.selectById(id);
-        if (user == null) {
-            throw new BizException("User not found");
-        }
+    public void resetPassword(Long id, String newPassword, Long tenantId) {
+        SysUser user = requireUserInTenant(id, tenantId);
         user.setPassword(passwordEncoder.encode(newPassword));
         userMapper.updateById(user);
+        // 重置口令通常意味着"怀疑这个账号在别人手上"，旧会话不该继续有效
+        sessionEvictor.evictUsername(user.getUsername());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void assignRoles(Long userId, List<Long> roleIds) {
+    public void assignRoles(Long userId, List<Long> roleIds, Long tenantId) {
+        SysUser user = requireUserInTenant(userId, tenantId);
+        requireRolesInTenant(roleIds, tenantId);
         userMapper.deleteRolesByUserId(userId);
         if (roleIds != null && !roleIds.isEmpty()) {
             userMapper.insertBatchUserRoles(userId, roleIds);
         }
+        sessionEvictor.evictUsername(user.getUsername());
     }
 
     @Override
@@ -154,6 +156,19 @@ public class UserServiceImpl implements UserService {
         // 用户名不跨租户唯一，且认证本来就按用户名全局查（迁移前 auth-service 的 selectByUsername 同样不带租户条件）。
         // 这里显式取 id 最小的一条：用 selectOne 命中重复行会抛 TooManyResultsException，把一次登录变成 500。
         wrapper.eq(SysUser::getUsername, username).orderByAsc(SysUser::getId).last("LIMIT 1");
+        return toAuthUserVO(userMapper.selectOne(wrapper));
+    }
+
+    @Override
+    public AuthUserVO findAuthUserByPhone(String phone) {
+        // 空值必须当场挡掉：phone 列默认是 ''（DDL 无唯一约束），
+        // 一次不带条件的查询会把"所有没填手机号的账号"当成命中，LIMIT 1 就随机登进其中一个。
+        if (!StringUtils.hasText(phone)) {
+            return null;
+        }
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        // 同 findByUsername：不取唯一约束，显式按 id 升序取一条，避免 TooManyResultsException 把登录打成 500。
+        wrapper.eq(SysUser::getPhone, phone).orderByAsc(SysUser::getId).last("LIMIT 1");
         return toAuthUserVO(userMapper.selectOne(wrapper));
     }
 
@@ -179,6 +194,32 @@ public class UserServiceImpl implements UserService {
                 .set(SysUser::getUpdateTime, now);
         if (userMapper.update(null, wrapper) == 0) {
             log.warn("登录时间未写入：用户不存在或已删除 userId={}", userId);
+        }
+    }
+
+    /**
+     * 不存在与"存在但不属于本租户"同一句话，配方同 {@code DeptServiceImpl.requireDeptInTenant}：
+     * 分开报就让 id 变成"这个账号在别的租户里存在"的探针。/resetPassword、toggleStatus 这几条
+     * 此前连这一层都没有 —— 拿到别人的 userId 就能重置他的口令。
+     */
+    private SysUser requireUserInTenant(Long id, Long tenantId) {
+        SysUser user = userMapper.selectById(id);
+        if (user == null || !tenantId.equals(user.getTenantId())) {
+            throw new BizException("User not found");
+        }
+        return user;
+    }
+
+    /** 挂角色只能挂自己租户里的角色，否则等于把别租户的身份体系接到本账号上。 */
+    private void requireRolesInTenant(List<Long> roleIds, Long tenantId) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return;
+        }
+        for (Long roleId : roleIds) {
+            SysRole role = roleId == null ? null : roleMapper.selectById(roleId);
+            if (role == null || !tenantId.equals(role.getTenantId())) {
+                throw new BizException("Role not found");
+            }
         }
     }
 

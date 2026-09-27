@@ -56,11 +56,17 @@ public class QueryServiceImpl implements QueryService {
             int maxRows = dto.getMaxRows() != null ? dto.getMaxRows() : 1000;
             // 确保SQL有LIMIT限制
             String limitedSql = sql;
-            if (!upperSql.contains("LIMIT")) {
-                limitedSql = sql.replaceAll(";\\s*$", "") + " LIMIT " + maxRows;
+            boolean userSuppliedLimit = upperSql.contains("LIMIT");
+            if (!userSuppliedLimit) {
+                // 多取一行才能判断截断：读到 maxRows+1 行说明后面还有，正好 maxRows 行则可能是全量
+                limitedSql = sql.replaceAll(";\\s*$", "") + " LIMIT " + (maxRows + 1);
             }
 
             rows = jdbcTemplate.queryForList(limitedSql);
+            boolean truncated = !userSuppliedLimit && rows.size() > maxRows;
+            if (truncated) {
+                rows = rows.subList(0, maxRows);
+            }
 
             if (!rows.isEmpty()) {
                 columnNames = new ArrayList<>(rows.get(0).keySet());
@@ -70,6 +76,7 @@ public class QueryServiceImpl implements QueryService {
             resultVO.setColumns(columnNames);
             resultVO.setRows(rows);
             resultVO.setRowCount(rows.size());
+            resultVO.setTruncated(truncated);
             resultVO.setExecutionTime(executionTime);
 
             // 保存到历史记录

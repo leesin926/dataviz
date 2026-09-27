@@ -34,7 +34,7 @@
           </button>
         </view>
         <button class="login-btn" :loading="smsLoading" @click="handleSmsLogin">登录</button>
-        <text class="sms-tip">短信登录为前端模拟功能，任意验证码均可登录</text>
+        <text class="sms-tip">演示环境未接入短信渠道，验证码固定为 123123</text>
       </view>
     </view>
   </view>
@@ -96,9 +96,10 @@ async function handleLogin() {
 
 async function handleSendCode() {
   try {
-    await sendSmsCode(smsForm.phone)
+    const res = await sendSmsCode(smsForm.phone)
     uni.showToast({ title: `验证码已发送至 ${smsForm.phone}`, icon: 'none' })
-    countdown.value = 60
+    // 倒计时秒数听服务端的，别在前端再写死一个 60
+    countdown.value = res.resendAfterSeconds
     if (countdownTimer) clearInterval(countdownTimer)
     countdownTimer = setInterval(() => {
       countdown.value -= 1

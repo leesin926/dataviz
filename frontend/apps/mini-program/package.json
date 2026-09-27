@@ -18,7 +18,9 @@
     "axios": "^1.6.7",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
-    "@dataviz/shared-styles": "workspace:*"
+    "@dataviz/shared-styles": "workspace:*",
+    "@dataviz/uni-screen-engine": "workspace:*",
+    "@qiun/ucharts": "2.5.0-20230101"
   },
   "devDependencies": {
     "@dcloudio/types": "^3.4.0",

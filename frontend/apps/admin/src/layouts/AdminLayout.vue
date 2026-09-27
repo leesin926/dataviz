@@ -88,6 +88,7 @@
   import { useI18n } from 'vue-i18n'
   import { Position } from '@element-plus/icons-vue'
   import { clearToken } from '@dataviz/api-client'
+  import { matchesPermissionCode } from '@dataviz/permission'
   import { getLocal, removeLocal } from '@dataviz/shared-utils'
   import { useAppStore } from '@/stores/app'
   import { menuRoutes } from '@/router'
@@ -125,7 +126,9 @@
       .map((r) => {
         const meta = (r.meta ?? {}) as Record<string, unknown>
         const perm = meta.permission as string | undefined
-        if (perm && !permissions.value.includes('*') && !permissions.value.includes(perm)) return null
+        // 菜单可见性必须与路由守卫、后端 PermissionInterceptor 同一套匹配语义：
+        // 裸 includes 只认精确码，被授予 `system:*` 的角色会"接口通、菜单消失"（API-26 同族）
+        if (perm && !matchesPermissionCode(perm, permissions.value)) return null
         return {
           path: `/${String(r.path)}`,
           titleKey: meta.titleKey as string,

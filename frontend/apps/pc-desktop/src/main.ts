@@ -6,14 +6,14 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import '@dataviz/shared-styles'
 import { watchGlobalMourning } from '@dataviz/shared-styles'
-import { getPublicConfig, MOURNING_CONFIG_KEY } from '@dataviz/api-client'
+import { getPublicConfig, MOURNING_CONFIG_KEY, subscribeMourningPush } from '@dataviz/api-client'
 import { i18n } from './locales'
 import App from './App.vue'
 import { router } from './router'
 import './styles/index.scss'
 
-// 全局哀悼模式由管理端系统配置驱动；读不到或未开启都按不灰度处理
-watchGlobalMourning(() => getPublicConfig(MOURNING_CONFIG_KEY))
+// 全局哀悼模式由管理端系统配置驱动；首屏一次 HTTP 定初值，之后走免登推送通道
+watchGlobalMourning(() => getPublicConfig(MOURNING_CONFIG_KEY), subscribeMourningPush)
 
 const app = createApp(App)
 const pinia = createPinia()

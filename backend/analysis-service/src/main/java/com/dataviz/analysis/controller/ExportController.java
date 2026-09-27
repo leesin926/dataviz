@@ -4,6 +4,7 @@ import com.dataviz.analysis.dto.ExportDTO;
 import com.dataviz.analysis.engine.QueryEngine;
 import com.dataviz.analysis.vo.QueryResultVO;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletResponse;
@@ -28,11 +29,14 @@ import java.util.Map;
 @RequestMapping("/api/analysis/export")
 @RequiredArgsConstructor
 @Tag(name = "Data Export", description = "Export query results to Excel or CSV")
+// 类级 = 本控制器全部端点至少要 analysis:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 analysis:write。
+@RequiresPermission("analysis:read")
 public class ExportController {
 
     private final QueryEngine queryEngine;
 
     @PostMapping("/excel")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "Export to Excel", description = "Export query results to XLSX file")
     public void exportToExcel(@RequestBody @Valid ExportDTO exportDTO,
                                @RequestHeader("X-User-Id") String userId,
@@ -98,6 +102,7 @@ public class ExportController {
     }
 
     @PostMapping("/csv")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "Export to CSV", description = "Export query results to CSV file")
     public void exportToCsv(@RequestBody @Valid ExportDTO exportDTO,
                              @RequestHeader("X-User-Id") String userId,

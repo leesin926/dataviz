@@ -46,12 +46,11 @@
     "logout": "Sign out",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "forbidden": "Access denied",
     "forbiddenDesc": "This admin account has no permission for this page",
     "notFound": "Page not found",
     "notFoundDesc": "The page may have been removed or the URL is incorrect",
     "sessionExpired": "Session expired, please sign in again",
-    "demoMode": "SMS trial account - data shown is demo only",
+    "forbidden": "You lack permission for this action - ask an administrator to grant it",
     "serviceUnavailable": "Service unavailable: {msg}"
   },
   "login": {
@@ -65,7 +64,7 @@
     "login": "Sign in",
     "getCode": "Send code",
     "retryAfter": "Retry in {sec}s",
-    "smsMockTip": "SMS sign-in is mocked in the frontend - any code works",
+    "smsTip": "No SMS provider in this demo - the code is fixed at 123123",
     "errUsernameRequired": "Username is required",
     "errPasswordRequired": "Password is required",
     "errPhoneRequired": "Phone number is required",
@@ -89,6 +88,7 @@
     "license": "License",
     "config": "Settings",
     "users": "Users",
+    "depts": "Departments",
     "roles": "Roles",
     "menus": "Menus",
     "audit": "Audit log"
@@ -163,6 +163,7 @@
     "createTitle": "New role",
     "keyPlaceholder": "e.g. tenant:admin",
     "codePlaceholder": "e.g. tenant_admin",
+    "codeLocked": "Immutable after creation",
     "deleted": "Role deleted"
   },
   "menu": {
@@ -185,6 +186,22 @@
     "deleted": "Menu deleted",
     "nameRequired": "Name is required",
     "codeRequired": "Permission code is required"
+  },
+  "dept": {
+    "title": "Departments",
+    "desc": "Maintain this tenant's organisation tree; user profiles pick their department from here",
+    "name": "Department",
+    "leader": "Leader",
+    "phone": "Phone",
+    "sort": "Sort",
+    "parent": "Parent",
+    "root": "Top level",
+    "create": "New department",
+    "addChild": "Add child",
+    "createTitle": "New department",
+    "editTitle": "Edit department",
+    "deleted": "Department deleted",
+    "nameRequired": "Department name is required"
   },
   "config": {
     "title": "Platform settings",

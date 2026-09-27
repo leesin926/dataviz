@@ -1,5 +1,6 @@
 package com.dataviz.admin.controller;
 
+import com.dataviz.common.security.annotation.RequiresPermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/license")
 @RequiredArgsConstructor
+// 类级 = 本控制器全部端点至少要 platform:read（PermissionInterceptor 会回落到类上的注解），激活许可证这类改状态的动作抬到 platform:write。
+@RequiresPermission("platform:read")
 public class LicenseController {
 
     @GetMapping("/info")
@@ -27,6 +30,7 @@ public class LicenseController {
     }
 
     @PostMapping("/activate")
+    @RequiresPermission("platform:write")
     public Map<String, Object> activateLicense(@RequestBody Map<String, String> request) {
         String licenseKey = request.get("licenseKey");
         log.info("Activating license: {}", licenseKey);

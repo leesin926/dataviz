@@ -1,5 +1,6 @@
 package com.dataviz.admin.controller;
 
+import com.dataviz.admin.config.PublicConfigKeys;
 import com.dataviz.admin.dto.ConfigCreateDTO;
 import com.dataviz.admin.service.ConfigService;
 import com.dataviz.admin.vo.ConfigVO;
@@ -8,33 +9,30 @@ import com.dataviz.common.core.result.ErrorCode;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/admin/config")
 @RequiredArgsConstructor
+// 类级 = 本控制器全部端点至少要 platform:read（PermissionInterceptor 会回落到类上的注解），改配置的动作抬到 platform:write；
+// getPublicByKey（/public/**）是刻意免登端点，保持不加注解——该路径已在 SecurityConfig 的 exclude 列表里，拦截器根本不会走到它。
+@RequiresPermission("platform:read")
 public class ConfigController {
-
-    /** 免登可读取的配置键（新增全局开关需在此登记） */
-    private static final Set<String> PUBLIC_KEYS = Collections.unmodifiableSet(
-            new HashSet<String>(Arrays.asList("screen.mourning.enabled")));
 
     private final ConfigService configService;
 
     @PostMapping
+    @RequiresPermission("platform:write")
     public R<Long> create(@RequestBody ConfigCreateDTO dto) {
         return R.ok(configService.create(dto));
     }
 
     @PutMapping
+    @RequiresPermission("platform:write")
     public R<Void> update(@RequestBody ConfigCreateDTO dto) {
         configService.update(dto);
         return R.ok();
@@ -46,6 +44,7 @@ public class ConfigController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("platform:write")
     public R<Void> delete(@PathVariable Long id) {
         configService.delete(id);
         return R.ok();
@@ -64,11 +63,12 @@ public class ConfigController {
     }
 
     /**
-     * 免登读取的系统配置白名单：分享页/uni 端匿名访问时也要拿到全局哀悼模式开关
+     * 免登读取的系统配置白名单：分享页/uni 端匿名访问时也要拿到全局哀悼模式开关。
+     * 键的唯一登记处是 {@link PublicConfigKeys}——新增全局开关只改那一处，推送通道读的是同一份。
      */
     @GetMapping("/public/{configKey}")
     public R<String> getPublicByKey(@PathVariable String configKey) {
-        if (!PUBLIC_KEYS.contains(configKey)) {
+        if (!PublicConfigKeys.isPublic(configKey)) {
             throw new BizException(ErrorCode.FORBIDDEN, "Config key is not public: " + configKey);
         }
         return R.ok(configService.getByKey(configKey));

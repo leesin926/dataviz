@@ -45,6 +45,12 @@
             <artifactId>common-swagger</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 免登全局配置推送通道（/api/admin/ws/public）。刻意不引 common-websocket：
+             那份共享 WebSocketConfig 需要 BaseWebSocketHandler bean，本服务没有 ⇒ 引了就起不来。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>easyexcel</artifactId>

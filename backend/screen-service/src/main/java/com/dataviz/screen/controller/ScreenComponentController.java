@@ -3,6 +3,7 @@ package com.dataviz.screen.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.core.result.ErrorCode;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.screen.entity.ScreenComponent;
 import com.dataviz.screen.mapper.ScreenComponentMapper;
 import com.dataviz.screen.vo.ScreenComponentVO;
@@ -18,11 +19,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/screen/component")
 @RequiredArgsConstructor
+// 类级 = 本控制器全部端点至少要 screen:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 screen:write。
+@RequiresPermission("screen:read")
 public class ScreenComponentController {
 
     private final ScreenComponentMapper screenComponentMapper;
 
     @PostMapping
+    @RequiresPermission("screen:write")
     public Long create(@RequestBody ScreenComponent component) {
         screenComponentMapper.insert(component);
         log.info("Created screen component: id={}", component.getId());
@@ -30,6 +34,7 @@ public class ScreenComponentController {
     }
 
     @PutMapping
+    @RequiresPermission("screen:write")
     public void update(@RequestBody ScreenComponent component) {
         screenComponentMapper.updateById(component);
         log.info("Updated screen component: id={}", component.getId());
@@ -47,6 +52,7 @@ public class ScreenComponentController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("screen:write")
     public void delete(@PathVariable Long id) {
         screenComponentMapper.deleteById(id);
         log.info("Deleted screen component: id={}", id);

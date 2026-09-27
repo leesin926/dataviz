@@ -13,4 +13,5 @@ public interface UserMapper extends BaseMapper<SysUser> {
     void deleteRolesByUserId(@Param("userId") Long userId);
     void insertBatchUserRoles(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
     List<String> selectPermissionCodesByUserId(@Param("userId") Long userId);
+    List<String> selectUsernamesByRoleId(@Param("roleId") Long roleId);
 }

@@ -6,7 +6,7 @@
         <p class="dv-page-desc">{{ t('tenant.desc') }}</p>
       </div>
       <div class="dv-page-actions">
-        <el-button type="primary" @click="openCreate">{{ t('tenant.create') }}</el-button>
+        <el-button v-permission="'platform:write'" type="primary" @click="openCreate">{{ t('tenant.create') }}</el-button>
       </div>
     </div>
 
@@ -45,6 +45,7 @@
           <template #default="{ row }">
             <el-switch
               :model-value="row.status === 'ACTIVE'"
+              :disabled="!canWrite"
               @change="(v: boolean) => onStatusChange(row, v)"
             />
           </template>
@@ -54,8 +55,8 @@
         </el-table-column>
         <el-table-column :label="t('common.operations')" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
-            <el-button link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
+            <el-button v-permission="'platform:write'" link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
+            <el-button v-permission="'platform:write'" link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
         <template #empty>
@@ -118,9 +119,12 @@
   import { rowsOf, totalOf } from '@dataviz/shared-types'
   import { createTenant, deleteTenant, pageTenants, setTenantStatus, updateTenant } from '@dataviz/api-client'
   import { formatDate } from '@dataviz/shared-utils'
+  import { hasSessionPermission } from '@dataviz/permission'
   import { useI18n } from 'vue-i18n'
 
   const { t } = useI18n()
+  // 开关不能整块摘掉（它同时也是"当前状态"的展示），所以走 :disabled 而不是 v-permission
+  const canWrite = hasSessionPermission('platform:write')
 
   const loading = ref(false)
   const saving = ref(false)

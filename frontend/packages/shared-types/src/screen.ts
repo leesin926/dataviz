@@ -55,6 +55,11 @@ export interface Screen {
   config: ScreenConfig
   /** 三端配置变体；某端缺省时回退顶层 width/height/config/components（视为该端的 pc 同源默认） */
   variants?: Partial<Record<ScreenPlatform, ScreenVariant>>
+  /**
+   * 列表接口专用：端 -> 该端单独配置的画布尺寸（未单独设定则为 null，表示沿用 pc 尺寸）。
+   * 列表不带完整 variants，避免把三端组件一并传出去；详情接口仍然只有 variants。
+   */
+  variantSizes?: Partial<Record<ScreenPlatform, { width: number | null; height: number | null }>>
   isTemplate?: boolean
   /** 分享标识：发布后生成，用于免登录链接 /s/:shareToken */
   shareToken?: string

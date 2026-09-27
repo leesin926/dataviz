@@ -34,4 +34,9 @@ public class QueryResultVO {
      * 执行的SQL
      */
     private String sql;
+
+    /**
+     * 结果是否被行数上限截断（true 时 rows 不是全量，别拿去当"总共就这些"）
+     */
+    private boolean truncated;
 }

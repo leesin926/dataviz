@@ -282,7 +282,10 @@ public class DatasourceServiceImpl implements DatasourceService {
             int timeout = dto.getTimeout() != null ? dto.getTimeout() : 30;
             int maxRows = dto.getMaxRows() != null ? dto.getMaxRows() : 1000;
             stmt.setQueryTimeout(timeout);
-            stmt.setMaxRows(maxRows);
+            // 多取一行来判断"是否还有数据"：rowcount 等于上限既可能是被截断，也可能恰好那么多，
+            // 只有读到第 maxRows+1 行才能确定前面那些不是全量。
+            stmt.setMaxRows(maxRows + 1);
+            boolean truncated = false;
 
             try (ResultSet rs = stmt.executeQuery(sql)) {
                 ResultSetMetaData metaData = rs.getMetaData();
@@ -295,6 +298,10 @@ public class DatasourceServiceImpl implements DatasourceService {
 
                 // 获取数据行
                 while (rs.next()) {
+                    if (rows.size() >= maxRows) {
+                        truncated = true;
+                        break;
+                    }
                     Map<String, Object> row = new LinkedHashMap<>();
                     for (int i = 1; i <= columnCount; i++) {
                         row.put(columnNames.get(i - 1), rs.getObject(i));
@@ -307,6 +314,7 @@ public class DatasourceServiceImpl implements DatasourceService {
             result.put("columns", columnNames);
             result.put("rows", rows);
             result.put("rowCount", rows.size());
+            result.put("truncated", truncated);
             result.put("executionTime", executionTime);
             result.put("sql", sql);
 

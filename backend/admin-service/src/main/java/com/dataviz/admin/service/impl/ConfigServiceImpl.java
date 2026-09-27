@@ -7,6 +7,7 @@ import com.dataviz.admin.entity.SysConfig;
 import com.dataviz.admin.mapper.SysConfigMapper;
 import com.dataviz.admin.service.ConfigService;
 import com.dataviz.admin.vo.ConfigVO;
+import com.dataviz.admin.websocket.PublicConfigBroadcaster;
 import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.core.result.ErrorCode;
 import com.dataviz.common.core.result.PageQuery;
@@ -31,6 +32,7 @@ public class ConfigServiceImpl implements ConfigService {
 
     private final SysConfigMapper configMapper;
     private final StringRedisTemplate redisTemplate;
+    private final PublicConfigBroadcaster publicConfigBroadcaster;
 
     private static final String CONFIG_CACHE_PREFIX = "sys:config:";
     private static final long CACHE_TTL_MINUTES = 60;
@@ -46,6 +48,7 @@ public class ConfigServiceImpl implements ConfigService {
         configMapper.insert(config);
         // Invalidate cache for this key
         evictCache(dto.getConfigKey());
+        publicConfigBroadcaster.publishAfterCommit(dto.getConfigKey(), dto.getConfigValue());
         log.info("Created config: id={}, key={}", config.getId(), config.getConfigKey());
         return config.getId();
     }
@@ -70,6 +73,7 @@ public class ConfigServiceImpl implements ConfigService {
         configMapper.updateById(config);
         // Invalidate cache for this key
         evictCache(dto.getConfigKey());
+        publicConfigBroadcaster.publishAfterCommit(dto.getConfigKey(), dto.getConfigValue());
         log.info("Updated config: id={}, key={}", config.getId(), config.getConfigKey());
     }
 
@@ -88,6 +92,7 @@ public class ConfigServiceImpl implements ConfigService {
         SysConfig config = configMapper.selectById(id);
         if (config != null) {
             evictCache(config.getConfigKey());
+            // 刻意不推送：删除后的"新值"是 null，而客户端对 null 的语义是保持现状 ⇒ 推了也等于没推。
         }
         configMapper.deleteById(id);
         log.info("Deleted config: id={}", id);

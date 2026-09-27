@@ -32,6 +32,11 @@ public class SecurityConfig implements WebMvcConfigurer {
             "/auth/captcha",
             "/auth/refresh-token",
             "/auth/refreshToken",
+            // 短信登录（auth-service）。同样不带 /api（StripPrefix=1，见 D38）。
+            // 本文件被所有服务共享，所以只列这两条精确路径：其它服务没有 /auth/sms/* 路由，
+            // 写成 /auth/sms/** 等于替将来可能新增的短信端点预先免登。
+            "/auth/sms/send",
+            "/auth/sms/login",
             // 第三方登录（auth-service）。网关侧写的是 /api/auth/sso/**，本服务侧因 StripPrefix=1 路径已去掉 /api（见 D38）。
             // 这里刻意逐条列举而非用通配：新增 sso 端点时若漏配，失败方向是"多拦一道 401"，而不是"意外变成免登公开接口"。
             "/auth/sso/login",

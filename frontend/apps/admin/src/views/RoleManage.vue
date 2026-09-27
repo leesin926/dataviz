@@ -6,7 +6,7 @@
         <p class="dv-page-desc">{{ t('common.appSubtitle') }}</p>
       </div>
       <div class="dv-page-actions">
-        <el-button type="primary" @click="openCreate">{{ t('role.create') }}</el-button>
+        <el-button v-permission="'system:role:add'" type="primary" @click="openCreate">{{ t('role.create') }}</el-button>
       </div>
     </div>
 
@@ -29,8 +29,8 @@
         </el-table-column>
         <el-table-column :label="t('common.operations')" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
-            <el-button link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
+            <el-button v-permission="'system:role:edit'" link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
+            <el-button v-permission="'system:role:delete'" link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -43,7 +43,11 @@
           <el-input v-model="form.roleName" />
         </el-form-item>
         <el-form-item :label="t('role.roleCode')" prop="roleCode">
-          <el-input v-model="form.roleCode" :placeholder="t('role.codePlaceholder')" />
+          <el-input
+            v-model="form.roleCode"
+            :disabled="!!editingId"
+            :placeholder="editingId ? t('role.codeLocked') : t('role.codePlaceholder')"
+          />
         </el-form-item>
         <el-form-item :label="t('common.description')">
           <el-input v-model="form.description" type="textarea" :rows="2" />

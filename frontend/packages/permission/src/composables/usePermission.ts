@@ -1,4 +1,4 @@
-import { computed, type Ref, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { PermissionManager } from '../core/PermissionManager'
 import type { Role } from '@dataviz/shared-types'
 

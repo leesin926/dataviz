@@ -9,21 +9,17 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "告警",
+        "navigationBarTitleText": "大屏",
         "enablePullDownRefresh": true,
         "backgroundTextStyle": "dark"
       }
     },
     {
-      "path": "pages/alert/detail",
+      "path": "pages/screen/screen",
       "style": {
-        "navigationBarTitleText": "告警详情"
-      }
-    },
-    {
-      "path": "pages/spike-charts/spike-charts",
-      "style": {
-        "navigationBarTitleText": "ucharts 验证"
+        "navigationBarTitleText": "大屏",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "light"
       }
     }
   ],

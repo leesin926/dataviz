@@ -2,9 +2,12 @@ package com.dataviz.auth.controller;
 
 import com.dataviz.auth.dto.LoginDTO;
 import com.dataviz.auth.dto.RefreshTokenDTO;
+import com.dataviz.auth.dto.SmsLoginDTO;
+import com.dataviz.auth.dto.SmsSendDTO;
 import com.dataviz.auth.service.AuthService;
 import com.dataviz.auth.vo.CaptchaVO;
 import com.dataviz.auth.vo.LoginVO;
+import com.dataviz.auth.vo.SmsSendVO;
 import com.dataviz.auth.vo.TokenVO;
 import com.dataviz.common.core.result.R;
 import com.dataviz.common.security.context.SecurityContextHolder;
@@ -41,13 +44,17 @@ public class AuthController {
 
     /**
      * User logout - invalidate current token.
+     * <p>
+     * 登出者身份<strong>只从已认证的会话快照取</strong>，不再收 {@code X-User-Id} 请求头。
+     * 本路径在网关是免登白名单，在 auth-service 侧又不在 {@code EXCLUDE_PATHS} 里（AuthInterceptor 会拦），
+     * 所以到这里的请求一定带过合法 token —— 身份没必要、也不应该由调用方声明（见 API-31②）。
      */
     @PostMapping("/logout")
     @Operation(summary = "User logout", description = "Invalidate the current access token")
-    public R<Void> logout(@RequestHeader(value = "X-User-Id", required = false) String userId,
-                                @RequestHeader(value = "Authorization", required = false) String token) {
-        log.info("Logout request for user: {}", userId);
-        authService.logout(userId, token);
+    public R<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        LoginUser loginUser = SecurityContextHolder.getLoginUser();
+        log.info("Logout request for user: {}", loginUser == null ? null : loginUser.getUserId());
+        authService.logout(loginUser, authorization);
         return R.ok();
     }
 
@@ -70,6 +77,34 @@ public class AuthController {
     public R<CaptchaVO> getCaptcha() {
         CaptchaVO captchaVO = authService.generateCaptcha();
         return R.ok(captchaVO);
+    }
+
+    /**
+     * 下发短信验证码 —— 免登端点（网关与服务侧各有一条白名单，缺一即 401）。
+     */
+    @PostMapping("/sms/send")
+    @Operation(summary = "Send SMS code", description = "Issue an SMS verification code for a bound phone number")
+    public R<SmsSendVO> sendSmsCode(@RequestBody @Valid SmsSendDTO smsSendDTO) {
+        log.info("短信验证码下发请求: phone={}, terminal={}", maskPhone(smsSendDTO.getPhone()), smsSendDTO.getTerminal());
+        return R.ok(authService.sendSmsCode(smsSendDTO.getPhone(), smsSendDTO.getTerminal()));
+    }
+
+    /**
+     * 短信登录 —— 返回体与密码登录同构（同一个 {@code LoginVO}），前端两条路可以共用一套会话落盘。
+     */
+    @PostMapping("/sms/login")
+    @Operation(summary = "SMS login", description = "Authenticate with a phone number and its SMS verification code")
+    public R<LoginVO> smsLogin(@RequestBody @Valid SmsLoginDTO smsLoginDTO) {
+        log.info("短信登录请求: phone={}, terminal={}", maskPhone(smsLoginDTO.getPhone()), smsLoginDTO.getTerminal());
+        return R.ok(authService.smsLogin(smsLoginDTO));
+    }
+
+    /** 手机号是准身份标识，日志里只留前后段。 */
+    private static String maskPhone(String phone) {
+        if (phone == null || phone.length() < 7) {
+            return "***";
+        }
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 
     /**

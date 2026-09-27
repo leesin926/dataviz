@@ -47,31 +47,11 @@ public class EtlExecutionServiceImpl implements EtlExecutionService {
         etlTaskLogMapper.insert(taskLog);
 
         try {
-            // 1. 从源数据源读取数据
-            long recordsRead = readFromSource(task);
-            taskLog.setRecordsRead(recordsRead);
-
-            // 2. 数据转换
-            // TODO: 根据transformConfig进行数据转换
-
-            // 3. 写入目标数据源
-            long recordsWritten = writeToTarget(task, recordsRead);
-            taskLog.setRecordsWritten(recordsWritten);
-
-            // 更新日志状态为成功
-            taskLog.setStatus("SUCCESS");
-            taskLog.setEndTime(LocalDateTime.now());
-            etlTaskLogMapper.updateById(taskLog);
-
-            // 更新任务状态
-            task.setStatus(EtlTaskStatus.COMPLETED.name());
-            task.setLastRunTime(LocalDateTime.now());
-            task.setLastRunStatus("SUCCESS");
-            etlTaskMapper.updateById(task);
-
-            log.info("ETL task completed successfully: taskId={}, read={}, written={}",
-                    taskId, recordsRead, recordsWritten);
-
+            // API-24：这里原本"读 1000 行、写回同一个数"，日志与任务状态双双记成 SUCCESS —— 伪成功记账。
+            // 真执行要接源端批读 + 目标端批量写（#75 的写端点设计稿，等用户拍板）。本轮先把账停掉，
+            // 处理方式与 API-20 的 Email/SMS 通知一致：显式 503、日志记 FAILED，让"没做"在数据上看得出来。
+            throw new BizException(ErrorCode.SERVICE_UNAVAILABLE,
+                    "ETL execution is not implemented: source read and target write are not wired up yet");
         } catch (Exception e) {
             log.error("ETL task execution failed: taskId={}", taskId, e);
 
@@ -87,27 +67,5 @@ public class EtlExecutionServiceImpl implements EtlExecutionService {
             task.setLastRunStatus("FAILED");
             etlTaskMapper.updateById(task);
         }
-    }
-
-    /**
-     * 从源数据源读取数据
-     * TODO: 实现实际的数据读取逻辑，根据sourceDatasourceId连接数据源并读取sourceTable数据
-     */
-    private long readFromSource(EtlTask task) {
-        log.info("Reading data from source: datasourceId={}, table={}",
-                task.getSourceDatasourceId(), task.getSourceTable());
-        // 模拟读取数据
-        return 1000L;
-    }
-
-    /**
-     * 写入目标数据源
-     * TODO: 实现实际的写入逻辑，根据targetDatasourceId连接数据源并写入targetTable
-     */
-    private long writeToTarget(EtlTask task, long recordsRead) {
-        log.info("Writing data to target: datasourceId={}, table={}",
-                task.getTargetDatasourceId(), task.getTargetTable());
-        // 模拟写入数据 (假设转换后记录数不变)
-        return recordsRead;
     }
 }

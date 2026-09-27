@@ -7,6 +7,7 @@ import com.dataviz.analysis.vo.QueryResultVO;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/analysis")
 @RequiredArgsConstructor
 @Tag(name = "数据分析", description = "查询执行、保存查询、历史记录")
+// 类级 = 本控制器全部端点至少要 analysis:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 analysis:write。
+@RequiresPermission("analysis:read")
 public class AnalysisController {
 
     private final QueryService queryService;

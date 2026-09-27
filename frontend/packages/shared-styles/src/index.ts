@@ -15,25 +15,33 @@ export function setGlobalMourning(on: boolean): void {
 }
 
 /**
- * 各端启动时接入管理端的全局哀悼模式：`fetchEnabled` 由调用方注入（返回 'true'/'false'/null），
+ * 订阅器由调用方注入：把「值变了」回调和「重连后补拉一次」回调交给传输层（api-client 的推送通道）。
+ * 返回的清理函数这里不用管，各端生命周期就是整个页面。
+ */
+export type MourningSubscriber = (apply: (value: string | null) => void, refetch: () => void) => () => void
+
+/**
+ * 各端启动时接入管理端的全局哀悼模式：`fetchEnabled` 与 `subscribe` 都由调用方注入（值取 'true'/'false'/null），
  * shared-styles 不依赖 api-client 以免样式包反向依赖请求层。
- * 窗口重新获得焦点或标签页转为可见时再拉一次——管理端切开关后其他标签页无需刷新即可灰度/恢复。
+ * 口径是**首屏一次 HTTP 定初值，之后纯推送**：不再挂 focus / visibilitychange 重复拉取，
+ * 那条回头路由由订阅器在重连后回调 `fetchEnabled` 承担。
  * 拉取失败（网关未升级、401、断网）时保持现状，不强制关闭，否则会覆盖管理端本地刚切上的开关。
  */
-export function watchGlobalMourning(fetchEnabled: () => Promise<string | null>): void {
+export function watchGlobalMourning(
+  fetchEnabled: () => Promise<string | null>,
+  subscribe: MourningSubscriber,
+): void {
   if (typeof document === 'undefined') return
-  const sync = () => {
+  const apply = (value: string | null): void => {
+    if (value === 'true' || value === 'false') setGlobalMourning(value === 'true')
+  }
+  const sync = (): void => {
     fetchEnabled()
-      .then((v) => {
-        if (v === 'true' || v === 'false') setGlobalMourning(v === 'true')
-      })
+      .then(apply)
       .catch(() => undefined)
   }
   sync()
-  window.addEventListener('focus', sync)
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) sync()
-  })
+  subscribe(apply, sync)
 }
 
 /** 暗色科技主题开关：document.documentElement.dataset.dvTheme */

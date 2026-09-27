@@ -3,6 +3,7 @@ package com.dataviz.etl.controller;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.etl.dto.EtlTaskCreateDTO;
 import com.dataviz.etl.dto.EtlTaskUpdateDTO;
 import com.dataviz.etl.service.EtlTaskService;
@@ -26,11 +27,14 @@ import java.util.List;
 @RequestMapping("/api/etl/task")
 @RequiredArgsConstructor
 @Tag(name = "ETL任务管理", description = "ETL任务CRUD、启动/停止/暂停、日志查询、指标统计")
+// 类级 = 本控制器全部端点至少要 etl:read（PermissionInterceptor 会回落到类上的注解），改任务与启停/触发任务运行的动作抬到 etl:write。
+@RequiresPermission("etl:read")
 public class EtlTaskController {
 
     private final EtlTaskService etlTaskService;
 
     @PostMapping
+    @RequiresPermission("etl:write")
     @Operation(summary = "创建ETL任务")
     public R<Long> create(@RequestBody @Valid EtlTaskCreateDTO dto,
                            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
@@ -38,6 +42,7 @@ public class EtlTaskController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("etl:write")
     @Operation(summary = "更新ETL任务")
     public R<Void> update(@PathVariable Long id, @RequestBody @Valid EtlTaskUpdateDTO dto) {
         etlTaskService.updateTask(id, dto);
@@ -45,6 +50,7 @@ public class EtlTaskController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("etl:write")
     @Operation(summary = "删除ETL任务")
     public R<Void> delete(@PathVariable Long id) {
         etlTaskService.deleteTask(id);
@@ -68,6 +74,7 @@ public class EtlTaskController {
     }
 
     @PostMapping("/{id}/start")
+    @RequiresPermission("etl:write")
     @Operation(summary = "启动任务")
     public R<Void> start(@PathVariable Long id) {
         etlTaskService.startTask(id);
@@ -75,6 +82,7 @@ public class EtlTaskController {
     }
 
     @PostMapping("/{id}/stop")
+    @RequiresPermission("etl:write")
     @Operation(summary = "停止任务")
     public R<Void> stop(@PathVariable Long id) {
         etlTaskService.stopTask(id);
@@ -82,6 +90,7 @@ public class EtlTaskController {
     }
 
     @PostMapping("/{id}/pause")
+    @RequiresPermission("etl:write")
     @Operation(summary = "暂停任务")
     public R<Void> pause(@PathVariable Long id) {
         etlTaskService.pauseTask(id);

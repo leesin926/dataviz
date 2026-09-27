@@ -7,7 +7,7 @@
       </div>
       <div class="dv-page-actions">
         <el-button @click="load">{{ t('common.refresh') }}</el-button>
-        <el-button type="primary" @click="openCreate()">{{ t('menu.create') }}</el-button>
+        <el-button v-permission="'system:menu:add'" type="primary" @click="openCreate()">{{ t('menu.create') }}</el-button>
       </div>
     </div>
 
@@ -42,11 +42,11 @@
         </el-table-column>
         <el-table-column :label="t('common.operations')" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.type !== 3" link type="primary" @click="openCreate(row)">
+            <el-button v-if="row.type !== 3" v-permission="'system:menu:add'" link type="primary" @click="openCreate(row)">
               {{ t('menu.addChild') }}
             </el-button>
-            <el-button link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
-            <el-button link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
+            <el-button v-permission="'system:menu:edit'" link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
+            <el-button v-permission="'system:menu:delete'" link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
         <template #empty>

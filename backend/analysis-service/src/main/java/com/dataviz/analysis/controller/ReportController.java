@@ -8,6 +8,7 @@ import com.dataviz.analysis.vo.ReportVO;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
@@ -23,11 +24,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/analysis/report")
 @RequiredArgsConstructor
 @Tag(name = "分析报告管理", description = "报告CRUD、发布/取消发布、获取报告数据")
+// 类级 = 本控制器全部端点至少要 analysis:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 analysis:write。
+@RequiresPermission("analysis:read")
 public class ReportController {
 
     private final ReportService reportService;
 
     @PostMapping
+    @RequiresPermission("analysis:write")
     @Operation(summary = "创建报告")
     public R<Long> create(@RequestBody @Valid ReportCreateDTO dto,
                            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
@@ -35,6 +39,7 @@ public class ReportController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "更新报告")
     public R<Void> update(@PathVariable Long id, @RequestBody @Valid ReportUpdateDTO dto) {
         reportService.updateReport(id, dto);
@@ -42,6 +47,7 @@ public class ReportController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "删除报告")
     public R<Void> delete(@PathVariable Long id) {
         reportService.deleteReport(id);
@@ -63,6 +69,7 @@ public class ReportController {
     }
 
     @PostMapping("/{id}/publish")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "发布报告")
     public R<Void> publish(@PathVariable Long id) {
         reportService.publishReport(id);
@@ -70,6 +77,7 @@ public class ReportController {
     }
 
     @PostMapping("/{id}/unpublish")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "取消发布报告")
     public R<Void> unpublish(@PathVariable Long id) {
         reportService.unpublishReport(id);

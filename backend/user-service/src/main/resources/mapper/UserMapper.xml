@@ -30,6 +30,16 @@
           AND r.deleted = 0
     </select>
 
+    <!-- 某角色下的全部有效用户名：用于授权变更后驱逐各自的登录态快照。 -->
+    <!-- 不带 status 条件——被停用的账号同样要踢下线，靠这里驱逐正好达成。 -->
+    <select id="selectUsernamesByRoleId" resultType="java.lang.String">
+        SELECT DISTINCT u.username
+        FROM sys_user u
+        INNER JOIN sys_user_role ur ON ur.user_id = u.id
+        WHERE ur.role_id = #{roleId}
+          AND u.deleted = 0
+    </select>
+
     <delete id="deleteRolesByUserId">
         DELETE FROM sys_user_role WHERE user_id = #{userId}
     </delete>

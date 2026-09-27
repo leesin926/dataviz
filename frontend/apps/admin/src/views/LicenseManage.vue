@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <el-card shadow="never" class="activate-card">
+    <el-card v-permission="'platform:write'" shadow="never" class="activate-card">
       <template #header>{{ t('license.activate') }}</template>
       <div class="activate-row">
         <el-input

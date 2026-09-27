@@ -1,6 +1,7 @@
 package com.dataviz.dashboard.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.dashboard.dto.DashboardCreateDTO;
 import com.dataviz.dashboard.dto.DashboardUpdateDTO;
 import com.dataviz.dashboard.service.DashboardService;
@@ -16,16 +17,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
+// 类级 = 本控制器全部端点至少要 dashboard:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 dashboard:write。
+@RequiresPermission("dashboard:read")
 public class DashboardController {
 
     private final DashboardService dashboardService;
 
     @PostMapping
+    @RequiresPermission("dashboard:write")
     public Long create(@RequestBody DashboardCreateDTO dto) {
         return dashboardService.create(dto);
     }
 
     @PutMapping
+    @RequiresPermission("dashboard:write")
     public void update(@RequestBody DashboardUpdateDTO dto) {
         dashboardService.update(dto);
     }
@@ -36,6 +41,7 @@ public class DashboardController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("dashboard:write")
     public void delete(@PathVariable Long id) {
         dashboardService.delete(id);
     }
@@ -50,16 +56,19 @@ public class DashboardController {
     }
 
     @PostMapping("/{id}/publish")
+    @RequiresPermission("dashboard:write")
     public void publish(@PathVariable Long id) {
         dashboardService.publish(id);
     }
 
     @PostMapping("/{id}/unpublish")
+    @RequiresPermission("dashboard:write")
     public void unpublish(@PathVariable Long id) {
         dashboardService.unpublish(id);
     }
 
     @PostMapping("/{id}/copy")
+    @RequiresPermission("dashboard:write")
     public Long copy(@PathVariable Long id) {
         return dashboardService.copy(id);
     }

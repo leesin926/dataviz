@@ -27,19 +27,19 @@
     }
   }
 
-  function onDemoMode() {
-    ElMessage.warning(t('common.demoMode'))
+  function onForbidden() {
+    ElMessage.warning(t('common.forbidden'))
   }
 
   onMounted(() => {
     appStore.initialize()
     window.addEventListener('dv:session-expired', onSessionExpired)
-    window.addEventListener('dv:demo-mode', onDemoMode)
+    window.addEventListener('dv:forbidden', onForbidden)
   })
 
   onBeforeUnmount(() => {
     window.removeEventListener('dv:session-expired', onSessionExpired)
-    window.removeEventListener('dv:demo-mode', onDemoMode)
+    window.removeEventListener('dv:forbidden', onForbidden)
   })
 
   watch(

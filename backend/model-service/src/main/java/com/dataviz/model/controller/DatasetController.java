@@ -3,6 +3,7 @@ package com.dataviz.model.controller;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.model.dto.DatasetCreateDTO;
 import com.dataviz.model.dto.DatasetPreviewDTO;
 import com.dataviz.model.service.DatasetService;
@@ -23,11 +24,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/model/dataset")
 @RequiredArgsConstructor
 @Tag(name = "数据集管理", description = "数据集CRUD及预览")
+// 类级 = 本控制器全部端点至少要 model:read（PermissionInterceptor 会回落到类上的注解），新增/改动/删除定义的动作在方法上抬到 model:write。
+@RequiresPermission("model:read")
 public class DatasetController {
 
     private final DatasetService datasetService;
 
     @PostMapping
+    @RequiresPermission("model:write")
     @Operation(summary = "创建数据集")
     public R<Long> create(@RequestBody @Valid DatasetCreateDTO dto,
                            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
@@ -35,6 +39,7 @@ public class DatasetController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("model:write")
     @Operation(summary = "更新数据集")
     public R<Void> update(@PathVariable Long id, @RequestBody @Valid DatasetCreateDTO dto) {
         datasetService.updateDataset(id, dto);
@@ -42,6 +47,7 @@ public class DatasetController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("model:write")
     @Operation(summary = "删除数据集")
     public R<Void> delete(@PathVariable Long id) {
         datasetService.deleteDataset(id);

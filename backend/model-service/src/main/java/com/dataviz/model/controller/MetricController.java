@@ -3,6 +3,7 @@ package com.dataviz.model.controller;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.model.dto.MetricCreateDTO;
 import com.dataviz.model.service.MetricService;
 import com.dataviz.model.vo.MetricVO;
@@ -21,11 +22,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/model/metric")
 @RequiredArgsConstructor
 @Tag(name = "指标管理", description = "指标CRUD操作")
+// 类级 = 本控制器全部端点至少要 model:read（PermissionInterceptor 会回落到类上的注解），新增/改动/删除定义的动作在方法上抬到 model:write。
+@RequiresPermission("model:read")
 public class MetricController {
 
     private final MetricService metricService;
 
     @PostMapping
+    @RequiresPermission("model:write")
     @Operation(summary = "创建指标")
     public R<Long> create(@RequestBody @Valid MetricCreateDTO dto,
                            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
@@ -33,6 +37,7 @@ public class MetricController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("model:write")
     @Operation(summary = "更新指标")
     public R<Void> update(@PathVariable Long id, @RequestBody @Valid MetricCreateDTO dto) {
         metricService.updateMetric(id, dto);
@@ -40,6 +45,7 @@ public class MetricController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("model:write")
     @Operation(summary = "删除指标")
     public R<Void> delete(@PathVariable Long id) {
         metricService.deleteMetric(id);

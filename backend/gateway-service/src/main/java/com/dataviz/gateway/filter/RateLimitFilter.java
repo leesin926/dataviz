@@ -2,6 +2,7 @@ package com.dataviz.gateway.filter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -15,15 +16,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Redis-based rate limiting filter.
  * <p>
- * Uses a sliding window counter approach backed by Redis to enforce per-user
- * and per-IP rate limits. Falls back to in-memory limiting if Redis is unavailable.
+ * 固定窗口计数（Redis {@code INCR} + 首次命中时 {@code EXPIRE}），分别按用户与按客户端地址限流。
+ * ⚠️ Redis 不可用时是 <strong>fail-open</strong>（{@code onErrorResume} 里直接放行，只在日志记一条）
+ * ⇒ 限流与 Redis 同生共死，Redis 挂掉时这一层防护静默消失。
  * </p>
  */
 @Slf4j
@@ -42,13 +47,22 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     /** Window duration in seconds */
     private static final long WINDOW_SECONDS = 60;
 
+    /**
+     * 网关前面有几层<strong>可信</strong>反向代理。0（默认）= 网关就是边缘节点，客户端地址只认 TCP 对端。
+     * 只有确实前置了 N 层、且每层都把自己看到的对端追加进 X-Forwarded-For 时，才配 N。
+     */
+    @Value("${gateway.rate-limit.trusted-proxy-hops:0}")
+    private int trustedProxyHops;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
 
-        // Extract user ID from header (set by AuthGlobalFilter) or fall back to IP
-        String userId = request.getHeaders().getFirst("X-User-Id");
-        String clientIp = getClientIp(request);
+        // X-User-Id 只有验过 JWT 的请求才是网关写进来的，见 AuthGlobalFilter#ATTR_AUTHENTICATED
+        String userId = Boolean.TRUE.equals(exchange.getAttributes().get(AuthGlobalFilter.ATTR_AUTHENTICATED))
+                ? request.getHeaders().getFirst("X-User-Id")
+                : null;
+        String clientIp = resolveClientIp(exchange);
 
         String userKey = "rate:user:" + (userId != null ? userId : clientIp);
         String ipKey = "rate:ip:" + clientIp;
@@ -62,7 +76,7 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * Check rate limits using Redis INCR with TTL for sliding window.
+     * 固定窗口计数：Redis INCR + 首次命中时设 TTL（窗口长度 WINDOW_SECONDS）。
      */
     private Mono<Void> checkRateLimit(ServerWebExchange exchange, GatewayFilterChain chain,
                                        String userKey, String ipKey) {
@@ -106,19 +120,46 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * Extract client IP address from request headers or remote address.
+     * Extract the client address used as the rate-limit bucket key.
+     * <p>
+     * 默认<strong>只信 TCP 对端地址</strong>。{@code X-Forwarded-For} 是客户端可自带头，原先"有 XFF 就取最左值"的写法
+     * 等于把桶的名字交给请求方：每个请求换一个值即可无限绕开额度，把某个真实 IP 写进去又能替别人把额度打光
+     * （两种现象都已在报告 19.8 实测）。只有确实前置了 N 层可信反代时才按 XFF 解析 —— 每层把自己看到的对端
+     * 追加到末尾，所以从左数第 {@code size - N} 项才是客户端，它左边的项全部可能是伪造的。
+     * 不再读 {@code X-Real-IP}：它只能由可信代理整体覆写才有意义，而那正是本方法无法假设的前提。
      */
-    private String getClientIp(ServerHttpRequest request) {
-        String xForwardedFor = request.getHeaders().getFirst("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.trim().isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
+    private String resolveClientIp(ServerWebExchange exchange) {
+        String socketIp = socketAddress(exchange.getRequest());
+        if (trustedProxyHops <= 0) {
+            return socketIp;
         }
-        String xRealIp = request.getHeaders().getFirst("X-Real-IP");
-        if (xRealIp != null && !xRealIp.trim().isEmpty()) {
-            return xRealIp;
+        List<String> forwarded = splitForwardedFor(exchange.getRequest().getHeaders().getFirst("X-Forwarded-For"));
+        int clientIndex = forwarded.size() - trustedProxyHops;
+        if (clientIndex < 0 || forwarded.get(clientIndex).isEmpty()) {
+            // 代理链比声明的跳数短（头被剥掉，或请求根本没走那几层可信代理）⇒ 退回不可伪造的 socket 地址
+            return socketIp;
         }
-        if (request.getRemoteAddress() != null && request.getRemoteAddress().getAddress() != null) {
-            return request.getRemoteAddress().getAddress().getHostAddress();
+        return forwarded.get(clientIndex);
+    }
+
+    /** Split a {@code X-Forwarded-For} value into trimmed entries, keeping blanks so index arithmetic stays honest */
+    private static List<String> splitForwardedFor(String headerValue) {
+        if (headerValue == null || headerValue.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        String[] raw = headerValue.split(",");
+        List<String> entries = new ArrayList<String>(raw.length);
+        for (String item : raw) {
+            String value = item.trim();
+            entries.add("unknown".equalsIgnoreCase(value) ? "" : value);
+        }
+        return entries;
+    }
+
+    private static String socketAddress(ServerHttpRequest request) {
+        InetSocketAddress remote = request.getRemoteAddress();
+        if (remote != null && remote.getAddress() != null) {
+            return remote.getAddress().getHostAddress();
         }
         return "unknown";
     }

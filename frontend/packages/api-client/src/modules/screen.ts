@@ -3,8 +3,10 @@ import { normalizeScreenInk } from '@dataviz/shared-types'
 import { request } from '../request'
 import { asPage } from '../unwrap'
 
-/** 大屏分页列表 */
-export async function listScreens(query?: PageQuery & { keyword?: string; status?: string }): Promise<PageResult<Screen>> {
+/** 大屏分页列表；传 platform 时 width/height 按该端返回（该端未单独配置则回退 pc 尺寸） */
+export async function listScreens(
+  query?: PageQuery & { keyword?: string; status?: string; platform?: ScreenPlatform },
+): Promise<PageResult<Screen>> {
   const res = await request.get('/screen/list', { params: query })
   return asPage<Screen>(res.data)
 }

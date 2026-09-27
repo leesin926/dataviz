@@ -8,6 +8,7 @@ import com.dataviz.user.entity.SysPermission;
 import com.dataviz.user.entity.SysRole;
 import com.dataviz.user.mapper.PermissionMapper;
 import com.dataviz.user.mapper.RoleMapper;
+import com.dataviz.user.service.LoginSessionEvictor;
 import com.dataviz.user.service.RoleService;
 import com.dataviz.user.vo.PermissionTreeVO;
 import com.dataviz.user.vo.RoleVO;
@@ -29,6 +30,7 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
+    private final LoginSessionEvictor sessionEvictor;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -43,23 +45,37 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateRole(Long id, RoleVO roleVO) {
-        SysRole role = roleMapper.selectById(id);
-        if (role == null) throw new BizException("Role not found");
-        BeanUtils.copyProperties(roleVO, role);
+    public void updateRole(Long id, RoleVO roleVO, Long tenantId) {
+        SysRole role = requireRoleInTenant(id, tenantId);
+        // 逐字段而不是 copyProperties：RoleVO 带着 tenantId/roleCode，整拷贝等于让人把自己搬去别的租户、
+        // 或把 role_code 改成 super_admin —— 后者是 PermissionInterceptor 短路放行的钥匙，改它等于自己发特权。
+        role.setRoleName(roleVO.getRoleName());
+        role.setDescription(roleVO.getDescription());
+        if (roleVO.getSortOrder() != null) {
+            role.setSortOrder(roleVO.getSortOrder());
+        }
+        if (roleVO.getStatus() != null) {
+            role.setStatus(roleVO.getStatus());
+        }
         roleMapper.updateById(role);
+        // 改 role_code 或把角色停用，都会改变成员该有哪些角色/权限（取码 SQL 带 status=1 AND deleted=0 条件）
+        sessionEvictor.evictRoleMembers(id);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteRole(Long id) {
+    public void deleteRole(Long id, Long tenantId) {
+        requireRoleInTenant(id, tenantId);
+        if (roleMapper.countMembersByRoleId(id) > 0) {
+            throw new BizException("Cannot delete role assigned to users");
+        }
         roleMapper.deleteById(id);
+        sessionEvictor.evictRoleMembers(id);
     }
 
     @Override
-    public RoleVO getRoleById(Long id) {
-        SysRole role = roleMapper.selectById(id);
-        if (role == null) throw new BizException("Role not found");
+    public RoleVO getRoleById(Long id, Long tenantId) {
+        SysRole role = requireRoleInTenant(id, tenantId);
         RoleVO vo = new RoleVO();
         BeanUtils.copyProperties(role, vo);
         return vo;
@@ -92,11 +108,14 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void assignPermissions(Long roleId, List<Long> permissionIds) {
+    public void assignPermissions(Long roleId, List<Long> permissionIds, Long tenantId) {
+        requireRoleInTenant(roleId, tenantId);
         roleMapper.deletePermissionsByRoleId(roleId);
         if (permissionIds != null && !permissionIds.isEmpty()) {
             roleMapper.insertBatchRolePermissions(roleId, permissionIds);
         }
+        // 授权改的是 Redis 快照的"上游"，快照本身不会自己变 ⇒ 不驱逐就等用户下次登录才生效
+        sessionEvictor.evictRoleMembers(roleId);
     }
 
     @Override
@@ -135,5 +154,17 @@ public class RoleServiceImpl implements RoleService {
     @Transactional(rollbackFor = Exception.class)
     public void deletePermission(Long id) {
         permissionMapper.deleteById(id);
+    }
+
+    /**
+     * 不存在与"存在但不属于本租户"必须是同一句话：分开报就把 404 变成了"这个角色 id 属于别人"的探针。
+     * 与 {@code DeptServiceImpl.requireDeptInTenant} 同一条配方。
+     */
+    private SysRole requireRoleInTenant(Long id, Long tenantId) {
+        SysRole role = roleMapper.selectById(id);
+        if (role == null || !tenantId.equals(role.getTenantId())) {
+            throw new BizException("Role not found");
+        }
+        return role;
     }
 }

@@ -6,7 +6,7 @@
         <p class="dv-page-desc">{{ t('config.desc') }}</p>
       </div>
       <div class="dv-page-actions">
-        <el-button type="primary" @click="openCreate">{{ t('config.create') }}</el-button>
+        <el-button v-permission="'platform:write'" type="primary" @click="openCreate">{{ t('config.create') }}</el-button>
       </div>
     </div>
 
@@ -33,7 +33,7 @@
           <p class="switch-title">{{ t('config.mourningTitle') }}</p>
           <p class="switch-desc">{{ t('config.mourningDesc') }}</p>
         </div>
-        <el-switch v-model="mourningOn" :loading="mourningSaving" @change="onMourningChange" />
+        <el-switch v-model="mourningOn" :disabled="!canWrite" :loading="mourningSaving" @change="onMourningChange" />
       </div>
     </el-card>
 
@@ -56,8 +56,8 @@
         <el-table-column prop="updateTime" :label="t('common.updatedAt')" width="170" />
         <el-table-column :label="t('common.operations')" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
-            <el-button v-if="row.configType !== 'SYSTEM'" link type="danger" @click="onDelete(row)">
+            <el-button v-permission="'platform:write'" link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
+            <el-button v-if="row.configType !== 'SYSTEM'" v-permission="'platform:write'" link type="danger" @click="onDelete(row)">
               {{ t('common.delete') }}
             </el-button>
           </template>
@@ -118,8 +118,11 @@
     updateConfig,
   } from '@dataviz/api-client'
   import { useI18n } from 'vue-i18n'
+  import { hasSessionPermission } from '@dataviz/permission'
 
   const { t } = useI18n()
+  // 哀悼开关既是展示也是写操作，摘掉会让用户看不见当前状态，所以走 :disabled
+  const canWrite = hasSessionPermission('platform:write')
 
   /** 库内备注保持中文，不随管理端界面语言变化 */
   const MOURNING_REMARK = '全局哀悼模式：true 时管理端与设计端/分享页整体灰度'

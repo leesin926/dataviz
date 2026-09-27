@@ -17,7 +17,12 @@ public interface ScreenService {
 
     void delete(Long id);
 
-    ScreenListVO list(String keyword, String status, int pageNum, int pageSize);
+    /**
+     * 分页列表：不返回组件与画布配置，只返回每端的尺寸。
+     * platform 为 mobile/tablet 时，width/height 取该端变体的值（该端未单独设定则沿用 pc 顶层），
+     * 与 {@link #getById} 的展平口径一致。
+     */
+    ScreenListVO list(String keyword, String status, String platform, int pageNum, int pageSize);
 
     void publish(Long id);
 

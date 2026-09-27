@@ -1,4 +1,5 @@
 export * from './request'
+export * from './publicConfigPush'
 export * from './modules/auth'
 export * from './modules/sms'
 export * from './modules/user'

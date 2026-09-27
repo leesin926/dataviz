@@ -93,6 +93,7 @@ public class QueryEngine {
         List<Map<String, Object>> rows = data.getRows() == null ? Collections.emptyList() : data.getRows();
         result.setRows(rows);
         result.setRowCount(rows.size());
+        result.setTruncated(data.isTruncated());
         result.setSql(filteredSql);
         result.setExecutionTime(System.currentTimeMillis() - start);
 

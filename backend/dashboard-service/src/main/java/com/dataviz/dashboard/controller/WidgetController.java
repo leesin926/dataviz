@@ -1,5 +1,6 @@
 package com.dataviz.dashboard.controller;
 
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.dashboard.dto.WidgetCreateDTO;
 import com.dataviz.dashboard.service.WidgetService;
 import com.dataviz.dashboard.vo.WidgetVO;
@@ -13,16 +14,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/dashboard/widget")
 @RequiredArgsConstructor
+// 类级 = 本控制器全部端点至少要 dashboard:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 dashboard:write。
+@RequiresPermission("dashboard:read")
 public class WidgetController {
 
     private final WidgetService widgetService;
 
     @PostMapping
+    @RequiresPermission("dashboard:write")
     public Long create(@RequestBody WidgetCreateDTO dto) {
         return widgetService.create(dto);
     }
 
     @PutMapping
+    @RequiresPermission("dashboard:write")
     public void update(@RequestBody WidgetCreateDTO dto) {
         widgetService.update(dto);
     }
@@ -33,6 +38,7 @@ public class WidgetController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("dashboard:write")
     public void delete(@PathVariable Long id) {
         widgetService.delete(id);
     }

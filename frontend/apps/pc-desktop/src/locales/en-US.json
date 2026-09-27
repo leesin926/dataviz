@@ -14,7 +14,7 @@
     "login": "Sign in",
     "getCode": "Get code",
     "retryAfter": "Retry in {sec}s",
-    "smsMockTip": "SMS login is a frontend mock; any code works",
+    "smsTip": "No SMS provider in this demo - the code is fixed at 123123",
     "errUsernameRequired": "Please enter your username",
     "errPasswordRequired": "Please enter your password",
     "errPhoneRequired": "Please enter your phone number",

@@ -6,7 +6,7 @@
         <p class="dv-page-desc">{{ t('common.appSubtitle') }}</p>
       </div>
       <div class="dv-page-actions">
-        <el-button type="primary" @click="openCreate">{{ t('user.create') }}</el-button>
+        <el-button v-permission="'system:user:add'" type="primary" @click="openCreate">{{ t('user.create') }}</el-button>
       </div>
     </div>
 
@@ -55,15 +55,16 @@
                   :model-value="row.status"
                   :active-value="1"
                   :inactive-value="0"
+                  :disabled="!canEdit"
                   @change="(v: number) => onStatusChange(row, v)"
                 />
               </template>
             </el-table-column>
             <el-table-column :label="t('common.operations')" width="230" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
-                <el-button link type="primary" @click="onResetPwd(row)">{{ t('user.resetPwd') }}</el-button>
-                <el-button link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
+                <el-button v-permission="'system:user:edit'" link type="primary" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
+                <el-button v-permission="'system:user:edit'" link type="primary" @click="onResetPwd(row)">{{ t('user.resetPwd') }}</el-button>
+                <el-button v-permission="'system:user:delete'" link type="danger" @click="onDelete(row)">{{ t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -133,8 +134,11 @@
     updateUser,
   } from '@dataviz/api-client'
   import { useI18n } from 'vue-i18n'
+  import { hasSessionPermission } from '@dataviz/permission'
 
   const { t } = useI18n()
+  // 状态开关同时是"这个号现在是启用还是停用"的唯一展示，摘掉比禁用更糟，所以走 :disabled
+  const canEdit = hasSessionPermission('system:user:edit')
 
   const loading = ref(false)
   const saving = ref(false)

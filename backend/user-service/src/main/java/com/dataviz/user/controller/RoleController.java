@@ -2,6 +2,7 @@ package com.dataviz.user.controller;
 
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.user.service.RoleService;
 import com.dataviz.user.vo.RoleVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ public class RoleController {
     private final RoleService roleService;
 
     @PostMapping
+    @RequiresPermission("system:role:add")
     @Operation(summary = "Create role")
     public R<Long> createRole(@RequestBody RoleVO roleVO,
                                     @RequestHeader("X-Tenant-Id") String tenantId) {
@@ -32,32 +34,40 @@ public class RoleController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("system:role:edit")
     @Operation(summary = "Update role")
-    public R<Void> updateRole(@PathVariable("id") Long id, @RequestBody RoleVO roleVO) {
-        roleService.updateRole(id, roleVO);
+    public R<Void> updateRole(@PathVariable("id") Long id, @RequestBody RoleVO roleVO,
+                                    @RequestHeader("X-Tenant-Id") String tenantId) {
+        roleService.updateRole(id, roleVO, Long.valueOf(tenantId));
         return R.ok();
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("system:role:delete")
     @Operation(summary = "Delete role")
-    public R<Void> deleteRole(@PathVariable("id") Long id) {
-        roleService.deleteRole(id);
+    public R<Void> deleteRole(@PathVariable("id") Long id,
+                                    @RequestHeader("X-Tenant-Id") String tenantId) {
+        roleService.deleteRole(id, Long.valueOf(tenantId));
         return R.ok();
     }
 
     @GetMapping("/{id}")
+    @RequiresPermission("system:role:list")
     @Operation(summary = "Get role by ID")
-    public R<RoleVO> getRoleById(@PathVariable("id") Long id) {
-        return R.ok(roleService.getRoleById(id));
+    public R<RoleVO> getRoleById(@PathVariable("id") Long id,
+                                    @RequestHeader("X-Tenant-Id") String tenantId) {
+        return R.ok(roleService.getRoleById(id, Long.valueOf(tenantId)));
     }
 
     @GetMapping("/list")
+    @RequiresPermission("system:role:list")
     @Operation(summary = "List all roles")
     public R<List<RoleVO>> listRoles(@RequestHeader("X-Tenant-Id") String tenantId) {
         return R.ok(roleService.listRoles(Long.valueOf(tenantId)));
     }
 
     @GetMapping("/page")
+    @RequiresPermission("system:role:list")
     @Operation(summary = "List roles with pagination")
     public R<PageResult<RoleVO>> pageRoles(@RequestParam(defaultValue = "1") int page,
                                                  @RequestParam(defaultValue = "10") int size,
@@ -66,10 +76,12 @@ public class RoleController {
     }
 
     @PostMapping("/{id}/permissions")
+    @RequiresPermission("system:role:edit")
     @Operation(summary = "Assign permissions to role")
     public R<Void> assignPermissions(@PathVariable("id") Long id,
-                                           @RequestBody List<Long> permissionIds) {
-        roleService.assignPermissions(id, permissionIds);
+                                           @RequestBody List<Long> permissionIds,
+                                           @RequestHeader("X-Tenant-Id") String tenantId) {
+        roleService.assignPermissions(id, permissionIds, Long.valueOf(tenantId));
         return R.ok();
     }
 }

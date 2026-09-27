@@ -74,10 +74,7 @@ public class WebhookNotifier implements AlertNotifier {
     private String urlOf(NotifyChannel channelConfig) {
         Map<String, Object> config = NotifierSupport.parseConfig(objectMapper, channelConfig);
         String url = NotifierSupport.requireText(config, "url", channelConfig.getName());
-        // 只放 http(s)：配置里写 file:// 或 jar:// 会变成让服务端去读本地盘
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "Webhook url 只支持 http/https");
-        }
-        return url;
+        // 协议 + 地址段两件事一起判，判据在 OutboundUrlGuard 里（含"为什么不在保存侧校验"）
+        return OutboundUrlGuard.requireAllowed(url, channelConfig.getName());
     }
 }

@@ -51,18 +51,26 @@ WHERE id = 902 AND type = 'DINGTALK';
 
 -- ----------------------------------------------------------------------------
 -- 4) 新增本地 webhook 收件渠道（零外部副作用的派发证据口）
---    需先起一个收件口：node deploy/sql/patch/hooksink.mjs  （监听 127.0.0.1:18099）
---    没起也不影响验证：WebhookNotifier 会记 FAILED + "无法访问" 到 alert_notify_log
+--    ⚠️ 2026-09-23 起这里**不能填 127.0.0.1**：服务端出网地址被 OutboundUrlGuard 拦回环段（SSRF 收口，
+--       报告 19.10），填了会以 `禁止回环地址` 记 FAILED —— 那是守卫在正常工作，不是链路坏了。
+--    两步走：
+--      a) 起收件口：`node deploy/sql/patch/hooksink.mjs`（监听 0.0.0.0:18099，会把本机局域网 IPv4
+--         和一条现成的 UPDATE 语句打印出来）；
+--      b) 把那条 UPDATE 粘进 mysql 跑一遍，把 config 里的占位 `<LAN_IP>` 换成真地址。
+--    没做 b) 也不影响验证主体：首轮会记 FAILED("不是合法 URL")，正好反向证明守卫在发送前生效；
+--    要做"WEBHOOK SUCCESS"这条正向证据就必须先换成局域网 IP。
 -- ----------------------------------------------------------------------------
 INSERT INTO db_alert.notify_channel (id, name, type, config, enabled, tenant_id, create_time, update_time)
-VALUES (911, '本地收件口（测试）', 'WEBHOOK', '{"url":"http://127.0.0.1:18099/hook"}', 1, 1, NOW(), NOW())
+VALUES (911, '本地收件口（测试）', 'WEBHOOK', '{"url":"http://<LAN_IP>:18099/hook"}', 1, 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE config = VALUES(config), enabled = 1, update_time = NOW();
 
 -- ----------------------------------------------------------------------------
 -- 5) 三条真 SQL 规则（对 db_analysis 的 3 个 demo_* 视图；数据源 901 已指到该库）
 --    实测基数：demo_orders 125 行 / demo_user_behavior 500 行 / SUM(demo_sales_daily.amount)=3956715.00
 --
---    911 立即触发（duration=0）        → 期望 alert_event +1，notify_log：WEBHOOK SUCCESS、EMAIL FAILED
+--    911 立即触发（duration=0）        → 期望 alert_event +1，notify_log：EMAIL FAILED，
+--                                        WEBHOOK 视步骤 4b 而定：未替换 <LAN_IP> → FAILED("不是合法 URL")；
+--                                        换成局域网 IP → SUCCESS（这条才是派发正证据）
 --    912 边界值 + 持续时长（duration=120）→ 前两轮只记"越界但未达持续时长"，第三轮才建事件
 --    913 恒不触发（阈值抬高）           → 期望无事件，且 Redis alert:breach:913 被清掉
 -- ----------------------------------------------------------------------------

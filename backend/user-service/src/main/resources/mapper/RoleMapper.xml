@@ -13,4 +13,13 @@
         </foreach>
     </insert>
 
+    <!-- 口径与 selectUsernamesByRoleId 保持一致：join 用户表只滤 deleted，不滤 status（停用账号仍然挂在这个角色上）。 -->
+    <select id="countMembersByRoleId" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM sys_user_role ur
+        INNER JOIN sys_user u ON u.id = ur.user_id
+        WHERE ur.role_id = #{roleId}
+          AND u.deleted = 0
+    </select>
+
 </mapper>

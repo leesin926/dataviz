@@ -38,6 +38,9 @@ public class ScreenVO {
     /** 三端变体；按 platform 展平返回时为 null */
     private Map<String, Object> variants;
 
+    /** 列表接口专用：端 -> 该端单独配置的画布尺寸。与 variants 分开命名，避免同一个字段两种结构 */
+    private Map<String, Object> variantSizes;
+
     private String adaptMode;
 
     private Long viewCount;

@@ -9,6 +9,7 @@ import com.dataviz.common.security.model.LoginUser;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -23,6 +24,10 @@ import java.util.Set;
 @Slf4j
 public class PermissionInterceptor implements HandlerInterceptor {
 
+    /** 与前端 {@code PermissionManager.matchPermission} 同一套通配语义，两端必须一起改 */
+    private static final String ALL = "*";
+    private static final String PREFIX_WILDCARD_SUFFIX = ":*";
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (!(handler instanceof HandlerMethod)) {
@@ -30,7 +35,11 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         HandlerMethod handlerMethod = (HandlerMethod) handler;
 
+        // 方法级优先，缺省回落到类级：@Target 里声明了 TYPE，回落不实现就是"标在类上静默不生效"
         RequiresPermission annotation = handlerMethod.getMethodAnnotation(RequiresPermission.class);
+        if (annotation == null) {
+            annotation = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getBeanType(), RequiresPermission.class);
+        }
         if (annotation == null) {
             return true;
         }
@@ -75,10 +84,46 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
 
         if (logical == RequiresPermission.Logical.AND) {
-            return Arrays.stream(requiredPermissions).allMatch(userPermissions::contains);
-        } else {
-            return Arrays.stream(requiredPermissions).anyMatch(userPermissions::contains);
+            for (String required : requiredPermissions) {
+                if (!matches(userPermissions, required)) {
+                    return false;
+                }
+            }
+            return true;
         }
+        for (String required : requiredPermissions) {
+            if (matches(userPermissions, required)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 用户持有的权限码允许是 {@code *} 或 {@code system:*} 这类前缀通配（与前端同语义）。
+     * 注意通配按字符串前缀截断，所以 {@code sys:*} 也会放行 {@code system:user:list} —— 这是两端共有的既有行为，
+     * 要收紧必须同时改前端，否则会出现"菜单看得见、接口 403"。
+     */
+    private boolean matches(Set<String> userPermissions, String required) {
+        if (!StringUtils.hasText(required)) {
+            return false;
+        }
+        if (userPermissions.contains(required)) {
+            return true;
+        }
+        for (String held : userPermissions) {
+            if (!StringUtils.hasText(held)) {
+                continue;
+            }
+            if (ALL.equals(held)) {
+                return true;
+            }
+            if (held.endsWith(PREFIX_WILDCARD_SUFFIX)
+                    && required.startsWith(held.substring(0, held.length() - PREFIX_WILDCARD_SUFFIX.length()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void writeForbiddenResponse(HttpServletResponse response, String message) throws IOException {

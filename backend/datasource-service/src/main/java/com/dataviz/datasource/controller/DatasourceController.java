@@ -3,6 +3,7 @@ package com.dataviz.datasource.controller;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.datasource.dto.*;
 import com.dataviz.datasource.service.DatasourceService;
 import com.dataviz.datasource.vo.ColumnInfoVO;
@@ -27,11 +28,15 @@ import java.util.Map;
 @RequestMapping("/api/datasource")
 @RequiredArgsConstructor
 @Tag(name = "数据源管理", description = "数据源CRUD、连接测试、元数据查询、SQL执行")
+// 类级 = 本控制器全部端点至少要 datasource:read（PermissionInterceptor 会回落到类上的注解）。
+// 只有"改配置"与"让服务端拿着凭据对外建连"这两类动作抬到 write —— 后者是 SSRF 面，只读用户不该能触发。
+@RequiresPermission("datasource:read")
 public class DatasourceController {
 
     private final DatasourceService datasourceService;
 
     @PostMapping
+    @RequiresPermission("datasource:write")
     @Operation(summary = "创建数据源")
     public R<Long> create(@RequestBody @Valid DatasourceCreateDTO dto,
                            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
@@ -39,6 +44,7 @@ public class DatasourceController {
     }
 
     @PutMapping("/{id}")
+    @RequiresPermission("datasource:write")
     @Operation(summary = "更新数据源")
     public R<Void> update(@PathVariable Long id, @RequestBody @Valid DatasourceUpdateDTO dto) {
         datasourceService.updateDatasource(id, dto);
@@ -46,6 +52,7 @@ public class DatasourceController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission("datasource:write")
     @Operation(summary = "删除数据源")
     public R<Void> delete(@PathVariable Long id) {
         datasourceService.deleteDatasource(id);
@@ -70,12 +77,14 @@ public class DatasourceController {
     }
 
     @PostMapping("/test-connection")
+    @RequiresPermission("datasource:write")
     @Operation(summary = "测试新数据源连接")
     public R<Boolean> testConnection(@RequestBody @Valid TestConnectionDTO dto) {
         return R.ok(datasourceService.testConnection(dto));
     }
 
     @PostMapping("/{id}/test-connection")
+    @RequiresPermission("datasource:write")
     @Operation(summary = "测试已有数据源连接")
     public R<Boolean> testExistingConnection(@PathVariable Long id) {
         return R.ok(datasourceService.testConnection(id));

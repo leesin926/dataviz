@@ -5,6 +5,7 @@ import com.dataviz.analysis.engine.QueryEngine;
 import com.dataviz.analysis.service.QueryHistoryService;
 import com.dataviz.analysis.vo.QueryResultVO;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/analysis/query")
 @RequiredArgsConstructor
 @Tag(name = "Query Engine", description = "Execute analysis queries, save and view history")
+// 类级 = 本控制器全部端点至少要 analysis:read（PermissionInterceptor 会回落到类上的注解），改状态的动作在方法上抬到 analysis:write。
+@RequiresPermission("analysis:read")
 public class QueryController {
 
     private final QueryEngine queryEngine;
@@ -39,6 +42,7 @@ public class QueryController {
     }
 
     @PostMapping("/save")
+    @RequiresPermission("analysis:write")
     @Operation(summary = "Save query", description = "Save a query for later reuse")
     public R<Long> saveQuery(@RequestBody @Valid AnalysisQueryDTO queryDTO,
                                    @RequestHeader("X-User-Id") String userId,

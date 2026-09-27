@@ -1,4 +1,5 @@
 import type { Role, Permission } from '@dataviz/shared-types'
+import { matchesAnyPermissionCode, matchesPermissionCode } from './matchesPermissionCode'
 
 /**
  * PermissionManager - 权限管理器
@@ -21,8 +22,8 @@ export class PermissionManager {
    */
   setRoles(roles: Role[]): void {
     this.roles = roles
-    // 检查是否是超级管理员
-    this.isAdmin = roles.some((r) => r.roleCode === 'admin' || r.roleCode === 'super_admin')
+    // 后端 LoginUser.isSuperAdmin() 只认 super_admin；roleCode 'admin' 是普通管理角色（有独立授权集）
+    this.isAdmin = roles.some((r) => r.roleCode === 'super_admin')
   }
 
   /**
@@ -37,7 +38,8 @@ export class PermissionManager {
    */
   hasPermission(permission: string): boolean {
     if (this.isAdmin) return true
-    return this.permissions.has(permission)
+    // 通配语义收进 matchesPermissionCode（与路由守卫、后端拦截器同一套）
+    return matchesPermissionCode(permission, this.permissions)
   }
 
   /**
@@ -45,7 +47,7 @@ export class PermissionManager {
    */
   hasAnyPermission(permissions: string[]): boolean {
     if (this.isAdmin) return true
-    return permissions.some((p) => this.permissions.has(p))
+    return matchesAnyPermissionCode(permissions, this.permissions)
   }
 
   /**
@@ -53,7 +55,7 @@ export class PermissionManager {
    */
   hasAllPermissions(permissions: string[]): boolean {
     if (this.isAdmin) return true
-    return permissions.every((p) => this.permissions.has(p))
+    return permissions.every((p) => matchesPermissionCode(p, this.permissions))
   }
 
   /**
@@ -127,18 +129,6 @@ export class PermissionManager {
    * 检查权限码是否匹配（支持通配符）
    */
   static matchPermission(required: string, actual: Set<string>): boolean {
-    // 精确匹配
-    if (actual.has(required)) return true
-
-    // 通配符匹配：如 'system:*' 匹配 'system:user:list'
-    for (const perm of actual) {
-      if (perm.endsWith(':*')) {
-        const prefix = perm.slice(0, -2)
-        if (required.startsWith(prefix)) return true
-      }
-      if (perm === '*') return true
-    }
-
-    return false
+    return matchesPermissionCode(required, actual)
   }
 }

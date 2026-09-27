@@ -91,7 +91,7 @@
                 {{ t('login.login') }}
               </el-button>
             </el-form>
-            <p class="sms-tip">{{ t('login.smsMockTip') }}</p>
+            <p class="sms-tip">{{ t('login.smsTip') }}</p>
           </el-tab-pane>
         </el-tabs>
       </section>
@@ -193,9 +193,11 @@
     const valid = await smsFormRef.value?.validateField('phone').catch(() => false)
     if (!valid) return
     try {
-      await sendSmsCode(smsForm.phone)
+      // 终端标识由后端按白名单校验，它决定这次发码落在哪条闸门上
+      const res = await sendSmsCode(smsForm.phone, 'pc-web')
       ElMessage.success(t('login.codeSent', { phone: smsForm.phone }))
-      startCountdown(60)
+      // 倒计时秒数听服务端的，别在前端再写死一个 60
+      startCountdown(res.resendAfterSeconds)
     } catch (e) {
       ElMessage.error((e as Error).message || t('login.sendFailed'))
     }

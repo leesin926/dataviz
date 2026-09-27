@@ -12,6 +12,7 @@ import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/alert/event")
 @RequiredArgsConstructor
+// 类级 = 本控制器全部端点至少要 alert:read（PermissionInterceptor 会回落到类上的注解），确认/解决事件等改状态的动作抬到 alert:write。
+@RequiresPermission("alert:read")
 public class AlertEventController {
 
     private final AlertEventMapper alertEventMapper;
@@ -53,6 +56,7 @@ public class AlertEventController {
     }
 
     @PostMapping("/acknowledge")
+    @RequiresPermission("alert:write")
     public R<Void> acknowledge(@RequestBody AlertEventAckDTO dto) {
         AlertEvent event = alertEventMapper.selectById(dto.getId());
         if (event == null) {
@@ -65,6 +69,7 @@ public class AlertEventController {
     }
 
     @PostMapping("/resolve")
+    @RequiresPermission("alert:write")
     public R<Void> resolve(@RequestBody AlertEventAckDTO dto) {
         AlertEvent event = alertEventMapper.selectById(dto.getId());
         if (event == null) {

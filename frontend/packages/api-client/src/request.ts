@@ -1,7 +1,6 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import type { R } from '@dataviz/shared-types'
 import { getLocal, removeLocal, setLocal } from '@dataviz/shared-utils'
-import { isSmsMockToken } from './modules/sms'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 const TIMEOUT = 30000
@@ -9,23 +8,19 @@ const TIMEOUT = 30000
 const TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
 
-/** 应用层注入的认证提示文案翻译器（api-client 不依赖 vue-i18n） */
-export type AuthMessageKey = 'demoMode' | 'sessionExpired'
-export type AuthMessageResolver = (key: AuthMessageKey) => string
+/** 会话失效提示文案由应用层注入翻译器（api-client 不依赖 vue-i18n） */
+export type AuthMessageResolver = () => string
 
-let authMessage: ((key: AuthMessageKey) => string) | null = null
+let authMessage: AuthMessageResolver | null = null
 
 export function setAuthMessageResolver(resolver: AuthMessageResolver): void {
   authMessage = resolver
 }
 
-const FALLBACK_MESSAGES: Record<AuthMessageKey, string> = {
-  demoMode: 'Demo mode: SMS sign-in does not reach real APIs',
-  sessionExpired: 'Session expired, please sign in again',
-}
+const SESSION_EXPIRED_FALLBACK = 'Session expired, please sign in again'
 
-function messageOf(key: AuthMessageKey): string {
-  return authMessage ? authMessage(key) : FALLBACK_MESSAGES[key]
+function sessionExpiredMessage(): string {
+  return authMessage ? authMessage() : SESSION_EXPIRED_FALLBACK
 }
 
 /**
@@ -74,16 +69,10 @@ request.interceptors.response.use(
       const { status, data } = error.response
       switch (status) {
         case 401: {
-          const token = getLocal<string>(TOKEN_KEY)
-          // 短信模拟登录的假 token 打不进真后端，直接按演示态处理，不触发刷新/登出
-          if (isSmsMockToken(token)) {
-            markDemoMode()
-            return Promise.reject(authError('demoMode', error))
-          }
           const refreshed = await tryRefreshToken()
           if (!refreshed) {
             handleLogout()
-            return Promise.reject(authError('sessionExpired', error))
+            return Promise.reject(authError(error))
           }
           // 刷新成功：用新 token 重放原请求，用户不会感知到这一次失败
           const cfg = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined
@@ -96,6 +85,7 @@ request.interceptors.response.use(
         }
         case 403:
           console.error('[request] 无权限:', data?.message)
+          markForbidden()
           break
         case 404:
           console.error('[request] 资源不存在')
@@ -115,12 +105,15 @@ request.interceptors.response.use(
   },
 )
 
-/** 演示态：短信模拟 token 打不通真实接口，广播给应用层做一次提示 */
-function markDemoMode(): void {
-  const w = window as unknown as { __dvDemoMode?: boolean }
-  if (typeof window === 'undefined' || w.__dvDemoMode) return
-  w.__dvDemoMode = true
-  window.dispatchEvent(new CustomEvent('dv:demo-mode'))
+/** 一次页面加载可能并发多个请求同时被拒，2s 内只广播一次，避免弹刷屏 */
+let lastForbiddenAt = 0
+
+function markForbidden(): void {
+  if (typeof window === 'undefined') return
+  const now = Date.now()
+  if (now - lastForbiddenAt < 2000) return
+  lastForbiddenAt = now
+  window.dispatchEvent(new CustomEvent('dv:forbidden'))
 }
 
 /** 尝试刷新 token
@@ -152,10 +145,9 @@ async function tryRefreshToken(): Promise<boolean> {
   return refreshing
 }
 
-/** 认证类失败：带上标记与本地化文案，应用层据此决定提示还是静默 */
-function authError(key: AuthMessageKey, cause: unknown): Error {
-  const err = new Error(messageOf(key)) as Error & { authKey?: AuthMessageKey; cause?: unknown }
-  err.authKey = key
+/** 会话失效：带上本地化文案与原始 cause，应用层据此决定提示还是静默 */
+function authError(cause: unknown): Error {
+  const err = new Error(sessionExpiredMessage()) as Error & { cause?: unknown }
   err.cause = cause
   return err
 }

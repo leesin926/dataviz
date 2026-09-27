@@ -105,7 +105,7 @@ public class ScreenServiceImpl implements ScreenService {
     }
 
     @Override
-    public ScreenListVO list(String keyword, String status, int pageNum, int pageSize) {
+    public ScreenListVO list(String keyword, String status, String platform, int pageNum, int pageSize) {
         LambdaQueryWrapper<Screen> wrapper = new LambdaQueryWrapper<Screen>();
         if (StringUtils.hasText(keyword)) {
             wrapper.like(Screen::getName, keyword);
@@ -126,6 +126,8 @@ public class ScreenServiceImpl implements ScreenService {
             ScreenVO vo = toVO(s);
             // 列表不携带大字段，编辑器打开详情时再取全量
             vo.setComponents(null);
+            applyListPlatformSize(vo, platform);
+            vo.setVariantSizes(variantSizes(vo.getVariants()));
             vo.setVariants(null);
             vos.add(vo);
         }
@@ -324,6 +326,41 @@ public class ScreenServiceImpl implements ScreenService {
         if (layers instanceof List) {
             vo.setLayers((List<Object>) layers);
         }
+    }
+
+    /**
+     * 列表口径的按端展平：只覆盖画布尺寸，config/components 仍然留给详情接口。
+     * 该端没有变体时保持 pc 尺寸 —— 缺省回退是既定语义，不能把大屏按"没配过"处理。
+     */
+    private void applyListPlatformSize(ScreenVO vo, String platform) {
+        if (!StringUtils.hasText(platform) || "pc".equalsIgnoreCase(platform)) {
+            return;
+        }
+        Map<String, Object> variants = vo.getVariants();
+        Object target = variants == null ? null : variants.get(platform.toLowerCase());
+        if (target instanceof Map) {
+            Map<String, Object> variant = (Map<String, Object>) target;
+            vo.setWidth(numberOr(variant.get("width"), vo.getWidth()));
+            vo.setHeight(numberOr(variant.get("height"), vo.getHeight()));
+        }
+    }
+
+    /** 变体压成"端 -> 尺寸"：列表要能看出哪一端单独配过，但不该把三端组件一并带出去 */
+    private Map<String, Object> variantSizes(Map<String, Object> variants) {
+        if (variants == null || variants.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> slim = new LinkedHashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : variants.entrySet()) {
+            if (entry.getValue() instanceof Map) {
+                Map<String, Object> variant = (Map<String, Object>) entry.getValue();
+                Map<String, Object> size = new LinkedHashMap<String, Object>();
+                size.put("width", variant.get("width"));
+                size.put("height", variant.get("height"));
+                slim.put(entry.getKey(), size);
+            }
+        }
+        return slim;
     }
 
     private Map<String, Object> readVariants(String json) {

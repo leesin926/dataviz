@@ -46,12 +46,11 @@
     "logout": "退出登录",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "forbidden": "无访问权限",
     "forbiddenDesc": "当前管理员没有访问该页面的权限",
     "notFound": "页面不存在",
     "notFoundDesc": "该页面可能已被删除或地址有误",
     "sessionExpired": "登录已过期，请重新登录",
-    "demoMode": "当前为短信体验账号，接口数据仅为演示",
+    "forbidden": "没有该操作的权限，请联系管理员分配",
     "serviceUnavailable": "服务暂不可用：{msg}"
   },
   "login": {
@@ -65,7 +64,7 @@
     "login": "登录",
     "getCode": "获取验证码",
     "retryAfter": "{sec}s 后重发",
-    "smsMockTip": "短信登录为前端模拟功能，任意验证码均可登录",
+    "smsTip": "演示环境未接入短信渠道，验证码固定为 123123",
     "errUsernameRequired": "请输入用户名",
     "errPasswordRequired": "请输入密码",
     "errPhoneRequired": "请输入手机号",
@@ -89,6 +88,7 @@
     "license": "许可证",
     "config": "系统配置",
     "users": "用户管理",
+    "depts": "部门管理",
     "roles": "角色管理",
     "menus": "菜单权限",
     "audit": "审计日志"
@@ -163,6 +163,7 @@
     "createTitle": "新增角色",
     "keyPlaceholder": "如 tenant:admin",
     "codePlaceholder": "如 tenant_admin",
+    "codeLocked": "创建后不可修改",
     "deleted": "角色已删除"
   },
   "menu": {
@@ -185,6 +186,22 @@
     "deleted": "菜单已删除",
     "nameRequired": "请输入名称",
     "codeRequired": "请输入权限标识"
+  },
+  "dept": {
+    "title": "部门管理",
+    "desc": "维护本租户的组织架构，用户档案里的部门取自这里",
+    "name": "部门名称",
+    "leader": "负责人",
+    "phone": "联系电话",
+    "sort": "排序",
+    "parent": "上级部门",
+    "root": "顶级部门",
+    "create": "新增部门",
+    "addChild": "新增下级",
+    "createTitle": "新增部门",
+    "editTitle": "编辑部门",
+    "deleted": "部门已删除",
+    "nameRequired": "请输入部门名称"
   },
   "config": {
     "title": "系统配置",

@@ -129,6 +129,14 @@ spring:
     database: 0
     timeout: 5000ms
 
+# Gateway 自有配置
+gateway:
+  rate-limit:
+    # 网关前面有几层「可信」反向代理。默认 0 = 网关就是边缘节点，客户端地址只认 TCP 对端。
+    # 只有确实前置了 N 层、且每层都往 X-Forwarded-For 末尾追加自己看到的对端时，才配成 N；
+    # 配大 = 开始信任一个客户端可自填的头（限流曾被这样零成本绕开，见 docs/12 报告 19.8）。
+    trusted-proxy-hops: ${GATEWAY_TRUSTED_PROXY_HOPS:0}
+
 # Logging
 logging:
   level:

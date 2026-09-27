@@ -88,7 +88,7 @@
                 {{ t('login.login') }}
               </el-button>
             </el-form>
-            <p class="sms-tip">{{ t('login.smsMockTip') }}</p>
+            <p class="sms-tip">{{ t('login.smsTip') }}</p>
           </el-tab-pane>
         </el-tabs>
       </section>
@@ -199,9 +199,11 @@ async function handleSendCode() {
   const valid = await smsFormRef.value?.validateField('phone').catch(() => false)
   if (!valid) return
   try {
-    await sendSmsCode(smsForm.phone)
+    // 终端标识：后端按"手机号+终端"隔离重发闸门与码值，值须在 SmsTerminalConstant 白名单内
+    const res = await sendSmsCode(smsForm.phone, 'admin')
     ElMessage.success(t('login.codeSent', { phone: smsForm.phone }))
-    startCountdown(60)
+    // 倒计时秒数听服务端的，别在前端再写死一个 60
+    startCountdown(res.resendAfterSeconds)
   } catch (e) {
     ElMessage.error((e as Error).message || t('login.sendFailed'))
   }
@@ -224,7 +226,7 @@ async function handleSmsLogin() {
   if (!valid) return
   smsLoading.value = true
   try {
-    const result = await smsLogin(smsForm.phone, smsForm.code)
+    const result = await smsLogin(smsForm.phone, smsForm.code, 'admin')
     saveSession(result)
     ElMessage.success(t('login.loginSuccess'))
     goHome()

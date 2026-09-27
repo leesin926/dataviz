@@ -55,12 +55,11 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "backHome": "Back to home",
-    "forbidden": "Access denied",
     "forbiddenDesc": "This account has no permission for this page",
     "notFound": "Page not found",
     "notFoundDesc": "The page may have been removed or the URL is incorrect",
     "sessionExpired": "Session expired, please sign in again",
-    "demoMode": "SMS trial account - data shown is demo only"
+    "forbidden": "You lack permission for this action - ask an administrator to grant it"
   },
   "login": {
     "tabPassword": "Account",
@@ -74,7 +73,7 @@
     "remember": "Keep me signed in",
     "getCode": "Send code",
     "retryAfter": "Retry in {sec}s",
-    "smsMockTip": "SMS sign-in is mocked in the frontend — any code works",
+    "smsTip": "No SMS provider in this demo - the code is fixed at 123123",
     "slogan": "One workspace for data visualisation and screen orchestration",
     "featureRealtime": "Realtime data",
     "featureDrag": "Drag to compose",
