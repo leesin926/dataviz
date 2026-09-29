@@ -858,7 +858,7 @@ uni 端**不依赖 `api-client`**（那个包是 web-only，`window`/`WebSocket`
 | `apps/{mobile-app,mini-program,tablet-app}/src/utils/device.ts` | 各加 `export const SMS_TERMINAL = '<端名>'`（它本就是三端唯一差异点，现在是第三个常量） |
 | `apps/{mobile-app,mini-program,tablet-app}/src/utils/auth.ts` | 从 `./device` 读 `SMS_TERMINAL` 带进两个 body ⇒ **对外函数签名不变、`pages/login/login.vue` 一行未动、三份继续逐字节相同**（md5 `4b8d8be9…`） |
 | `packages/permission/src/guard.ts` | 抽出并导出 `canEnterRouteMeta`；loginPath 分支改成"目标可进才弹，否则渲染登录页"；主判定改调同一个函数 |
-| `packages/permission/src/index.ts` | 补 `export * from './core/session'` | app 侧要读同一份权限码；自己去解析 localStorage 信封是 API-26 同族老错 |
+| `packages/permission/src/index.ts` | 补 `export * from './core/session'` —— app 侧要读同一份权限码；自己去解析 localStorage 信封是 API-26 同族老错 |
 | `apps/admin/src/views/SimplePage.vue` | 返回目标按会话真算（`hidden` + `canEnterRouteMeta`），全不可达时按钮改「退出登录」并 `clearToken()/removeLocal('user')/removeLocal('permissions')` 后回 `/login` |
 
 ### 五、证据边界（本批有什么、没什么）
@@ -1034,7 +1034,7 @@ Grep 的索引会返回**已删除文件**的命中，也会返回**同一文件
 
 ---
 
-## 2026-09-23 · 阶段 AK：整改收口批（任务 #110~#113，决策 **D67** / 报告 **19.18**，结案 **API-40 / API-24 / API-23 / API-25**，新登记 **API-41 / API-42 / API-43**）
+## 2026-09-27 · 阶段 AK：整改收口批（任务 #109~#113，决策 **D67** / 报告 **19.18**，结案 **API-40 / API-24 / API-23 / API-25**，新登记 **API-41 / API-42 / API-43**）
 
 用户指令是"**先修复整改项，完成后一起验证**"⇒ 这一批的定义性约束：**只做已登记的整改项，不做需要产品决策的扩张**。所以四条代码修复全部照已定的配方（AJ 的租户收口配方 / API-20 的"诚实失败"口径 / D53 的变体回退语义）落地，运行时时延后集中验；而过程中新发现的三条（API-41/42/43）**登记不修**，尽管其中两条改起来只有几行。
 
@@ -1121,3 +1121,529 @@ D66 ④ 与 19.17.1 第 ⑤ 行都写过：`BeanUtils.copyProperties` 会把 DTO
 4. AK1：超管在角色管理页看得到"角色标识"编辑态置灰；role 2 账号（`viewer01`）打 `PUT /api/role/{别人的角色id}` 应当返回"角色不存在"而不是成功 —— 注意**同租户内的越权不在本批评据内**（那是 API-41）。
 5. AK2/AK3 判据都在报告 19.18.4 / 19.18.5：`truncated` 只在"恰好触顶"时可观测，所以要用小 `maxRows` 打；列表接口的判据是"同一块配过 mobile 变体的大屏，`/screen/list?platform=mobile` 的 width/height 与 `/screen/{id}?platform=mobile` 一致"。
 6. **AK4 反着判**：手动执行 ETL 任务必须返回 503 且 `etl_task_log` 新增一行 FAILED；返回 SUCCESS 说明没生效（多半是 8084 没重启）。
+
+## 2026-09-28 · 阶段 AL：租户拦截器的忽略清单与真实 schema 分叉（任务 #114/#115，决策 **D68** / 报告 **19.19**，新立并修 **API-44**，结案 **#108**）
+
+**输入不是需求，是一发 500**：用户按 AK 交接清单重启 8082 并登录后，打开管理端"菜单管理"报服务器错误，把根因贴了过来。这一批因此**不在原计划里**（AK 的"完成后一起验证"正在进行中），但它是验证轮的第一个产出 —— 而且炸点不在 AK 改的任何一行上。
+
+### 一、定位：三条廉价判据，没有一条需要把服务跑起来
+
+用户贴出来的语句是 `SELECT id, parent_id, permission_code, … , deleted FROM sys_permission WHERE deleted = 0 AND tenant_id = '1'`，报 `Unknown column 'tenant_id' in 'where clause'`。**先看这条 SQL 是谁写的**，三条读法当场定死：
+
+| 判据 | 读数 | 结论 |
+|------|------|------|
+| 租户条件是**字面量** `'1'` 而不是 `?` | MyBatis-Plus 的 wrapper `.eq(...)` 一定生成占位符；字面量只可能来自 SQL 解析后的**事后改写** | 不是业务代码写的 |
+| SELECT 列表里**没有** `tenant_id` | `SysPermission.java` 实体压根没有 `tenantId` 字段（`git` 与 Read 双向确认） | 业务代码**写不出**这条条件 |
+| 全仓 `grep -rn "TenantLine"` | 命中**只有一处**：`common/common-mybatis/…/MybatisPlusConfig.java` | 注入者唯一，无需再找第二个候选 |
+
+⇒ 根因 = `TenantLineInnerInterceptor` 给一张**没有 `tenant_id` 列**的表注入了条件，而 `IGNORE_TENANT_TABLES` 没包含它。立 **API-44**，#108 结案。
+
+### 二、为什么这套测试跑了这么多轮，第一次才暴露（本批真正的收获）
+
+`ignoreTable()` 的第一句是 `SecurityContextHolder.getTenantId() == null ⇒ return true`。也就是说**这条逻辑只在"有会话"的 HTTP 线程里生效**：
+
+- 免登端点（验证码、分享、`config/public/**`、file view）⇒ 租户为 null ⇒ 不注入 ⇒ 永远正常；
+- `/internal/**`（AA/AB 那两批实证过的内部只读链路）⇒ 走 `InternalApiGuard` 而不是会话 ⇒ 不注入；
+- `@Async` 线程（alert 定时检查、etl 执行）⇒ `SecurityContextHolder` 是 ThreadLocal，异步线程读不到 ⇒ 不注入。
+
+所以**第十二章 240 个端点体检、19.7 的内部实证、AI 轮的免登半区，一次都碰不到它**。这不是测试不够多，是测试的**维度**缺一个"带会话"。已把这条写成 D68 ①：以后判断"某段底座逻辑有没有被覆盖到"，先看它的**生效前置条件**，而不是数跑过多少个接口。
+
+### 三、清单与 schema 的分叉是量出来的
+
+对 `deploy/sql/init/*.sql` + `deploy/sql/patch/*.sql` 做 CREATE TABLE 列审计：**51 张表 / 21 张没有 `tenant_id` 列**。原清单四项是 `sys_tenant, sys_menu, sys_dict_type, sys_dict_data` —— 后三项**在本仓库不存在**（没有任何建表语句叫这些名字）。
+
+⇒ **真正生效的只有一项，覆盖率 1/21**。而"清单里出现库里没有的表名"这个信号本身就够定性了：**它不是多写了几项无害，是这几项从来没被验证过**（D68 ③）。
+
+### 四、改动：一个文件，一次纯数据层的补全
+
+`backend/common/common-mybatis/src/main/java/com/dataviz/common/mybatis/config/MybatisPlusConfig.java`
+- `IGNORE_TENANT_TABLES`：`List` → `HashSet`（语义是集合不是序列，且 `ignoreTable` 每次调用都查它），内容按列审计补到 **18 项**，分组注释写清每组的**理由**：平台表 / RBAC 码表与关联表 / 元数据·子表·日志表 / monitor 自采自看。
+- 三张 `demo_*` **刻意不列**：它们同样没有 `tenant_id`，但只被 `JdbcTemplate` 与外部数据源查询命中，不在这套 `SqlSessionFactory` 的映射范围内 —— 列进清单等于把"我没验证过它可达"写成"它不需要过滤"。
+- 类注释写明三件事：清单怎么来的、**为什么是黑名单不是白名单**、关联表 `sys_user_role`/`sys_role_permission` 的租户归属由**父表**决定（AK1/AJ 的 `requireXxxInTenant` 已在方法入口挡过）。
+
+### 五、三条刻意没做（这一批最容易被"顺手优化"带跑的地方）
+
+1. **不动 `ignoreTable()` 里 `tenantId == null ⇒ 不注入` 这句**。它看起来像"漏了个判据"，实际是**免登与内部调用不受租户过滤**的正确语义；改成"null 时当租户 1"会让所有免登路径的 SQL 凭空多一个条件，那是发明行为。
+2. **不加超管绕过**（"super_admin 时不过滤"）。当前代码里**没有任何一处**实现过"超管能看全租户数据"，加了就是替产品把"超管应该看到哪些租户"这个未定问题定死 —— 与 API-41 同一族。
+3. **不做运行时自动发现清单**。理由两条：`ignoreTable` 收到的是**裸表名**（带库前缀的写法匹配不上，所以自动发现也未必配得上），更关键的是把"读 `information_schema`"变成**服务启动依赖**后，失败时"跳过"还是"拒绝启动"仍然是我替它发明的策略。**宁要一份能跑的只读体检，不要一个没人验证的自动化**。
+   替代产出：`deploy/sql/patch/2026-09-28-tenant-column-audit.sql`（三段全只读）—— ① 真库里"无 `tenant_id` 列的表"清单（应与代码 18 项 + 3 张 `demo_*` 一致）② 每张有该列的表的 `SUM(tenant_id IS NULL)`（期望 **0**；不为 0 的行会被注入条件**静默藏起来**）③ 各表 `tenant_id` 取值分档。
+   写这份脚本时自纠两处：**`GROUP_CONCAT(DISTINCT … ORDER BY …)` 在 MySQL 直接报错**（去掉 ORDER BY）；**`group_concat_max_len` 默认 1024 字节**会把第②③段生成的 ~3KB UNION **静默截成半条 SQL** —— 与 API-23 那一族"截断不声明"同源，脚本首段显式 `SET SESSION group_concat_max_len = 200000`，判据是"先看长度/条数再看内容"（D68 ⑥）。
+
+### 六、影响面：比"菜单权限页坏了"大得多（但只实测了一条）
+
+拦截器改写的是它能解析到的**每一条**语句（含手写 XML、含 INSERT/UPDATE/DELETE），所以同根的候选症状还有：给角色授权（`sys_role_permission` 批插/批删）、给用户分配角色（`sys_user_role`）、ETL 执行日志页（`etl_task_log`）、告警通知记录（`alert_notify_log`）、openapi/AI/monitor 那几张流水表。**这张表是静态推导**（读拦截器 + 读实体 + 读列审计），**已实测的只有菜单权限那一发**；报告 19.19.3 逐条列了入口，复验轮点通几条结几条，**不提前写成"已确认"**。
+
+### 七、门禁读数
+
+| 层 | 命令 / 读数 | 结果 |
+|----|------|------|
+| 编译 | `mvn -o -q -pl common/common-mybatis -am -DskipTests compile` | 退出码 **0** |
+| 产物 | `MybatisPlusConfig.class` mtime | **2026-09-28 16:23:45** |
+| 进程 | 8082（PID 201760）`StartTime` | **16:14:36** ⇒ **进程早于 class** |
+| 运行时 | — | **零取证**（D33：启停归用户） |
+
+⚠️ 改动在**共享 jar**（`common-mybatis`）⇒ 理论生效面是**全量重启面**。按发火面排序：**8082 必须先重启**（本发症状与 AK1/AJ 的判据全在它上面），其后 8084 / 8090 / 8087 / 8088 / 8091 / 8092 / 8095 / 8096。
+
+### 八、交接给用户（四步）
+
+1. IDEA **重启 user-service(8082)** ⇒ 打开管理端"菜单管理"：**不再 500** 就是本批的结案判据（这一条不需要重新登录就能看出来是否修好；修好了才谈得上跑 AK 的登录态判据）。
+2. 执行 `deploy/sql/patch/2026-09-28-tenant-column-audit.sql`（**带 `--default-character-set=utf8mb4`**，**D31**），回报三段读数；第①段与 18+3 不一致 ⇒ 说明真库与 SQL 脚本也分叉了，那是新缺陷不是本批未完。
+3. 继续 AK 那六步（角色管理编辑态/删除有成员的角色、部门管理页、`/screen/list?platform=mobile`、小 `maxRows` 看 `truncated`、ETL 反向判据）。
+4. AJ 那笔仍欠的 `2026-09-23-dept-permissions.sql` 与登录半区（S4/S5/S6③、U5/U6、#61/#79/#90 矩阵、#95 T4~T6、#70/#76/#89）照旧等回读数。
+
+## 2026-09-28 · 阶段 AM：角色↔权限的读写配对端点 + 管理端「分配权限」抽屉（任务 #116~#118，决策 **D69** / 报告 **19.20**，新登记 **API-45**，变更 **API-41** 状态）
+
+输入是两句话。第一句"权限分配在什么地方"——我去查证，结论很难看：`sys_role_permission` 只有**写**端点（`POST /role/{id}/permissions`，`RoleController:91`），没有读端点，也没有任何界面碰得到它 ⇒ 权限分配在数据库里，不在产品里。第二句"需要加一个权限分配的功能，具体用抽屉还是单独的页面，你自己设计"——形式归我定，我选抽屉（D69①，四条可验证理由：树只是角色的一个属性而非独立工作对象、勾选态天然带行上下文、免路由/免菜单项/免面包屑、关掉即销毁状态）。
+
+这一轮的约束是那句老话：**"先删后插"的写接口必须有配对读接口，才允许有界面**。否则界面的"保存"会静默删掉它从未显示过的授权。所以后端先补读，前端才动。
+
+### 一、后端（5 个文件，全在 user-service）
+
+- `mapper/RoleMapper.java:16` — 新增 `List<Long> selectPermissionIdsByRoleId(@Param("roleId") Long roleId);`。**只有 roleId 一个参数**，没有 tenantId。
+- `resources/mapper/RoleMapper.xml:18-22` — 对应 `<select>`，`resultType="java.lang.Long"`。这里没有租户条件是**合法的**，注释把为什么写死了：`sys_role_permission` 本身没有 `tenant_id` 列，而且它在 AL 那份 18 条 `ignoreTable` 黑名单里 ⇒ 拦截器本来也不会往这条 SQL 上注入条件；真正的归属校验在服务入口（`requireRoleInTenant`），不在 SQL 里。值得记一笔：这是 AL 台账第一次被用来**证明一条 SQL 可以不带租户条件**，而不只是证明某条 SQL 漏了。
+- `service/RoleService.java` — 声明 `getRolePermissionIds`。注释写的是配对关系（"先删后插 ⇒ 必须有读"），不是方法说明。
+- `service/impl/RoleServiceImpl.java:130-134` — `getRolePermissionIds` 先 `requireRoleInTenant(roleId, tenantId)` 再放行 mapper。`requireRoleInTenant`（`:185`，"不存在与不属于本租户同一句话"）没动——AJ/AK 的既有口径。
+- `service/impl/RoleServiceImpl.java:112-128` + `:136-141` — `assignPermissions` 加了**引用完整性**校验：入参先过 `normalizePermissionIds`（`filter(Objects::nonNull).distinct()`），再 `selectBatchIds` 把库里实际条数与去重后的入参条数比对，对不上直接抛错。改之前是"你给什么 ID 我就往关联表里插什么"，而 DB 没有外键兜着。
+- `controller/RoleController.java:83-89` — 新增 `@GetMapping("/{id}/permissions")`，注解是 **`system:role:list`** 而不是 edit。理由写进 javadoc（D69③）：能查看一个角色的授权，跟能查看角色列表是同一件事的两种问法；用 edit 码会让"只读"的人看得见列表却点不开详情，在排查现场就表现为"我看不到他到底有什么权限"。POST（`:91-99`）保持 `system:role:edit` 不变。
+
+### 二、前端（3 个文件）
+
+- `frontend/packages/api-client/src/modules/user.ts:116-119` — `getRolePermissionIds(id)` → `GET /role/{id}/permissions`，返回 `Array<string|number>`。取值沿用本模块拦截器口径（`res.data.data ?? []`），不为这一条另写空值处理。
+- `frontend/apps/admin/src/views/RoleManage.vue` — 行操作加「分配权限」按钮 + 一个 560px `el-drawer`。抽屉内 `el-tree`：`node-key="id" show-checkbox check-strictly :render-after-expand="false" default-expand-all`。四点：
+  1. **`check-strictly` 是这轮的胜负手**（D69④）。开父子联动时，一个只被授予"目录码"的角色会被回显成"目录 + 它所有子节点全勾"，用户点保存 ⇒ 授权被静默**扩大**。所以回显必须忠实。
+  2. 代价反向补：保存时对勾选项跑 `withAncestors()`，把祖先目录码并入 payload。这不是为了好看——D57 那一发（接口放行、菜单看不见）正是这么来的，勾选树不该要求操作员手工补父级。
+  3. `indexTree()` 建 `parentOf` / `originalOf` 两张 Map；`openAssign()` 用 `Promise.all([getPermissionTree(), getRolePermissionIds(id)])` 一次拿齐，回显只 `setCheckedKeys(assignedIds ∩ originalOf.keys())`——库里存在但目录里已消失的授权进 `orphanIds`，**不参与勾选、原样拼回 payload**，界面只给一条数量警告。清掉孤儿等于改数据语义，不该由一个勾选框代劳。
+  4. 空勾选 ≠ 误触：`onAssignSubmit()` 里"当前有授权、这次一个都没勾"走确认弹窗（先删后插的清空是真清空），"本来就没有授权"直接放行。
+- `frontend/apps/admin/src/locales/zh-CN.json:168-175` + `en-US.json:168-175` — 8 对 `role.assign*` 键。`assignHint` 的中文没有粉饰：**保存会立刻让该角色成员重新登录；如果你自己在这个角色里，你也会被登出。** 英文同义。把副作用写进提示，而不是把副作用修掉（见第三节）。
+
+### 三、本轮自己抓到的一发：`v-permission.all`
+
+第一版按钮只判 `system:role:edit`。审计时发现抽屉要打**两个控制器**：回显/保存在 `RoleController`（role 码），但那棵树来自 `GET /permission/tree`，而 `PermissionController.java:26` 是**类级**注解 `system:menu:list`。于是"有 role:edit、没有 menu:list"的角色会点开一个必定报错的抽屉——而这种角色恰恰是本抽屉自己发得出来的（只勾按钮码不勾菜单码），不是假想情况。改成：
+
+```html
+<el-button v-permission.all="['system:role:edit', 'system:menu:list']" link type="primary" @click="openAssign(row)">
+```
+
+`vPermission.ts` 支持 `binding.arg === 'all' || binding.modifiers.all === true`；数组裸写是 any-of、`.all` 是 all-of，与后端 `PermissionInterceptor.matches` 逐条等价——**没有**在 RoleManage 里另写一份 includes。
+
+### 四、三条刻意没做
+
+- **不给 `assignPermissions` 加"操作员必须持有被授予码"的校验。** 那就是 API-41 未定的语义（提权面），产品决策没下来之前我在后端加校验等于替它做决定。但这轮确实让 API-41 **从"只有 SQL"变成"界面点得到"**——状态如实变更，不写成已修。
+- **不做"操作员不在被编辑角色里就不踢线"的豁免。** `sessionEvictor.evictRoleMembers(roleId)` 在事务内跑，改自己所在的角色会把自己登出。豁免等于把 D55 刚杀掉的旧快照问题（会话里的权限改了不生效）请回来。代价由文案承担。
+- **不碰 `assignUserRoles`（`api-client/user.ts:58`，零调用方）和 `UserManage.vue`（全文零 "role" 提及）。** 用户↔角色同样没有界面，是同一类缺口的另一发，登记为 **API-45**。查证时先纠正过自己一处说法：`UserCreateDTO` **根本没有** role 字段（不是"有字段但没人用"），且 `UserVO.roleIds` 只在 `UserServiceImpl:85` 这一条路径被填充。按未定的语义去发明一个"用户分配角色"界面，比留着这个缺口更糟。
+
+### 五、门禁读数
+
+| 门禁 | 结果 |
+|---|---|
+| `mvn -o -q -pl user-service -am -DskipTests compile` | **EXIT=0**（class 产物 16:51:26） |
+| `vite build`（admin） | **EXIT=0 / 7.34s** |
+| api-client `tsc --noEmit` | **EXIT=0** |
+| i18n 键位对齐 | **247 / 247，双向零漂移** |
+| 产物证据 | `RoleManage-DW-2DLY-.js` 含双码数组 + `{all:!0}`；`index-koYpqqiA.js` 含「分配权限」；`user-DsTCPbCs.js` 含 `` `/role/${e}/permissions` ``（POST 与 GET 两条都在） |
+| D33 链 | 端口→PID→主类→启动时刻→**反证**全跑：8082 = PID 200096 / **16:39:53** / `com.dataviz.user.UserServiceApplication`；`find user-service/src common/common-mybatis/src -newermt "2026-09-28 16:39:53"` **只命中四个 AM 源文件** ⇒ 同一进程**已含 AL、未含 AM** |
+| 运行时 | **零**：新端点、勾选回显、保存踢线三条都要用户登录（D36 / D65 ⑤）；生效面**只有 8082** 一个服务 |
+
+顺序要说清：AL 的修正**已在 8082 生效**（用户 16:39:53 重启过），其余 16 个服务仍是 16:00:44~16:02:01 起的旧 jar ⇒ AL 对它们还没生效；AM 需要 8082 **再重启一次**。报告里那句"运行时零取证"是 16:39 之前写的，本轮已在原处加 ⏩ 更正而不是抹掉。
+
+### 六、交接给用户（本批新增三步，AK/AL 那几步照旧欠着）
+
+1. IDEA **再重启一次 user-service(8082)** ⇒ AM 的新端点与入参校验才生效；admin 前端硬刷新。
+2. 按报告 **19.20.5** 的 M1~M4 跑抽屉：M1 打开有授权的角色看勾选数是否等于接口返回数（不是"看起来合理"）、M2 只勾一个子节点保存后回显应含父级目录码、M3 清空勾选要弹确认、M4 保存后自己若在该角色应被登出。
+3. 顺带确认 `/permission/tree` 不再 500（这是 AL 的结案判据，AM 的树依赖它）。
+
+### 七、用户实测"点了没反应"后的追补（同日 17:3x，任务 #119）
+
+回报的现象是"分配权限按钮点击后调用后端接口但无其他响应"。先排除部署面（**这一步不需要会话**）：
+
+- `curl http://localhost:8082/v3/api-docs` ⇒ `/role/{id}/permissions -> get,post`，**新端点确在运行进程里**；`RoleController.class` / `RoleServiceImpl.class` mtime **17:23:26**、8082 进程启动 **17:23:27** ⇒ 用户这次重启带上了 AM。（旁记两条方法论：① 未加签名的 `GET /role/1/permissions` 与一条**根本不存在**的路径都回 **401** ⇒ 认证在 Filter 层，**401 不能证明映射存在**，别拿它当证据；② 同一份 api-docs 里 `PermissionTreeVO` 的 schema **没有 `children`**，而 `DeptTreeVO` 有 —— 读源码 `RoleServiceImpl:152-157` 证明 `children` 是真在填的，所以**springdoc 的自引用字段会漏，schema 不能当响应体的 oracle**。）
+- admin dev server 日志读到 `16:52:00 page reload api-client/src/modules/user.ts` / `16:53:00 hmr RoleManage.vue` / `17:02:03 hmr RoleManage.vue` ⇒ 前端也不是旧包；`api-client` 的 `main` 直指 `src/index.ts`（无 dist 陈旧问题）；`main.ts:27 app.use(ElementPlus)` ⇒ `el-drawer` 与 `v-loading` 都是注册过的，不是"组件解析失败"。
+
+代码级抓到的一处真不一致（`RoleManage.vue:264`）：**回显喂的是字符串，保存喂的是原值**。`assignedIds` 为了做孤儿判定被 `String(id)` 化，`originalOf` 存的是后端回来的原始数字 Long；`onAssignSubmit()` 走 `originalOf.get(key)` 取回原值，而 `openAssign()` 直接把**字符串数组**给了 `setCheckedKeys` —— `node-key="id"` 上是数字。两边同源才对，已改为 `filter(...).map(id => originalOf.get(id)!)`，并把局部接口签名放宽成 `Array<string | number>`。门禁：`vite build` **EXIT=0 / 6.88s**。**⚠️ 追补③更正（同日 19.22 / D71 ⑥）：本段那句"字符串 vs 数字会错配"是错的** —— `tree-store.mjs:184` 对节点键做 `.toString()`，而 `checkedKeys` 是普通对象（键天生字符串），两侧都在字符串域；这次同源化改动无害，但它不是"点了没反应"的原因，也不是"一个都勾不上"的原因。
+
+**如实说边界**：这一处能解释"抽屉打开但一个都没勾上"，**不能**解释"抽屉根本不出现"。后者只可能是 `openAssign` 的 `catch` 把抽屉关掉（两条请求任一非 2xx：`/permission/tree` 或 `/role/{id}/permissions`），而区分这两者必须要会话里的状态码 ⇒ 现象**未结案**，交回用户四条读数（抽屉是否闪一下 / 两条请求的状态码与响应体 / console 有无 `[request]` 行 / 右上有无红色 toast 文字）。
+
+### 八、根因结案（同日 17:5x，任务 #119 / 决策 **D70** / 报告 **19.21** / 新立并修 **API-46**）
+
+用户回四条读数：**抽屉没闪**；Network 里 4 个 `permissions` 请求全 **HTTP 200**（initiator `user.ts:117`，各 0.4 kB）；console 只有浏览器插件噪声（`content.js` 的 `adjustPosIfNecessary`），**没有任何 `[request]` 行**；右上无红色 toast。⇒ **HTTP 层与权限层被排除**：请求成功、拦截器没 reject、`openAssign` 的 `catch` 没走到，`drawerVisible` 一定是被置成了 `true`。那么缺陷只能在渲染层。
+
+根因链（4 步，都有源码出处）：
+
+1. `frontend/packages/shared-styles/src/element.css` 里 `.dv-page > * { position: relative }`（特异度 0,1,0）与 Element Plus 的 `.el-overlay { position: fixed; inset: 0 }`（同为 0,1,0）**特异度打平**，谁后加载谁赢。`apps/admin/src/main.ts` 里 `element-plus/dist/index.css` 在 **第 5 行**、`@dataviz/shared-styles` 在 **第 8 行** ⇒ **我们那份后加载 ⇒ 赢**，`.el-overlay` 的 `fixed` 被顶成 `relative`。
+2. Element Plus 2.14.5 里 `appendToBody` 的默认值是 **`Boolean` = false**（`es/components/dialog/src/dialog.mjs:14`），而 overlay 的 Teleport 目标是 `appendTo !== "body" ? false : !appendToBody` 决定的 `disabled`（`drawer.vue…setup_true_lang.mjs:50`、`dialog.vue…:60`）⇒ 默认 **不传送到 body，就地渲染**。
+3. 就地渲染 ⇒ `.el-overlay` 正好是 `.dv-page` 的**直系子节点**，被第 1 步命中；一个 `position: relative` 且高度为 0 的普通块，里面躺着 `absolute` 定位的抽屉 ⇒ **DOM 里有、屏幕上没有**。
+4. 这条链路不会产生任何 console 报错，所以是"接口都发了、界面什么都不出现"这个特定形状。
+
+影响面（不是 AM 抽屉自己的 bug，是**页面级缺陷**）：admin 9 个 `.dv-page` 视图里 **7 个**含 `el-dialog`/`el-drawer`，pc-web 7 个里 **3 个**含；全仓 `append-to-body` **0 处使用** ⇒ 这 10 个页面的弹窗/抽屉此前应当**同样打不开**，只是没人报过（"点击返回概览按钮无响应"之类旧现象很可能同源）。
+
+取舍与改动：不去给 10 个页面逐个补 `append-to-body`（那是把同一个坑挖 10 遍，且新页面一定会再踩），而是**删掉 `.dv-page > *` 这条规则**，把抬层的职责交给氛围底本身 —— `.dv-page::before` 加 **`z-index: -1`**。原理：负层级子元素绘制在父元素自身背景之上、内容之下，而祖先背景永远先画，所以渐变底仍压在渐变之上不需要每条 `> *` 都 `relative`。
+
+回归自查：`.dv-page` 后代里唯一的 `position: absolute` 就是这条 `::before`；`LoginView` 用的是 `.login-view`（显式 `relative`，且不是 `.dv-page`），不受影响；`--dv-grad-page` 仍在 `::before` 上，视觉不变。
+
+门禁：admin `vite build` **EXIT=0 / 7.55s**；pc-web **EXIT=0 / 16.21s**；构建产物 CSS 里 **含 `z-index:-1`**、**不再含 `.dv-page > *`**。
+
+**运行时取证仍为零** ⇒ 交回用户三条：N1 硬刷新后角色页点「分配权限」应右滑出且**库里已授项是勾上的**；N2 同页点「编辑」/「新增角色」弹窗应出现（**顺带修好的既有缺陷**）；N3 页面渐变底仍可见（证明没把 `-1` 修成"渐变没了"）。
+
+如实记录两处方法论（已进 D70）：**401 不能证明映射存在**（认证在 Filter 层，不存在的路径也回 401，要用 `/v3/api-docs` 的路径表）；**springdoc 的自引用字段会漏**（`PermissionTreeVO.children` 在 schema 里缺失而 `DeptTreeVO.children` 有，但源码确实在填 ⇒ schema 不是响应体的 oracle）。
+
+已登记未验证的残余风险：`.dv-mourning { filter: grayscale(100%) }` 会为后代**创建包含块**，理论上会让就地 overlay 的 `fixed` 退化为相对该根容器定位 —— 本轮没有哀悼模式下的读数，不宣称它安全。
+
+### 九、回显由"严格"改为"联动"（同日 18:2x，任务 #121 / 决策 **D71** / 报告 **19.22**）
+
+用户回报「权限分配点击父级节点，子节点不会被选中」。**先说清楚性质：这不是缺陷，是我在 D69 ④ 主动选的取舍** —— `check-strictly` 的语义就是父子互不牵连，我当时判断"忠实回显 > 少点几下"，把代价放在了用户侧。这句反馈的实际内容是"这个代价我不付"，所以处置是把代价挪回界面侧，而不是解释设计理由。
+
+真冲突只有一处：**回显方向**（库里那份数据映射成勾选态时会不会被放大）。交互方向从来不构成风险。`element-plus@2.14.5` 读源码定下四条判据：
+
+1. `tree-store.mjs:171-206` 的 `_setCheckedKeys` 按**层级升序**遍历，命中列表的**非叶节点**执行 `setChecked(true, true)`（`deep=true` ⇒ 向下扩给整棵子树）⇒ **联动模式下回显只能喂叶子**，喂父级码就是强行勾中它整个子树。
+2. 同段 `cacheCheckedChild` 先把这些后代写进 `cache`，于是 `:186` 那句"不在列表里就把勾着的取消"对它们**永久失效** ⇒ 上面那个扩权在实现层面救不回来（不是"顺序换一下"能解决的）。
+3. `node.mjs:29-48` 的 `reInitChecked` 只在非严格模式下向上传播：**子级全勾 ⇒ 父级 checked，部分 ⇒ indeterminate** ⇒ 只喂叶子时父级状态是算出来的，不需要自己维护。
+4. `tree-store.mjs:124-136` 的 `getCheckedNodes(leafOnly=false, includeHalfChecked=false)` ⇒ **半勾的父级不进 `getCheckedKeys()`** ⇒ `withAncestors()` 从"给 strict 打的补丁"变成联动模式下的**必需品**（不补就是"接口放行、菜单看不见"，D57 反方向）。这一半原样保留。
+
+剩下唯一表达不出来的状态：**库里授了父目录码、其下子项一个都没授** —— 勾上会扩权，装作没授会在保存时被"先删后插"静默收回。处置是**让它显形**：`parentOnlyIds`（在库 ∩ 树、非叶、且不是任何已授项的祖先）挂「仅本级」`el-tag`，保存时原样并回 payload；同时 `onCheck(node)` 用新增的 `subtreeOf` 做**双向亲属判定**，用户点到该节点/其祖先/其子树内任意一项就作废这条保留 —— **不清的话这条授权在界面上永远撤不掉，那才是真 bug**。计数由「已选 N 项」改为**「将保存 N 项」** = `withAncestors(勾中) ∪ parentOnlyIds ∪ orphanIds` 经 `Set` 去重后的条数（改联动后报"勾选数"就是报假数；去重也是新出现的需要，"仅本级"会和补出来的祖先重叠，重复 id 会撞 `sys_role_permission` 唯一键）。
+
+**另更正我上一轮（§七）写下的假判据**：那句"字符串化 id 喂 `setCheckedKeys` 而 `node-key` 上是数字 ⇒ 匹配靠运气"**不成立**，`tree-store.mjs:184` 对节点键做 `.toString()`、`checkedKeys` 又是普通对象，两侧都在字符串域。那次改动方向无害，但我据此解释"一个都勾不上"属于**过度归因**。规矩入 D71 ⑥：**判断"类型不一致会不会坏"要看比较两侧各自的归一化动作，不是看两边的声明类型。**
+
+改动面：`frontend/apps/admin/src/views/RoleManage.vue` 一个文件 + `locales/zh-CN.json` / `en-US.json`（改 2 键 + 新 1 键）。**后端与 api-client 零改动 ⇒ 不需要重启任何服务**，硬刷新管理端即生效。
+
+门禁读数：`vite build` **EXIT=0 / 7.84s**；`dist/assets/RoleManage-*.js` 内 `strictly` **0 命中**（prop 确实摘掉了）；`index-*.js` 内「仅本级」2 处 / `this level only` 2 处 / 「将保存」1 处；zh/en 键扁平化比对 **248/248，双向零差集**。**运行时零取证**（要会话，D36）⇒ 判据 P1~P6 交回用户，见报告 19.22.4。三份台账同步：本文件、docs/10（D71 + AM6 + 变更记录追补③ + 风险表两条就地更正）、docs/12（19.20.2 加更正提示、19.20.5 的 M1 两句就地更正、新章 19.22）。
+
+## 2026-09-28 · 阶段 AN：三条"待执行"SQL 由助手执行完毕（任务 #122，决策 **D72** / 报告 **19.23**）
+
+用户一句"需要我跑的sql你自己去跑就可以"，把 D30 的"SQL 我写、用户跑并回报"改成"助手自己跑"。**边界要说清：交出的是执行，不是判断** —— 需要产品拍板的那两条（`2026-09-22-role-grants-draft.sql` 谁拿哪些码、`2026-09-23-api30-wildcard-and-role2-unlock.sql` 属 #61 鉴权矩阵）**照旧不跑**。凭证这条走"不提取、不外泄"：口令只在容器内部由 `$MYSQL_ROOT_PASSWORD` 交给 `mysql` 客户端，全程不读、不打印、不探测它的值。
+
+### 一、执行前先读现状 —— 这一步抓出两条与台账不符的事实
+
+| 读数 | 值 | 与台账的关系 |
+| --- | --- | --- |
+| `system:dept:%` 码行 | 0 | 与"待执行"一致 |
+| `sys_permission` 有效行 | 39 | 与补丁注释"39 → 43"一致 |
+| 授权数 super_admin / admin / user | 39 / **27** / 10 | ⚠️ 补丁注释写"期望 admin **20**"是**陈旧值** ⇒ 这类判据该看**增量**不看绝对值 |
+| `admin.phone` | **空串** | ⚠️ 台账记"待执行"，实际 901~905 五个号在灌数批次里**早就有了** ⇒ 补丁**已执行过一半** |
+| `idx_phone` | 不存在 | 同上 |
+
+**这条是本轮最有价值的产出**：`admin` 没有手机号，正是 AG 那批短信登录判据**当时一条都不可能通过**的直接原因（免登面按手机号定位账号，查不到只能回"账号不存在"）。**登记为数据缺口，不登记为代码缺陷** —— 不需要拿新证据去解释旧症状，旧症状的因就在这一行数据里。规矩：**"待执行"是一种状态，不是事实**；台账挂着 ⬜ 的脚本，跑之前先读一遍现状。
+
+### 二、备份先行（D30）
+
+`db_user.zz_bak_20260928_sys_permission`（39 行）、`zz_bak_20260928_sys_role_permission`（76 行）、`zz_bak_20260928_sys_user`（6 行），全部 `CREATE TABLE IF NOT EXISTS ... AS SELECT`。**用 `IF NOT EXISTS` 而不是 `DROP + CREATE`**：重跑会把上一次那份快照覆盖掉，而"上一次之前"的状态就永久丢了 —— 快照的唯一价值就是它不可变。
+
+### 三、三条脚本的执行与实读
+
+**① `2026-09-28-tenant-column-audit.sql`（只读，三段）**：
+- ① 期望 21 张，实得 **24 张**（跑完本轮后 26）—— 多出的全是 `zz_bak_*` **备份表**（本就没有租户列、也不在任何 MyBatis 映射里）⇒ **代码 `IGNORE_TENANT_TABLES` 的 18 项与真实 schema 零分叉**，AL1 那次补齐经受住了真库校对。**读法规矩：这个体检要按"表名集合"比对，不能按"命中行数"比对**，否则每次 D30 备份都让它"看起来变了"。
+- ② 29 张业务表里 **28 张 `null_tenant_rows = 0`**，唯一例外 `db_model.dataset` 返回 **`NULL`** —— 它 `COUNT(*) = 0`，**空集上 `SUM` 给 `NULL` 而不是 0，是 SQL 语义不是脏数据**。写判据的人要把"0"与"没有可判的行"分开，否则读的人会拿一个 `NULL` 当新缺陷去查。
+- ③ 28 张表租户取值**全部单档 `[1]`** ⇒ **数据从未按租户 2 种过**，"admin 登录后看不到东西"这条**数据方向**的排查正式关闭。
+- 顺带一条库存事实（不下结论，只登记）：`db_model.dataset` 是**空表**，而同库 `model_dataset` 有 4 行。
+
+**② `2026-09-23-dept-permissions.sql`（数据变更）**：四码落 id **40~43**，`type` 2/3/3/3；四个 `HEX(permission_name)` 与期望**逐字相符、无一处 `3F`**（D31 这次没有复发）；父链 `list → system`、`add/edit/delete → system:dept:list(40)`；有效码 **39 → 43**；授权 **super_admin 39→43 / admin 27→28（只多读码）/ user 10 不变**。**幂等性没有靠重跑证明**：`uk_permission_code(permission_code,deleted)` 与 `uk_role_permission(role_id,permission_id)` 从 `information_schema.STATISTICS` 直接读到 ⇒ 重跑必为 no-op，**机制证据强于一次抽样**。
+
+**③ `2026-09-23-sms-phone-login.sql`（补跑剩余半段）**：`admin.phone = 13912345678`（`HEX` = `3133393132333435363738`）+ `idx_phone` 建成**普通**索引（`NON_UNIQUE = 1`，符合"刻意不建唯一索引"：`phone` 默认 `''`，多个未填号会互撞）；校验 3a 重复号 **0 行**、3b 六号齐且互不相同、3c 无手机号账号 **0 行**。
+
+**④ 顺带跑掉 19.17.2 的部门存量五条**：A 跨租户父子 / B 自指 / C 父级缺失或已删 / D 2-环 / E 用户 `dept_id` 悬空或跨租户 —— **全部 0 行**（`sys_dept` 有效 5 行，`COUNT(*)`，D35）。风险表里"存量脏数据靠界面清不掉"从"大概率没有"升级为**实测为 0**；风险条目照留（代码只拦"以后再写坏"这件事没变，变的只是这次不必猜）。
+
+### 四、执行手法的一条更正：脚本"能给人跑"不等于"能给程序跑"
+
+原脚本 ②③ 设计成"输出一段 `copy_this_union` 文本、人复制后再执行一次"。程序化跑这条 round-trip 连续两次失败：`mysql -B` 会把结果里的换行**转义成字面 `\n`**，贴回去就是一串 `... ALLSELECT ...` 的 1064；改用 shell 里 `-e "..."` 重写生成器，单双引号与反引号三层嵌套同样 1064。**改法是把"生成 + 执行"都留在服务端**：`SET @sql = (SELECT GROUP_CONCAT(... SEPARATOR ' UNION ALL ')); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;` —— 一次执行、无转义面，`SET SESSION group_concat_max_len = 200000` 仍须在同一会话里（heredoc 算同一会话，逐条分开调用不算）。另一条：生成器要排除 `zz_bak_%`，否则快照表自己会被算进业务表面板。
+
+### 五、门禁与残余
+
+| 项 | 读数 |
+| --- | --- |
+| 代码改动 | **零**（后端 / 前端 / 样式全零）⇒ **本轮不产生任何重启面** |
+| 数据变更面 | `sys_permission` **+4 行**、`sys_role_permission` **+5 行**、`sys_user` **1 行 UPDATE** + **1 个普通索引** |
+| 回滚 | 部门码 = 补丁第 7 节两条 `DELETE`（先删授权再删码）或快照回补；手机号 = `UPDATE ... SET phone='' WHERE username='admin'` / 从 `zz_bak_20260928_sys_user` 回补；索引 = `DROP INDEX idx_phone ON db_user.sys_user`；体检 = 只读无需回滚 |
+| 运行时后果 | 改库**不驱逐 Redis 会话快照**（D55 边界①）⇒ role 2 账号要**重新登录**才拿到 `system:dept:*`（role 1 走 `role_code` 短路不受影响）；受影响的正是 D66 ⑦ 那条"用户页部门树要读 `/dept/tree`"的联动。短信登录不受快照影响（免登面本来无会话） |
+| 仍未关闭 | ① role 2 重登录后部门页可见 + 部门树不 403；② 短信登录端到端（#100）；③ 抽屉 P1~P6 与 N1~N3（#120）；④ ~~其余 16 个服务仍未带 AL 修复~~（⏩ §六 按 D33 实测**收窄为 8 个端口**，原口径过期）；⑤ `role-grants-draft` / `api30-unlock` 两条等拍板 |
+
+### 六、追加 AN7：应用户"重新梳理哪些需要验证"，先把部署面证据链重跑一遍
+
+台账里每一条"需重启"都是**当时**的读数 —— 进程被用户重启过、class 戳每次 IDEA 增量编译都在变，所以这类断言必须重测才能用来排验证清单。**三组实测**（编译/进程面，运行时仍零取证）：
+
+| 手段 | 读数 | 结论 |
+| --- | --- | --- |
+| 17 端口 → PID → `StartTime` | 16 个进程 09-28 **16:00:44~16:02:01**，唯 **8082 = 17:23:27** | 8082 是最新代码的孤例 |
+| `.class` 戳 vs 本进程启动 | `EtlExecutionServiceImpl` 16:02:01、`DatasourceServiceImpl` 16:01:56、`QueryServiceImpl` 16:00:59、`ScreenServiceImpl` 16:01:17、`RoleController` 17:23:26 ⇒ **全部 ≤ 各自进程启动** | **AK2/AK3/AK4 + AM1 已在线上**（含 `PublicConfig*` 09-23 03:29 ≤ 8093 的 16:01:24 ⇒ **AF 推送也在线上**）；台账"这批需重启"对 8082/8083/8084/8086/8088/8093 过期 |
+| `MybatisPlusConfig` | 源码 16:23、class **16:39** ⇒ 晚于除 8082 外全部进程 | **唯一真实待重启面** |
+| 四个"09-23 class"反证 | gateway 16:25 / auth 17:59 / admin 03:29 / alert 03:30，`find <mod>/src -name '*.java' -newermt <那个戳>` ⇒ **四个模块各 0 命中** | **虚警**：旧 class = 没再改过源码，不是没重编 ⇒ 不构成重启理由 |
+| 影响面归属 | `grep -l common-mybatis */pom.xml` = **16 个模块**（gateway 唯一不依赖）；清单里每张表按源码归属再切一遍 | **16 收窄到 8** = 8084/8087/8088/8090/8091/8092/8095/8096；`datasource_metadata`/`sys_oauth_client`/`service_health` 三张在 `common` 外**无命中 ⇒ 记为"未归属"，不等于"已排除"** |
+
+**由此重排出的四档验证清单**（判据原文在各编号章节，这里只重排**门槛**）：**A 只需刷浏览器**（#120 抽屉 N1~N3 / P1~P6 / M3~M4 —— `dist` 18:24 > 源码 18:23，已是最新，硬刷新即生效）；**B 只需登录**（#100 短信 S1~S6、#61/#90 鉴权矩阵与 `viewer01` 反向用例、#79 登录三步、部门页可见性、以及**跑 role 2 判据前必须先重登一次**）；**C 需 8 端口里对应那一个重启**（AL3 那批登录态 500 症状、#70 里"通知记录落库"那一环）；**D 不是测试是决策**（#75/#81/#82/#83/#84/#86/#87③/#91/#77 + 两条未跑补丁）。
+
+**这一节真正想登记的判断**：A+B 覆盖了本轮新增的**全部**界面与登录判据 ⇒ **"权限分配抽屉 + 部门管理 + 短信登录"这一大批验收一个服务都不用重启**。把 C 当成前置去等，会把可跑的判据误挂成阻塞；反过来 C 那 8 个端口没重启也**不影响** A/B 任何一条结论的有效性。这类"门槛归错档"比缺陷更贵 —— 它让用户和我都在等一件不必等的事。
+
+**两条做实/自查**：① "AM 在 8082 线上"不能只看 `RoleController` 一个文件 —— 实测该模块**最新 5 个 class 全在 17:23:26.x**、`find user-service/src -newermt '2026-09-28 17:23:27'` **0 命中**、`target/classes/mapper/RoleMapper.xml` 与源码同戳且内含 AM 新增语句，才算成立。② **我自己踩了一条错判据**：先用 `ls -l --time-style=+%H:%M:%S` 取时间再按字符串比 —— 那个格式对近期文件**只显示时分秒不显示日期**，于是"5 个文件比进程新"全是别的日期的旧文件。**规矩：判新旧只用 `find -newermt`，`ls` 的时间列不参与判断。**
+
+三份台账同步：本文件、docs/10（**D72** + 新章 **阶段 AN**（AN1~AN7 + 门禁表）+ 变更记录一行（含 ⑧）+ AJ1/AJ4/AL1/AL2/AL3 五处就地更正 + 部门存量风险行就地更正）、docs/12（结论摘要 AN 头注追加 AN7 一句 + 新章 **19.23**，含 19.23.1~19.23.9，其中 19.23.8 的"仍未关闭④"就地划线更正）。**git 未提交**（未被要求）；本轮**代码零改动**，仅台账与查询。
+
+---
+
+## 2026-09-28 · 阶段 AO：通知渠道配置页（任务 **#124/#126/#127**，决策 **D73** / 报告 **19.24**，新立并修 **API-47 / API-48**，新登记 **API-49**）
+
+用户诉求："帮我把EMAIL / SMS / WEBHOOK / DINGTALK的配置页也做出来，还有什么通知渠道也可以加进来"。**改动共 25 个文件**（后端 19 + 前端 6，全部落在 `alert-service` 与 admin 端），**数据库零改动**（本轮只跑只读 SELECT），**权限码零新增 ⇒ 无 SQL 补丁、无需重登**，待重启面只有 **alert-service(8090)**。
+
+### 一、起点核查：这一层原来整层不存在
+
+派发侧（`NotifyDispatcher`）一直真读 `db_alert.notify_channel`，但**没有任何界面写过这张表**，库里的行全靠 SQL 灌。而当时唯一的 `NotifyChannelController` 长这样：注入 `NotifyChannelMapper`、把 `NotifyChannel` **实体**直接返回 ⇒ `config` 里的群机器人 token、SMTP 密码、短信 `accessKeySecret` 对任何 `alert:read` 账号明文可见（**API-47**）。所以这批不是"给页面加几个字段"，是端点、契约、脱敏、校验、守卫、试发六件事一起新建。
+
+实读到的数据形状（决定后面几条判据的写法）：`notify_channel` 4 行（901 EMAIL 启用 / 902 DINGTALK **停用** / 903 SMS **停用** / 911 WEBHOOK 启用且 `config` 含 `127.0.0.1`）；`alert_rule` 8 行，其中 901~905 `enabled=0`、911/912/913 `enabled=1`，引用统计 = EMAIL←901/902/904/911、DINGTALK←901/903、SMS←902/905、WEBHOOK←911/912/913。**列名要记一笔**：表里是 `config`（不是 `config_json`），`alert_rule` 是 `enabled`（不是 `status`）—— 第一版查询就撞在这两个名字上。
+
+### 二、后端 · 契约层（10 文件，`engine/notifier/`）
+
+- **新** `ChannelField.java`(134) — 配置项值对象。`public static final String MASK = "***"`；8 个 `KIND_*`（text/password/number/switch/list/select/json/textarea）；链式修饰 `required() secret() url() label() placeholder() defaultValue() options()`；`:50-51` 那条默认值是关键决定 —— `labelKey` 缺省为 `"channel.field." + key`，**后端只回文案键不回中文串**（翻译在前端，否则切英文时界面只剩半截），而默认键的意义是"新渠道忘了配文案时界面退化成显示 `smtp`/`signName`，而不是崩"。`static list(ChannelField...)` 是包私有糖，只为让六个 notifier 的声明读起来像一张表。
+- `AlertNotifier.java`(44) — 加两个 **default** 方法：`fields()`（空表）与 `deliverable()`（true）。用 default 而不是抽象：`fields()` 为空是合法状态（有些渠道真的不需要配置项），而抽象方法会把"再加一个渠道"变成一次跨文件改动。
+- `EmailNotifier.java`(74) — 8 项声明（smtp/port/ssl/username/password/from/to/subject，`port` 默认 465、`ssl` 默认 true、password 标 `secret`）+ `deliverable()=false`。类注释写了补齐路径（联网后引 `spring-boot-starter-mail` + `JavaMailSenderImpl`），**离线 Maven 没这个 starter 才是它不发信的原因**，不是偷懒。
+- `SmsNotifier.java`(69) — 6 项，`provider` 是 `select`（aliyun/tencent/huawei），`accessKeySecret` 标 `secret`；`deliverable()=false`（缺服务商凭据）。
+- `WebhookNotifier.java`(103) — `url`(required+url) 与 `headers`(json) 两项；发送时把 `headers` 这个 Map 逐条 `headers.set(...)`。注释里的理由是产品性的：**只支持固定头的话，能接的系统就只剩不设防的那几个**。
+- `DingTalkNotifier.java`(131) — 3 项（webhook required+secret+url / mobiles list / atAll switch）；`recipientOf` 把 `access_token=` 之后遮成 `***` —— 机器人地址本身就是口令，不能进 `alert_notify_log.recipient`，也不能显示在界面上。
+- **新** `WeChatNotifier.java`(124) — 企业微信群机器人 2 项；`mentioned_mobile_list` **仅在非空时**写入 body（空数组会被服务端判为格式错误）；发送后解析 `errcode`。
+- **新** `FeiShuNotifier.java`(154) — 飞书自定义机器人 2 项，`secret` 是**可选加签**：`key = timestamp + "\n" + secret`，对**空字节数组**做 HmacSHA256 后 Base64（官方口径：签的是 body 而非 URL）；成功判据同时接受 `code` 与 `StatusCode` 两种字段名。
+- `NotifierSupport.java`(75) — `formatMessage` 改为按实际有无值决定要不要追加「规则ID」「当前值/阈值」两行；此前无条件拼接会把 `null` 打进消息正文，用户看到的就是"告警里写着 null"。
+- `OutboundUrlGuard.java`(92) — 由包私有提为 **public**，目的是让服务层的**保存路径**复用同一条判据（19.24.7）：保存侧给内联红字，发送侧挡"直接写库的行"。判据本身没动：挡 loopback/any/link-local/multicast，**RFC1918 刻意放行**（本项目就是内网部署）。
+
+三家群机器人共用的一条判据写进发送侧，值得单独记：**HTTP 200 不等于送达** —— 钉钉/企业微信/飞书在 token 无效或被限流时都回 200 + 非 0 码。只看状态码会把"一条都没发出去"记成"通知成功"。
+
+### 三、后端 · 服务层与端点（8 文件）
+
+- `dto/NotifyChannelDTO.java`(27) — 写入形状（id/name/type/enabled/**config 是 `Map<String,Object>`**）。`config` 在 DTO 与 VO 两侧都是 Map 而不是字符串：口令位要在服务端逐字段判断（脱敏、MASK 合并、按 kind 强制），如果传的是字符串就得在每个判断点各解析一次，而"解析点分散"正是脱敏漏掉某一处的常规来路。
+- **新** `vo/ChannelSchemaVO.java`(26) — `{type, deliverable, fields[]}`，`GET /channel/schema` 的载荷。
+- **新** `vo/ChannelTestVO.java`(31) — `{success, channel, recipient, error, elapsedMs, deliverable}`。这个 VO 存在的原因是 `alert_notify_log.event_id` NOT NULL 而**一次测试没有事件** ⇒ 结果只能作为数据返回，且失败要表达成 `success=false` 而不是 500。
+- `vo/NotifyChannelVO.java`(42) — `config` 是 `Map<String,Object>`（读侧 secret 已换 `"***"`），`deliverable` 用 primitive，但 **`shadowedByOtherRow` 用 `Boolean` 不是 `boolean`**：这三态是"没算/无遮蔽/有遮蔽"，primitive 会把"没算"塌成 false，界面上就永远不显示红标签。
+- `service/NotifyChannelService.java`(32) — 声明 8 个方法（schema/page/detail/create/update/delete/setEnabled/test）。
+- `service/impl/NotifyChannelServiceImpl.java`(516) — 本轮最大的一块。逐条：注册表是 `TreeMap`（按 `channel().toUpperCase()` 键 ⇒ **列表顺序稳定**，前端类型下拉不会因 Bean 装配顺序变来变去）；`MAX_CONFIG_CHARS = 60000` 挡在写库前（MySQL 截断 `config` 得到的是**读不回来的半截 JSON**，比保存失败难修得多）；`normalize()` 按 kind 做类型强制（number→`BigDecimal`、switch→`Boolean`、list→逗号/分号/换行三种分隔符都切、json→`Map`、select→**必须落在 options 内**）并**保留未声明的键**（表单没显示 ≠ 可以删数据）；`resolveFieldValue` 是 MASK 四条规则唯一的实现点；`markShadowed` 的措辞与派发侧严格一致（"每种类型取**启用记录中 id 最小**的那条"）；`delete`/`setEnabled` 的引用守卫会扫 `alert_rule.notify_channels` 并在异常消息里**点名规则**；`test` 走 `syntheticEvent` 构造一条不落库的事件喂给真 notifier。
+- `controller/NotifyChannelController.java`(93) — **整文件替换**。9 个 `R<>` 端点，类级 `@RequiresPermission("alert:read")`，五个写端点 + `test` 标 `alert:write`。**测试发送标 write 的理由**：它真的对外发一条消息（WEBHOOK 就是打出去一次 POST），那是写语义，不该是只读账号能做的事。
+- `entity/NotifyChannel.java`(43) — `type` 的 javadoc 从旧的四值更新为六个真实码。
+
+### 四、后端 · 派发侧的一处行为修复（API-48，在验证自己的模型时顺手抓出来的）
+
+- `engine/NotifyDispatcher.java`(130) — `findEnabledChannel` 原来是 `eq(type).orderByAsc(id).last("LIMIT 1")` **再**判这一条是否启用。排序先于过滤 ⇒ 停用小 id 那条、启用大 id 那条时，读到的还是停用那条，于是**新配置被无声跳过，而 `alert_notify_log.error_message` 写「X 渠道已停用: <旧那条的名字>**，把责任推给错误的行。改成两段：`findChannel(type, true)` 取启用行；取不到再 `findChannel(type, false)` 回查是否存在停用行 —— 有则报"已停用: 名字"，都没有才报"未配置 X 渠道"。五种库状态的真值表在报告 19.24.6。
+
+**这条修复是怎么被撞出来的值得记**：我不是在查 bug，是为了把 `shadowedByOtherRow` 的语义写准而去读派发代码，才发现"取最小 id"和"判启用"的先后顺序反了。**凡是在文档里描述某个行为，就先去读那个行为本身** —— 写台账比写代码更容易暴露"我以为的实现"。
+
+### 五、前端（6 文件）
+
+- `frontend/packages/shared-types/src/alert.ts` — 追加 `ChannelFieldKind` / `ChannelField` / `ChannelSchema` / `NotifyChannelConfig` / `NotifyChannelPayload` / `ChannelTestResult`。两处口径写进注释：`type` 是 `string` **不是联合类型**（后端加渠道时前端不该需要改类型）；它**不能**和已有的小写 `NotifyChannel` 联合（`'email'|'sms'|...`）合并 —— 后者是"规则里勾选的渠道名"，两个词汇不是一回事。
+- `frontend/packages/api-client/src/modules/alert.ts` — 追加 7 个函数（`listChannelSchemas` / `pageNotifyChannels` / `createNotifyChannel` / `updateNotifyChannel` / `deleteNotifyChannel` / `toggleNotifyChannel` / `testNotifyChannel`）与 `CHANNEL_SECRET_MASK = '***'`；分页沿用本模块 `asPage(res.data)` 口径，不另写空值处理。
+- **新** `frontend/apps/admin/src/views/ChannelConfig.vue` — schema 驱动的配置页。列表：名称 / 类型（本地化渠道名 + 原始码；`deliverable=false` 挂「通道未接入」tooltip；`shadowedByOtherRow` 挂「同类型另有 ID x 的启用配置」红标签）/ **已配置项（只显示键名，永不显示值）** / 状态开关 / 更新时间 / 编辑·测试·删除三颗行内按钮 + 工具栏「新增渠道」（**四颗写动作都挂 `v-permission="'alert:write'"`**；新增那颗还额外 `:disabled="!schemas.length"`）。表单：8 种 kind 各一控件，必填在前端再判一遍并落到**该输入框下**的红字（服务端同判据，冲突时以服务端为准），`list` 用 `allow-create`（回车/逗号/分号/换行都能加项），secret 位初始值 `***` + 灰字「已保存（保持原样则不改，清空并保存即撤销）」，换类型时同名键留住不重填。两个界面决定对应 D71 那条教训（常规控件语义是需求，代价由界面消化）：① 行内开关用 `:model-value` + `load()` 在 `finally` ⇒ **被拒绝后开关自己弹回**，不留"界面说启用着、库里没启用"；② 测试用**结果弹窗**而不是 toast，因为 `error` 可能是长文本（SSRF 判据、渠道 body 码），toast 会把原因截掉。`typeLabel()`/`fieldLabel()` 都走 `te()` 回落 ⇒ 未翻译的渠道退化成显示原始键而不是显示 `channel.field.xxx`。
+- `frontend/apps/admin/src/router/index.ts` — `audit` 之后加 `channels`（`component: ChannelConfig.vue`，`meta: { titleKey:'nav.channels', icon:'Bell', group:'nav.groupSystem', permission:'alert:read' }`）。
+- `frontend/apps/admin/src/locales/zh-CN.json` + `en-US.json` — 各 **+59 键**：`nav.channels` + `channel.*` 58 键（30 条界面文案 + `field.*` 22 个字段名 + `typeName.*` 6 个渠道名）。两端展平后 **307/307、双向 diff 为空、无重复键**（AM6 收官时 248，248+59=307 自洽）。`channel.testNote` 明确写着"测试发送不会写入通知记录表"，避免用户去通知记录里找那条测试。
+
+### 六、编译期自己撞的三发（记下来是因为都是"看起来对"的写法）
+
+① `OutboundUrlGate.allowed(...)` —— 类名记错（真实是 `OutboundUrlGuard.requireAllowed`）；② `syntheticEvent` 里用 FQN `com.dataviz.alert.entity.AlertEvent` 而没有 import；③ `NotifyChannelVO.shadowedByOtherRow` 写成 primitive `boolean`（就是第四节那个三态问题，编译期不报、只有读侧语义会错）。第三条是**语义错**而不是语法错，靠编译发现不了 —— 是复核 VO 时发现的。
+
+### 七、三条刻意没做（含 API-49 为什么不顺手修）
+
+- **不补设计端的规则表单。** `apps/pc-web/src/views/alert/AlertRuleList.vue` 的"新增/编辑"仍是 `ElMessage.info(coming soon)` ⇒ 渠道能配了，"哪条规则用哪个渠道"仍然只能改 SQL。半环已接、另半环没接，这是**功能缺口不是缺陷**，登记为 D73⑨ 等拍板（做它就是规则表单：取数表达式 + 阈值 + 静默期 + 渠道多选）。
+- **不修 API-49**（本轮实读数据时抓出来的另一发）：`AlertRuleList.vue` 读的 `status/level/condition/notify/lastFiredAt` 与 `AlertRuleVO` 的 `enabled/severity/condition(String)+threshold/notifyChannels` **不同源**，症状是 911~913 明明启用而开关恒显示"关"、级别列恒「提示」、条件列渲染成 `undefined undefined undefined`、且两次点击都 toast「状态已更新」。**为什么不顺手修**：改开关那一行是一行代码，但改完条件列/级别列照旧错 ⇒ "半修"比"没修"更难解释；前端全对齐 = 规则表单范围（上一条），后端加 `status/level` 兼容字段 = 两套词汇长期并存（API-26 型分叉会重长回来）。交出的是判据与两条路，不是自作主张。
+- **不动演示数据、不播种新渠道。** id=911 那条回环 webhook 保持原样（改它等于改演示语义；后果如实登记：配置页保存它会得 400，三条启用规则的 WEBHOOK 那一路会记 FAILED —— 这也是 #70 的**排查前置**，不是链坏）；WECHAT/FEISHU 只进注册表不建行（要不要这两条是业务决定）。
+
+由此得出一条**要贴在 #70 前面的结论**：当前库里 EMAIL 有启用行但 `deliverable=false`、WEBHOOK 唯一启用行是回环地址、DINGTALK/SMS 的启用行都停用着 ⇒ **三条启用规则的通知路径 100% 会写 FAILED**。所以"通知记录一片红"是预期读数；先按 `error_message` 分辨"通道未接入 / 地址被 SSRF 判据挡 / 渠道已停用"三种原因，再决定动不动数据。
+
+### 八、门禁读数
+
+| 门禁 | 结果 | 证据层 |
+|---|---|---|
+| `mvn -o -q -pl alert-service -am -DskipTests compile` | **EXIT=0**（两次；中途 3 处编译错见第六节） | 编译层 |
+| `pnpm --filter @dataviz/admin exec vite build` | **EXIT=0**，`ChannelConfig-*.js` **13.53 kB / gzip 4.25 kB** | 构建层（`vue-tsc` 1.8.27 在 TS 5.9.3 下崩，**不充当门禁**） |
+| admin 两端 locale 展平 diff | zh **307** / en **307**，双向为空、无重复键 | 静态层 |
+| dist chunk 字符串取证 | 6 个渠道名 / 22 个字段名 / 「通道未接入」/「已保存（保持原样则不改…）」均落进产物 | 静态层 |
+| `db_alert` | **只读**：`notify_channel` 4 行、`alert_rule` 8 行、`SHOW COLUMNS` 两次 ⇒ 不建备份表、不改列不改行（D30 未触发） | 实读 |
+| 运行时 | **零取证**（要登录，D36） | —— |
+
+### 九、交接给用户（前置：重启 **alert-service(8090)** + 管理端硬刷新 + 登录一次）
+
+九条判据 **K1~K9** 全文在报告 **19.24.13**，摘要：K1 类型下拉应有 6 项（少于 6 ⇒ 8090 还是旧包）；K2 打开 901 应见 `password` 为 `***` 而 `smtp/from/to` 原样；K3 **什么都不改直接保存**后再看仍是 `***` 且测试错误不是"密码不对"（验 MASK 写侧）；K4 清空 password 保存应成功；K5 EMAIL/SMS 测试期望 **`success=false` + 通道未接入**，不是 500 也不是成功；K6 删/停 911 应被 **400** 拒绝并点名规则 911/912/913；K7 新建第二条启用的 WEBHOOK ⇒ 出现「同类型另有 ID x」标签且派发仍用 id 小的那条（同时验 API-48 修复方向）；K8 用 `http://127.0.0.1:18099/hook` 新建应**保存即 400** 且是内联红字；K9 只读账号该页可读、三颗写按钮不出现。**K7~K9 必须先跑 K1**，否则 schema 为空会让后面全是假阴性。另：#120（硬刷新跑 N1~N3/P1~P6/M3~M4）、#100（S1~S6）、#95（T4~T6）、#61/#90（鉴权矩阵 + viewer01）、#70（告警链路，现在多一条 911 回环前置）、#76、#79 仍照旧欠着；role 2 仍需重登才拿到 `system:dept:*`。
+
+### 十、三份台账同步
+
+本文件；docs/10（**D73** 十一条 + 新章 **阶段 AO**（AO1/AO1b/AO2/AO3 + 读数表）+ 关键文件一条 + 变更记录一行 + 已知风险四行）；docs/12（头注一条 bullet ⇒ 缺陷**累计 49 条** + 新章 **19.24**，19.24.1~19.24.14，含 API-47/48/49 三张台账表）。同批更正两处自己写下的东西：AO2 行原本写"两端 locale 各 +30 键"（实测 **307/307、+59**，按测量重述）、已知风险表那三行 AO 行被两个空行从表里切断（表格完整性重查：`|` 计数与列数已核，历史两行的 `\|` 是合法转义不是缺陷）。**git 未提交**（未被要求）。
+
+---
+
+## 2026-09-28 · 阶段 AP：邮件通道接真 SMTP（任务 **#128**，决策 **D74** / 报告 **19.25**，结掉 19.24.14 ④ 的 EMAIL 半条）
+
+**用户诉求**："帮我把邮件的配置完善一下，我需要能发邮件"，追加一句定范围的话：**"依赖只要正确，拉取问题我自己解决"**。这句话把本轮切成两半 —— **坐标与实现的正确性归助手，jar 下载归用户**，所以本文件的门禁读数里"编译通过"这件事**只在 javac 层成立，Maven 层是预期失败**（不是回归）。
+
+### 一、起点核查（读改动前的代码，不读记忆）
+
+HEAD 那份 `EmailNotifier` 的 `send()` 只有一句 `throw new BizException(SERVICE_UNAVAILABLE, NOT_AVAILABLE)`，类注释里补齐路径写得很清楚（"引入 starter-mail + 一个 `JavaMailSenderImpl`，把 `send` 换成真发送即可，渠道配置 smtp/port/from/to/ssl 已按那个形状解析好了"）；`recipientOf` 走 `NotifierSupport.stringList`，**只认 List**。AO 轮（未提交）给它加了 `fields()`（8 项，`ssl` 是布尔开关）和 `deliverable() -> false`。
+
+⇒ 这一轮**不是接一个从没接过的外部系统**，是把一条已登记、已留好形状的桩换成实现。所以风险不在"SMTP 会不会写"，在两处：**(a) 字段契约换形状后老数据怎么读**、**(b) 新依赖会不会动启动面**。两处都有对应产物（第一、三节）。
+
+### 二、依赖：三行 pom，**故意不写版本号**
+
+- `backend/alert-service/pom.xml` — `common-kafka` 之后追加 `spring-boot-starter-mail`，无 `<version>`。根 pom 的 `dependencyManagement` import 了 `spring-boot-dependencies:2.7.18`，且仓库里所有 starter 都不带版本号（对照 `common/common-redis/pom.xml` 核实）⇒ **写版本就是给 BOM 之外再留一份真相**，将来升级时它变成第二个要记的地方。
+- **`mvn -o` 的报错本身就是证据**：`Cannot access central ... spring-boot-starter-mail:jar:2.7.18 has not been downloaded`。这一句同时证明坐标拼写对、BOM 认它、解析出的版本是 2.7.18；**没证的只有字节流**。
+- 实测本地 `~/.m2`：`spring-context-support 5.3.31` 在、`com.sun.activation:jakarta.activation 1.2.2` 在 ⇒ **净需拉三件**：`spring-boot-starter-mail:2.7.18`、`com.sun.mail:jakarta.mail:1.6.7`、`jakarta.mail:jakarta.mail-api:1.6.7`。
+- **命名空间这条要记住**：Boot 2.7 线解析到 `com.sun.mail:jakarta.mail:1.6.7`，用的是 **`javax.mail.*`**（Java 8 可用）；Boot 3 线才是 `jakarta.mail.*`。本仓源码级别 Java 8 ⇒ import 写错直接编不过。实现里是 `import javax.mail.MessagingException`。
+- 静态验证没等用户拉 jar：两个 mail jar 单独取到临时目录（`mailapi/mail-api.jar`、`mailapi/sun-mail.jar`）用于 javac，**没有写进 `~/.m2`**，用户的下载路径不受影响。
+
+### 三、实现：`EmailNotifier.java` 整文件重写（现 226 行）
+
+- **不注入 `MailSender` bean，每次 `send()` 现搭 `JavaMailSenderImpl`**。这是本轮最要紧的一个决定，理由三层：`spring.mail.*` 是全局一份而配置在 `notify_channel.config` 里**每行一份**；JavaMail 的 `Session` 一旦按属性建好就缓存 ⇒ 复用单例等于永远发成"第一条读到的那台服务器"、且改配置不重启不生效；通知量级用不到连接池。写进类注释，因为"为什么不注入"比"怎么注入"更容易被下一个人改回去。
+- **三个超时全设**（`mail.smtp.connectiontimeout` / `timeout` / `writetimeout`，默认 10000ms，可配）。理由不是健壮性而是：派发是 `NotifyDispatcher.dispatch` 里**同步 for 循环串在告警链路上**，一台连不上的 SMTP 会把这条链挂到 OS 默认超时，而链上还挂着别的规则和别的渠道。
+- **加密三态 `ssl` / `starttls` / `none`，不是一个布尔**。465 与 587 的差别只在握手时机，布尔表达不了；25 端口匿名中继是合法场景（所以 `username` 缺位时**不设** username/password，走匿名）。`starttls` 同时置 `starttls.required=true` ⇒ "升级失败降级明文"不是这一档的行为，要明文请用 `none`，那是**明确表达过的**决定。
+- **`mail.smtp.ssl.trust` 只在 `trustHosts` 非空且 `security != none` 时给**，默认值**是空而不是 `*`** —— 自签证书的内网 SMTP 需要这个键，但"关掉证书校验"必须是用户显式填一格的行为。这条带来的开放开关如实登记为残留风险（第九节 ②）。
+- `subject` 键的语义是**标题前缀**（实现是 `前缀 + "[级别] 规则名"`），文案与注释都按这个改（AO 轮文案写的"邮件主题"会让人以为填了就没级别了）。
+- 正文仍走 AO 轮的 `NotifierSupport.formatMessage`，`setText(..., false)` 纯文本 —— 本轮不引入 HTML，也就不引入 XSS 面。中文乱码**没有运行时取证**，属判据 E6，纸面不声明已验证。
+
+### 四、字段契约换形状（8 → 10）**与读侧回退**：本轮唯一会静默坏掉老数据的地方
+
+新增 `security`（select）、`timeout`、`trustHosts`，删掉 `ssl`（switch）。**删一个键在"配置是库里一段 JSON"这种形状上不是免费的**：
+
+- AO 轮定的 `normalize` 语义是**保留渠道未声明的键**（"配置页不该有隐形删数据的能力"）⇒ 老的 `ssl: true` 会**永远留在** `notify_channel.config` 里，即使代码不再声明它；
+- 于是读侧**必须**认它。不认的后果不是报错，是最坏那一类：**一条原本走 SSL 的记录突然变成明文连接**，邮件照样"发送成功"，界面什么都看不出来；
+- `securityOf` 因此是三层回退：**显式 `security` →（缺位）老 `ssl` 键 →（也缺位）端口**（587→starttls、25→none、其余→ssl）。八行真值表在报告 **19.25.4**。
+- 顺带登记一条**保存侧与读侧宽严不同**：`security` 是 select，AO 轮 `coerce()` 会拿 `options()` 精确校验 ⇒ 界面上存不下大写值；但 **SQL 直写那行**能存下任意串，所以读侧自己做了 `toLowerCase` 归一 + 非法值点名 400。**这不是重复劳动**，是"保存校验拦不住直写路径"（API-33 原判断）在字段级别的重现。
+- `to` 双形状兼容：配置页交回数组，手写 SQL 的那些年可能是逗号串 ⇒ `addresses()` 两种都认，分隔符 `[,;\n]` 与服务端 list 的 `coerce` 同一套。**解析后为空 ⇒ 400 并点名是哪条渠道的 `to`**，而不是发一封"看起来发了"的信。
+
+### 五、失败信息：两道 catch，因为两类失败的操作者动作完全不同
+
+| 失败点 | 捕获 | 码 | 消息形状 |
+|---|---|---|---|
+| 组装这封信（helper 构造 + setFrom/setTo/setSubject/setText） | `MessagingException` | **400** | `邮件写不出来（多半是地址格式不对）: <root cause> / from=..., to=...` |
+| 真的发出去（`sender.send(...)`） | `Exception` | **503** | `邮件发送失败: <root cause>（host:port，security，超时 Nms）` |
+| 必填缺失 / 收件人为空 / `security`、`port` 值非法 | 直接抛 `BizException` | 400 | 点名渠道名与键名 |
+
+两条约束：**`rootMessage()` 走到底层 cause**（JavaMail 层层包：`MailException` → `MessagingException` → `AuthenticationFailedException` / `SSLHandshakeException` / `ConnectException`，最外层几乎总是"Could not connect to SMTP host..."这种没有区分度的话，**只有最里层那句能分清是口令错还是端口错还是证书不信**；链成环或末层无 message 时退回类简名，不留 null）；**失败消息里带 host:port + security + 超时**，因为这串会原样进 `alert_notify_log.error_message`（TEXT 列，不怕长），而派发失败时弹窗早关了，日志那行是用户唯一能回看的证据。
+
+### 六、`deliverable` 的语义边界（顺手把这条方法的注释钉死）
+
+EMAIL 的 `deliverable() -> false` 覆盖**删掉**（回到接口默认 true），SMS 保留。同时把语义写进 `AlertNotifier` / `NotifyChannelVO` / `ChannelTestVO` / `NotifyDispatcher` 四处注释：**它回答"这个渠道类型有没有实现"，不回答"这一行配置对不对"**。
+
+⇒ 于是出现一个必须提前解释、否则一定被误判的组合状态：**库里 901 现在 `deliverable=true`（界面不再挂「通道未接入」），但照样发不出去** —— 它的 `smtp` 仍是演示占位值 `smtp.example.com`，`username`/`password` 两个键**根本不存在**（AO 轮实读 4 行的读数）。不该把"这一行没配好"塞进 `deliverable`：那是让类型级的静态属性去做行级的动态判断，同类型两条行一条配好一条没配好时它只能回一个值，那条 tooltip 就开始说假话。
+
+**据此更正了自己写的六处台账**（19.24 的排查顺序段、19.24.9 那句"EMAIL/SMS 期望 success=false"、19.24.13 的 K5 与其警示行、19.24.14 的 ④、19.24.2 的 EMAIL 行与合计句、以及 AD 轮那张渠道表里 `EMAIL / SMS` 的一行和 16.x 那条 `alert_notify_log` 期望读数）：D73⑪ 那条"三条启用规则的通知路径 100% 记 FAILED"**结论不变、理由换了** —— WEBHOOK 被回环判据挡，EMAIL 现在被**数据**挡。通路接好了但用户还是收不到，是最容易被记成回归的状态，所以更正写在原读数旁边而不是文末。
+
+**凭据只能走界面，不能走 SQL**：这是 D73② 那对掩码约定的直接后果 —— 口令位读回来是 `***`，SQL 里写 `***` 会被服务端当成"沿用库里那份"（而库里那份不存在），写真实口令等于把口令摊进补丁文件和 shell history。本轮**不代填**任何 SMTP 凭据。
+
+### 七、静态门禁：`javap` 抓掉两个**必编译错**，`javac --release 8` 复跑 EXIT=0
+
+- **`javap` 查本地 `spring-context-support-5.3.31.jar` 的 API 形状**，抓掉两处我先写出来的错：① `MimeMessageHelper` **没有** `getMessage()`，它是 `public final MimeMessage getMimeMessage()`；② `MimeMessageHelper(MimeMessage,String)`、`setFrom(String)`、`setTo(String[])`、`setText(String,boolean)` **从不抛** `UnsupportedEncodingException` ⇒ 那个多分支 catch 会以 "exception never thrown in the corresponding try block" 直接编译失败。**登记价值**：对第三方 API 的形状，`javap` 是"没有 jar 也能拿到的最强证据"，比"照记忆写完再指望 Maven 报错"便宜两个数量级。
+- **`javac --release 8` 整包编译（本文件收官时复跑的最新读数）**：9 个 notifier 源文件 + 3 个 entity 源文件，classpath = 临时目录两个 mail jar + `~/.m2` 的 spring 5.3.31 五件套 + jackson 2.13.5 + lombok 1.18.30 + slf4j 1.7.36 + activation 1.2.2 + mybatis-plus-annotation ⇒ **EXIT=0，产出 11 个 class**（含 `EmailNotifier.class`）。**Java 8 兼容性由 `--release 8` 证明**，不是由"我没写新语法"证明。
+- **复跑时踩到的一条门禁方法论**（值得单独记，因为它会长驻在这个仓库）：第一次把 entity 交给 `-sourcepath` **隐式**编译，得到 **51 个"找不到符号 getName()/getId()"**。那**不是代码缺陷** —— javac 不对隐式编译的源文件跑注解处理器 ⇒ Lombok 的 `@Data` 没生成 getter。把三个 entity 源文件**显式**列进编译单元后归零。⇒ **Lombok 项目做单包 javac 门禁时，依赖其生成方法的源文件必须显式入列**，否则会拿到一整屏假错误。
+- **`mvn -o -pl alert-service -am compile` 现在必然停在解析阶段**（缺 jar），这是**预期读数**。它证明的是"除下载之外没有别的问题"，仅此。
+- **启动面查证而非默认信任**：`MailSenderAutoConfiguration` 的条件 `MailSenderCondition` 要求 `spring.mail.host` 或 `spring.mail.jndi-name`；grep 本仓**所有** `application.yml` 里 `mail` **零命中** ⇒ 不会有 `MailSender` bean 被创建 ⇒ 加了 jar 也不多一台连接。
+
+### 八、前端：零代码改动（这正是 AO 轮那条契约的兑现测试）
+
+`ChannelConfig.vue` **本轮未被修改**：`security` 由既有 `select` 分支渲染（选项显示原始值 ssl/starttls/none），`timeout`/`trustHosts` 由 `number`/`text` 分支渲染，`to` 仍是标签输入。改动只在两端 locale 的 `channel.field.*`：删 `ssl`，加 `security`（加密方式 / Encryption）、`timeout`（连接超时（毫秒）/ Timeout (ms)）、`trustHosts`（受信证书主机 / Trusted cert hosts），并把 `subject` 改成**「邮件标题前缀」/「Subject prefix」**。门禁：zh/en 展平 **309/309**、双向 diff 为空、无重复键（AO 收官 307，本轮 +3 −1 自洽），`channel.field.*` 两端各 **24** 键；`pnpm --filter @dataviz/admin exec vite build` **EXIT=0**。
+
+### 九、刻意没做 / 未取证（登记，不擅自扩范围）
+
+① **凭据没填、真发信没验过** ⇒ E1~E9 全部未取证（也不主动往任何真实邮箱发信）；② **`trustHosts` 是一条用户可见的"关掉证书校验"开关**，本轮选择默认空但**没有**在服务端拒绝 `*`（内网自签是合法需求；要更严可以只允许具体主机名，属新范围）；③ **没有 HTML 正文 / 附件 / 抄送密送**，范围止于"能发出一封可读的纯文本告警"；④ **没有连接复用**（每次新建 sender = 每次一条新连接），这是用"改配置立刻生效"换的，高频告警场景要重新评估；⑤ **SMS 仍是硬桩**（`deliverable=false` 现在只剩它）；⑥ **规则侧勾选仍无界面**（D73⑨ / API-49）⇒ EMAIL 在派发路径上是否被用到，仍取决于 `alert_rule.notify_channels` 里有没有 `"EMAIL"`，那是 SQL 灌的，所以判据 E9 必须先确认规则勾了什么；⑦ **老 `ssl` 键没做数据迁移**，选择读侧兼容而不是写补丁（补丁要动数据而兼容不用），代价是那个键会长期留在行里。
+
+### 十、交接给用户（前置：拉三件 jar → IDEA Maven 重载 → 重启 **alert-service(8090)** → 管理端硬刷新并登录）
+
+九条判据 **E1~E9** 全文在报告 **19.25.10**，摘要：E1 重启后启动日志里没有 mail bean、没有连 `smtp.example.com` 的报错（起不来且报 `NoClassDefFoundError: javax/mail/...` ⇒ jar 没拉全）；E2 901 编辑弹窗应多出 `security` 下拉 + `timeout` + `trustHosts` 三格（还是旧 `ssl` 开关 ⇒ 包没换）；E3 只改加密档保存后重开，值要保住；**E4 不填凭据直接点测试 = 期望 `success=false` 且文案是"邮件发送失败: …（smtp.example.com:465，ssl，超时 10000ms）"这一族，不是"通道未接入"、不是 500 —— 出 `success=true` 才是异常**；E5 填真服务器 + 授权码后应 `success=true`（554/535 ⇒ 用了登录密码而非授权码，`SSLHandshakeException` ⇒ 端口与加密档不匹配，`certificate unknown` ⇒ 需填 `trustHosts`）；E6 看收件箱的中文主题/正文与「前缀 + [级别] 规则名」形状；E7 老 `ssl` 键的行仍走 SSL（本轮唯一防静默降级的判据）；E8 `timeout=1000` + 不可达地址应在约 1 秒失败且**其它渠道照发**；E9 真实告警触发后 `alert_notify_log` 里要有 EMAIL 行（**一行都没有 ⇒ 是规则没勾类型，不是邮件坏了**）。另：**建议 E5 先填用户自己的邮箱**，不要把演示收件人写进别人邮箱。
+
+AO 轮的 K1~K9 里，K5 那条"期望失败"的**判据文案已随本轮改变**（EMAIL 那一半从「通道未接入」变成 SMTP 连接/认证失败族）；#120、#100、#95、#61/#90、#70、#76、#79 与 role 2 重登仍照旧欠着。
+
+### 十一、三份台账同步
+
+本文件；docs/10（**D74** 九条 + **AP1/AP2** 阶段行 + 阶段 AP 门禁读数表 + 关键文件一条 + 变更记录一行 + 已知风险两行更正，并就地更正 D73 的 ⑤ 末段与 ⑪ 的 EMAIL 部分、AO1 的 EMAIL 字段数 8→10；本轮还修掉一处**表格完整性缺陷**：决策表内一个空行把 D73 从表里切出去、且 D73 行缺"确认日期"格）；docs/12（头注新增阶段 AP 一条 bullet ⇒ 缺陷编号**累计仍 49 条**（本轮不新增）+ 新章 **19.25**（19.25.1~19.25.11，含依赖表、回退真值表、失败信息表、门禁读数表、E1~E9 判据表）+ 就地更正六处（见第六节末段））。全仓 markdown 表格未转义 `|` 计数校验：**bad rows 0**。**git 未提交**（未被要求）。
+
+
+---
+
+## 2026-09-28 · 阶段 AQ：通知对象搬迁（任务 **#129~#135**，决策 **D75** / 报告 **19.26**，闭合 **API-49**）
+
+**用户诉求**："邮件的收件人应该在告警管理或其他需要发邮件的地方配置，而不是直接在邮箱配置里面，这样的话没发动态的调整"。随后在两轴上各选最大范围：数据形状 = **独立「联系人 / 通知组」表，规则引用组**；规则侧界面 = **做完整规则表单**。第二项正是 AP 轮登记 API-49 时写死"等拍板"的那个范围，所以本轮**一次交付两件事**：收件人搬家 + 规则表单对齐。
+
+### 一、起点核查：这不是"重构"，是原形状**没有解**
+
+读码（不是读记忆）得到的三条事实：
+
+1. `NotifyDispatcher.findEnabledChannel(type)` **每种渠道类型只取"启用中 id 最小"的那一条** ⇒ 一条 EMAIL 渠道只能带一组收件人，**所有**引用 EMAIL 的规则共用它；
+2. 收件人原先就住在这条渠道的 `config` 里（`to` / `receivers` / `mobiles` / `atMobiles`），所以"按规则给不同人发"在这个形状下**表达不出来**；
+3. 想绕开的唯一办法是再配一条同类型渠道，而第二条启用行**永远不会被派发读到** —— 那正是 API-48 的症状，不是假想。
+
+⇒ 结论：**"发给谁"必须离开"走哪条通道"**。分层后各管一件事：通道 = 凭据与出口（`fields()` + `targetKind()` + `deliverable()`），通知对象 = 联系人（谁）+ 通知组（一组人）+ 规则引用（这条规则发给哪几组）。边界照这句话切：`atAll`（钉钉/企微"@所有人"）**留在渠道配置**，因为那是**这台机器人的行为**而不是"谁"。
+
+播种数据读数（写判据时用的）：`notify_channel` 901 EMAIL 的 `to` 是 `["ops@example.com","data@example.com"]`、902 DINGTALK 的 `mobiles` 是 `["13800000901"]`（且 `atAll:false`）、903 SMS 的 `receivers` 是 `["13800000901"]` ⇒ 老键**必须**有回退路径，否则升级当天这几条规则一条都发不出去（第四节）。
+
+### 二、数据模型：`deploy/sql/patch/2026-09-28-notify-target.sql`（104 行，纯增量 DDL）
+
+四张表：`alert_contact` / `alert_notify_group` / `alert_notify_group_member` / `alert_rule_notify_group`。三条判据都写进补丁注释，因为将来改表的人只看得到 SQL：
+
+- **四张表全部带 `tenant_id`** —— 这是本轮**唯一决定重启面的设计**。`MybatisPlusConfig.IGNORE_TENANT_TABLES` 的语义是"这张表**没有** `tenant_id` 列"的黑名单；把两张关联表做成无租户列，就得往那份共享 jar 的清单里加行 ⇒ 按 AN7 的口径是 **8 个端口**的重启面。带列则新表默认被过滤，**零共享代码改动** ⇒ 本轮重启面只有 **8090**。
+- **关联用关系表 + UNIQUE 而不是 JSON 列**：删除守卫要**反查**"哪些规则在用这个组"。JSON + `LIKE` 会把 900 和 9001 混成一次命中（"看着能用其实判据是错的"是 API 台账里反复出现的形状）。`uk_group_contact(group_id,contact_id)` / `uk_rule_group(rule_id,group_id)` 同时把重复挂载变成库层面的不可能。
+- **「邮箱与手机号至少填一个」落服务层不落库**：MySQL 5.7 的 `CHECK` 被静默忽略、8.0 才真生效 ⇒ 加了就等于"库里塞得进、界面报错但没人知道是谁塞的"。
+- **生命周期分两档**：联系人/组**逻辑删**（`deleted`，为了留住历史成员关系与"曾经发给谁"）；两张关联表**物理删**（保存即整批替换，没有"复原旧挂载"的语义）。
+- 索引按真实查询形状给：`idx_tenant_enabled`（列表页过滤）、`idx_tenant_name`（`options()` 按名排序）、`idx_contact` / `idx_group`（两个反查方向的守卫）。
+- 自检段用 `COUNT(*)` 而不是 `information_schema.TABLES.TABLE_ROWS`（后者是估算值，空表也可能显示非 0，D35），并显式写"不要用 `GROUP_CONCAT` 拼表名清单"（默认 1024 静默截断，D72 ⑤ 同族）。
+- **D30 备份规则未触发**：本轮不改任何既有列、不动任何既有行，没有可被改坏的东西。
+
+### 三、后端服务层：新增 **22** 个文件、**16** 个端点、**零新权限码**
+
+按 `git status --porcelain` 的 untracked/modified 分档数（**不把"改动"混进"新增"**；本文件收官时重算，顺手把台账里"26 个新文件"那句改回 22 + 11 个既有文件被改）：4 实体 + 4 mapper + 3 服务接口 + 3 实现 + 2 controller + 2 DTO + 3 VO + `NotifyTargets`。
+
+- `AlertContactController`（`/api/alert/contact`）与 `AlertNotifyGroupController`（`/api/alert/notify-group`）各 8 条：`GET /page`、`GET /options`、`GET /{id}`、`POST`、`PUT`、`DELETE /{id}`、`POST /{id}/enable`、`POST /{id}/disable`；类级 `@RequiresPermission("alert:read")` + 写侧四条方法级 `alert:write`。**沿用 D56 乙路线的两档码 ⇒ 无 `sys_permission` 播种、无重新登录、网关零改动**（`/api/alert/**` 早就在路由里）。
+- **`AlertNotifyTargetService` 为什么单独一个服务**：①派发侧（`NotifyDispatcher`）、②规则读写侧、③组/联系人删除守卫三处都要问同一个问题"这个引用还在不在、解析出谁"。判据写三份必歪 —— 而歪的表现形式是"守卫说在用，派发说没人"。
+- **实现形状 (a)｜可空列只进 wrapper 不进实体**：`email`/`mobile`/`remark`/`description` 走 `LambdaUpdateWrapper.set(...)`，**不同时挂到实体**（`AlertContactServiceImpl:93-102`）。MyBatis-Plus 默认 `NOT_NULL` 更新策略会跳过实体里的 null（D67⑩ 那条"纠正"这次变成写法）⇒ 只挂实体则"把邮箱清空"点了保存而库里纹丝不动；两者都挂则 MySQL 报「Column specified twice」。
+- **实现形状 (b)｜`options()` 含停用组、计数归零**（`AlertNotifyGroupServiceImpl:173-208`）：`memberCount` 照算，`emailCount`/`mobileCount` 只在**组启用且联系人启用**时累加。停用组必须**出现在 options 里**，否则"挂了停用组"的规则一进编辑表单就少一项、一保存就静默冲掉挂载关系（D69④ 忠实回显的同族）。`options()` 与 `optionsById()` 共用同一个 `toOptions` ⇒ 列表页与规则表单的口径不会分叉。
+- **引用完整性一律"点名"而不是静默丢弃**：组成员里不存在的联系人 ⇒ 400 + `join(missing)`（`:262`）；规则挂的组不存在 ⇒ 400 并点名 id（`AlertNotifyTargetServiceImpl:142-151`）。静默丢会让界面显示"5 个人"而库里只有 4 个，而这类差值**只有告警真触发、少一个人收不到时**才被发现。
+- **删除守卫反查 + 给出口**：联系人被 N 个组含着 ⇒ 400 列出组名(ID) + "只想让他不再收件的话，改成「停用」即可"；组被 N 条规则引用 ⇒ 400 列出规则名(ID) + 同一句出口。`groupCounts` / `membersOf` / `ruleCountOf` 都一次查完，列表页**没有 N+1**。
+- **一处脏数据容错写在明处**：`membersOf` 遇到"成员行还在而联系人查不到"（逻辑删没清干净的历史行）**跳过而不是让整页 500**（`:304`）。
+
+### 四、派发链路：`NotifyTargets` 四态 + SPI `targetKind()` + **可看见的**老数据回退
+
+- `engine/notifier/NotifyTargets.java`（新）：值对象，`emails()` / `mobiles()` / `source()` / `describe()`；`of(...)` 里统一 trim + `LinkedHashSet` 去重（保序，否则同一批人每次收件顺序不同）。**传"已按渠道分好类的地址列表"而不是联系人对象** —— notifier 不需要知道一个人有没有备注、属不属于某个组。
+- `Source` **四态**而不是"有没有收件人"两态：`GROUP`（正常路径）/ `CHANNEL_CONFIG`（回退到渠道存量键）/ `ADHOC`（测试发送临时填的）/ `NONE`。每种来源在界面上的说法都不一样，压成两态就必然有一句谎。
+- `AlertNotifier` SPI：加 `default String targetKind()`（常量 `TARGET_EMAIL` / `TARGET_MOBILE` / `TARGET_NONE`，默认 none），`send()` 与 `recipientOf()` 多收一个 `NotifyTargets`。六家分配：EMAIL=email，SMS/钉钉/企业微信=mobile，Webhook/飞书=none。**这条方法是"这条渠道有没有收件人概念"的唯一事实源** —— 前端测试发送弹窗据此决定给不给临时收件人输入框。
+- `NotifyDispatcher.dispatch`（`:57-76`）：`resolveTargets(rule, config)` 放在 `try` 内、`recipientOf` 之前 ⇒ 解析失败照旧记 FAILED 而不是把整条派发链抛出；`recipient` 在 send **之前**赋值，所以失败日志里也带得上"本来要发给谁"。
+- **回退判据**（`AlertNotifyTargetServiceImpl:48-49,58-74`）：**组解析不出任何地址**时才读 `LEGACY_EMAIL_KEYS={"to"}` / `LEGACY_MOBILE_KEYS={"receivers","mobiles","atMobiles"}`，标成 `CHANNEL_CONFIG` 并打一行 info 日志。老配置 JSON 不合法时 `parseConfigQuietly` **不抛** —— 回退解析器不该决定派发结果，"渠道必填项缺失"那条更准的规定性错误留给服务层报。
+- **为什么回退必须可见**：AO 轮的 `normalize` 语义是**保留渠道未声明的键**（"配置页不该有隐形删数据的能力"）⇒ 老键会长期留在行里。所以 `ChannelConfig.vue` 表单顶部有一条历史键提示带（`shared-types` 的 `LEGACY_RECIPIENT_KEYS` + `legacyRecipientKeys()`），`legacyLabel()` 用 `te()` 守卫取 `channel.field.*` 的中文名 —— **这就是那四个收件人文案键本轮不删的原因**（删了提示带就退化成显示 `to`、`receivers` 这种键名）。
+
+### 五、规则读写侧
+
+`AlertRuleCreateDTO` / `AlertRuleUpdateDTO` 加 `List<Long> notifyGroupIds`（注释直接写明"放规则侧而不是渠道侧"的那条结构性理由）；`AlertRuleServiceImpl` 三处接入：`create` 后 `replaceRuleGroups`（`:92`）、`update` 里 `replaceRuleGroups`（`:131`，null = 不改 / 空数组 = 清空，与 `notifyChannels` 的 null 语义一致）、`delete` 里 `clearRuleGroups`（`:148`）。VO 侧 `AlertRuleVO` 加 `List<NotifyGroupOptionVO> notifyGroups` + `Boolean notifyTargetsEmpty`（`:47,50`），列表填充走 `groupIdsOfRules` 批量版 + `optionsById`（`:410-428`），**不给规则列表页留 N+1**。
+
+`notifyTargetsEmpty` 只在"挂了组但一个可达地址都没有"时为 true —— 它是列表页那条警告 tooltip 的开关，**不等于"这条规则发不出去"**（后面还有一条渠道存量收件人的回退路）。这个口径同时写在注释和界面文案里，免得它被读成"规则被静默了"。
+
+### 六、管理端两个新页面 + 渠道页收件人退场
+
+- `apps/admin/src/views/ContactConfig.vue`（317 行）：列表带「所在组数」，`groupCount>0` 时删除**当场拦**（省一发必定 400 的请求；后端守卫仍是真守卫，两处不互替）；跨字段判据用一个 `requireAddress` validator **同时挂 email 和 mobile 两个字段**（只挂一边则用户看到一边红字、不知道另一边也能填）；`payload()` 清空就是清空（配合第三节那条 wrapper 写法，界面才敢说"我保存了什么库里就是什么"）。
+- `apps/admin/src/views/NotifyGroupConfig.vue`（433 行）：成员选择器显示 `email‖mobile‖无地址`，停用联系人 `:disabled` 但**仍显示**（否则"这个人不见了"变成谜）；`MAX_TAGS=4` 收起长名单；两个可达计数由 `reachableOf()` 算，**与后端 `toOptions` 同口径**（本轮唯一一处刻意的前后端重复，登记而非隐藏）；都为 0 时表单里红字警告"这一组一个人都发不到"；停用行的提示说清"停用后引用它的规则会退回渠道存量收件人（如果有）"。
+- 路由两条：`contacts` / `notify-groups`，`meta.permission` 用 `alert:read`（D56 两档，不新增码）。
+- `ChannelConfig.vue`：**收件人字段从表单退场**（schema 驱动 ⇒ 后端不声明就不渲染，前端零删除代码），新增的是历史键提示带与"测试发送"的临时收件人框（`targetKind` 由 `/channel/schema` 导出，`none` 的渠道不显示输入框）；**临时收件人只用于这一次、不落库**，来源在结果里标成 `ADHOC`。留空时走与真实派发同一条解析路 —— 但这条请求带的是**合成规则**（无 id ⇒ 组那一段必然落空，实际取到的是渠道存量键）。本文件收官时把 controller 那句 javadoc 从"传空则按规则的通知组解析"改成了这句实话。
+
+### 七、设计端 `AlertRuleList.vue` 整页重写（627 行）⇒ **API-49 闭合**
+
+API-49 的根缺陷有两句：**列表页读的 `status/level/condition/notify/lastFiredAt` 与 `AlertRuleVO` 的 `enabled/severity/condition(String)+threshold/notifyChannels` 不同源**；而**最致命的是 `createAlertRule` 曾把 `R<Long>` 的裸 id 拿去 `fromVO(...)`** —— 等于把数字当规则对象铺给调用方，之后整条表单铺出来的都是空。
+
+本轮做法：`fromVO` / `toPayload` 一次对上四套词汇（`severity`↔`level`、`condition` 码↔运算符、`type` 大写↔`threshold/rate/trend`、`notifyChannels`↔`notify.channels` + `notifyGroups`）；`createAlertRule` 只回 id。三条非显然的判据：
+
+- **编辑刻意走一次详情**（`getAlertRule(row.id)`，`:467`）：列表 VO 少读一个组挂载，保存时就会冲掉它。
+- **草稿保存改成"更新或新建 + 新 id 记回 `editingId`"**（`:508-513`）：新建成功后启停那半路失败时，再点一次保存是改这一条而不是**多建一条重复规则**。
+- **`threshold` 加 `prop` + `type: number, required`**（`:313`）⇒ 不再静默存 0。注意判 required 而不是判真假：**0 是有效阈值**，`if (!form.threshold)` 那种写法会把合法值当空。
+- 非阈值型（变化率/趋势）**不藏选项**，而是显式一行提示："调度器目前只对「阈值」型取数判定，这一条能存下来但不会被执行"（`AlertEvaluator.TYPE_THRESHOLD` 是事实，藏掉三个类型等于用界面篡改事实）。
+- 列表那一列换成「通知范围」（`alert.notifyTo`），同一格里**先排渠道 tag、再排组名 tag**，两组都没有各说各的灰字；`notifyTargetsEmpty` 挂一条 warning tag + tooltip。
+
+### 八、契约层：`shared-types` + `api-client`
+
+`shared-types/src/alert.ts`（209 行）新增 `AlertContact` / `AlertContactPayload` / `AlertNotifyGroup` / `AlertNotifyGroupPayload` / `NotifyGroupOption` / `NotifyTargetKind` 六个型 + `LEGACY_RECIPIENT_KEYS` 常量与 `legacyRecipientKeys()` 纯函数，`AlertRule` 加 `groups?: NotifyGroupOption[]`（`:43`）。`api-client/src/modules/alert.ts` 新增 **13** 个函数（联系人 6：`pageContacts / listContactOptions / createContact / updateContact / deleteContact / toggleContact`；通知组 7：同名族多一个 `getNotifyGroup` —— 它存在就是为了第七节那条"编辑走详情"的判据），`testNotifyChannel` 多一个可选 `recipients`。两个包各跑 `tsc --noEmit` ⇒ **exit=0**。
+
+### 九、门禁读数（**本文件收官时复跑**，不是沿用改动前的数）
+
+| 档 | 读数 |
+|---|---|
+| 后端编译 | `devlog/aq-javac.sh` ⇒ **68 个源文件、exit=0**（`javac --release 8`，classpath = 临时目录两个 mail jar + 本地 spring 5.3.31 / mybatis-plus 3.5.5 / jackson 2.13.5 / lombok 1.18.30 + 四个 `common-*/target/classes`）。**`mvn -o` 仍缺 `spring-boot-starter-mail`**（#128 用户侧）⇒ 本轮编译证据是 **javac 直证，不是 mvn 全绿**，两者不混着说 |
+| admin 构建 | `vite build` **EXIT=0 / 10.55s**：`ContactConfig` 8.02 kB、`NotifyGroupConfig` 9.56 kB、`ChannelConfig` 15.03 kB |
+| pc-web 构建 | `vite build` **EXIT=0 / 20.29s**：`AlertRuleList` 18.70 kB / gzip 5.63 kB |
+| 纯 TS 包 | `tsc --noEmit` 对 `shared-types`、`api-client` 各 **exit=0** |
+| locale | admin **372/372**、pc-web **436/436**，双向 diff 为空、重复键 0（收官时用扁平化脚本重跑核验）；`channel.field.*` **25** 个键，其中 4 个收件人标签刻意保留（第四节理由） |
+| dist 串取证 | 「告警联系人」「告警通知组」「邮箱与手机号至少填一个」「退回历史收件人」均命中 chunk；旧的两条 coming-soon 键**零残留** |
+| **缺口** | ⚠️ **`vue-tsc` 全仓不可用**（1.8.27 × TS 5.9.3 抛 `Search string not found`）⇒ **三个新 SFC 的类型面没有被机器证过**，只有人工类型审计（`vite build` 走 esbuild，不做类型检查）。按 D72/D67 口径登记为缺口，**不写成"type check 通过"** |
+| 数据库 | 补丁**已执行**、四表存在、中文注释 utf8mb4 干净、四个 `COUNT(*)` 全 0 —— 读数**取自上轮回读**：Docker 引擎此刻仍宕（`docker ps` → `failed to connect to the docker API at npipe:`，本文件收官时复测仍是这句）⇒ 记为"已执行、上轮已复核、**本轮未复跑**" |
+| 重启面 | **只有 alert-service(8090)**。无 `common-*` 改动 ⇒ 不进 AN7 那 8 端口清单；零 SQL（本轮不再改库）、零新权限码、零重新登录 |
+
+### 十、刻意没做 / 未取证（登记，不擅自扩范围）
+
+① **没有播种任何联系人/组**（要不要造演示数据、造给哪个租户是产品决策）；② **老收件人键没做数据清理**，选择"读侧回退 + 界面显形"而不是写补丁把 `to` 迁成联系人 —— 迁移要替用户决定"这两个人属于哪个组"，那是业务事实不是技术事实；③ **`atAll` 仍是渠道级**，"某条规则要 @所有人而另一条不要"当前表达不了；④ **没有值班/排班维度**（组是静态集合，"今天轮到谁"是另一张表）；⑤ **FEISHU / WEBHOOK 的 `targetKind=none`** ⇒ 规则挂组对它们没有可见效果（飞书卡片的 @ 要 open_id 而不是手机号，那是另一个集成量级）；⑥ **每条 webhook 各自的接收端点没有做**：`findEnabledChannel` 的"每类型只取一条"语义没动 ⇒ API-48 修的是"影子行为要说真话"，不是"支持多实例"；⑦ **没有静默/恢复/升级**（`AlertRule` 上没这些列，那属告警策略不属通知对象）；⑧ **规则表单没有"这条规则会发给谁"的预览**（测试发送走渠道 + 合成规则，与真实规则不同源；要做预览得先定"预览算不算一次发送"）；⑨ **SQL 未复跑**（Docker 宕）⇒ 真库与本记录不符时按 D72 口径就地更正；⑩ **运行时零取证**（D33/D36：重启 8090 + 用户本人登录）⇒ 十条判据 **D1~D10**（每条含"失败时先查什么"）全文在报告 **19.26.7**，其中 D4 是启停方向指纹、D8 是回退路径指纹（界面「通知范围」列里的组名与 `alert_notify_log.recipient` 不一致 ⇒ 十有八九走的是渠道存量键而不是组）。
+
+### 十一、三份台账同步
+
+本文件；docs/10（**D75** 十条 + **AQ1~AQ6** 阶段行 + 阶段 AQ 门禁读数表 + 关键文件一条 + 变更记录一行；就地更正四处：**AO3b** 行（API-49 → 已闭合，但只到契约与代码面）、**D73⑨** 末段补一句"已由 AQ 闭合"、已知风险两行划线 + 新增"老收件人键与静默回退"一行）；docs/12（头注新增阶段 AQ 一条 bullet ⇒ 缺陷编号**累计仍 49 条**，本轮闭合既有缺陷而非新立 + 新章 **19.26**（19.26.1~19.26.9：起点核查 / DDL 三条判据与生命周期表 / 端点与两个实现形状 / `Source` 四态与 SPI / 管理端界面判据 / API-49 闭合逐条证据表 / D1~D10 / 门禁表 / 未做清单））。
+
+**收官时按当前文件状态重跑读数，抓出并就地改掉三处过期或过度声明**（这一条本身值得记，它是"台账数字会随后续轮次腐坏"的实例）：① "后端 26 个新文件" ⇒ **22 个新文件 + 11 个既有文件被改**（按 `git status` 的 untracked/modified 分档重数，docs/10 变更记录③ 与报告 19.26.3 两处同改）；② 报告 19.24.2 那张渠道表里 EMAIL 的字段数与"合计 25 个声明" ⇒ 本轮 `to`/`receivers`/两个 `mobiles` 从契约退场后实为 **21 个**（9+5+2+2+1+2；secret 6 / url 4 未变），AO/AP/AQ 三个轮次的 23/25/21 各自只在当轮成立 ⇒ 表里**保留三个读数并注明**而不是覆盖成一个；③ 19.25.4 那句"`fields()` 现在是 10 项"里的"现在"是 AP 轮的现在 ⇒ 加 ⏩ 标注指向 19.26.4。另把 `NotifyChannelController` 那句会误导的 javadoc 改成实话（第六节末段）。`devlog/aq-javac.sh` 这份临时装配脚本**随本条台账落盘即删**，不进产物。**git 未提交**（未被要求）。

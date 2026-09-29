@@ -12,7 +12,9 @@ import java.net.UnknownHostException;
  * 所以必须挡住"让服务端自己去敲内网/元数据段"的写法（SSRF）。
  * <p>
  * 判据放在<b>发送侧</b>而不是保存侧：渠道行可以直接由 SQL 写进 {@code notify_channel}，
- * 保存时校验拦不住那条路。两个配套说明：
+ * 保存时校验拦不住那条路。配置页上线后<b>保存侧也判一次</b>（{@code NotifyChannelServiceImpl} 对
+ * {@code url} 标记的字段调这里）—— 那一层是为了让填错的人当场看到红字，不是把本类从"必需"降级成"冗余"：
+ * 绕过界面写进去的行依然只由发送侧这一道把关。两个配套说明：
  * <ul>
  *   <li>重定向：{@code notifyRestTemplate} 显式关掉了跟随 3xx。实测（报告 19.10 B 组）它原本就不跟随
  *       —— 但不是 JDK 的功劳，是 {@code SimpleClientHttpRequestFactory} 对非 GET 方法设了 {@code false}；
@@ -25,13 +27,13 @@ import java.net.UnknownHostException;
  * webhook 是正当用法，全挡等于砍功能。上公有云时要在 {@link #forbiddenReason} 里补厂商元数据地址
  * （阿里云 100.100.100.200 这类不在链路本地段里，本类当前挡不住）。
  */
-final class OutboundUrlGuard {
+public final class OutboundUrlGuard {
 
     private OutboundUrlGuard() {
     }
 
     /** 校验通过则原样返回 URL；不通过一律 BizException，消息里写清挡在哪一条 */
-    static String requireAllowed(String url, String channelName) {
+    public static String requireAllowed(String url, String channelName) {
         URI uri = parse(url, channelName);
         String host = uri.getHost();
         if (host == null || host.trim().isEmpty()) {

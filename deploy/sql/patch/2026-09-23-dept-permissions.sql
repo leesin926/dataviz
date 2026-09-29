@@ -84,7 +84,11 @@ LEFT JOIN `db_user`.`sys_permission` r ON r.`id` = w.`parent_id` AND r.`deleted`
 WHERE w.`permission_code` LIKE 'system:dept:%' AND w.`deleted` = 0
 ORDER BY w.`id`;
 
--- 6c. 授权行数（期望：super_admin 43 / admin 20 / user 10；总数 39 → 43）
+-- 6c. 授权行数
+--     ⚠️ 2026-09-28 实跑更正：原写的"期望 admin 20"是**陈旧值**（当天实测前置 27）。
+--     这类判据要看**增量**（super_admin +4、admin +1、user +0），不要看绝对值 ——
+--     绝对值会被后续任何一批授权改动带偏，而增量才是本脚本的承诺。
+--     实跑读数：有效码 39 → 43；super_admin 39 → 43 / admin 27 → 28 / user 10 不变。
 SELECT COUNT(*) AS permission_total FROM `db_user`.`sys_permission` WHERE `deleted` = 0;
 SELECT r.`role_code`, COUNT(rp.`permission_id`) AS granted
 FROM `db_user`.`sys_role` r

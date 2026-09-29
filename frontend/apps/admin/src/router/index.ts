@@ -78,6 +78,29 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/AuditLog.vue'),
         meta: { titleKey: 'nav.audit', icon: 'Notebook', group: 'nav.groupSystem', permission: 'platform:read' },
       },
+      {
+        // 通知渠道归管理端而不是设计端：这一行存的是服务端将来要拿去 POST 的地址与机器人 token，
+        // 属于运维配置面。权限用后端真实码 alert:read / alert:write（路线乙），不新增权限行。
+        path: 'channels',
+        name: 'NotifyChannelConfig',
+        component: () => import('@/views/ChannelConfig.vue'),
+        meta: { titleKey: 'nav.channels', icon: 'Bell', group: 'nav.groupSystem', permission: 'alert:read' },
+      },
+      {
+        // 收件人从渠道配置搬到这里的理由见进度表 D73：一条渠道在服务端只会被取一条启用记录，
+        // 所以收件人写在渠道里等于"所有规则共用一批人"，改不动也按不了规则分。
+        // 权限沿用 alert:read / alert:write，不新增码（这批地址原先就在渠道 config 里，可读面没变大）。
+        path: 'contacts',
+        name: 'AlertContactConfig',
+        component: () => import('@/views/ContactConfig.vue'),
+        meta: { titleKey: 'nav.contacts', icon: 'UserFilled', group: 'nav.groupSystem', permission: 'alert:read' },
+      },
+      {
+        path: 'notify-groups',
+        name: 'AlertNotifyGroupConfig',
+        component: () => import('@/views/NotifyGroupConfig.vue'),
+        meta: { titleKey: 'nav.notifyGroups', icon: 'Collection', group: 'nav.groupSystem', permission: 'alert:read' },
+      },
     ],
   },
   {

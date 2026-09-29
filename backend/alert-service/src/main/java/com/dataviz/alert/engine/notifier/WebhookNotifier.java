@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,15 +41,37 @@ public class WebhookNotifier implements AlertNotifier {
     }
 
     @Override
-    public String recipientOf(NotifyChannel channelConfig) {
+    public List<ChannelField> fields() {
+        return ChannelField.list(
+                ChannelField.of("url", ChannelField.KIND_TEXT)
+                        .required().url()
+                        .placeholder("http://192.168.1.10:18099/hook")
+                        .label("channel.field.url"),
+                // 接收方常常要求带鉴权头或对内容做签名校验；只支持固定头的话，能接的系统就只剩不设防的那几个
+                ChannelField.of("headers", ChannelField.KIND_JSON)
+                        .label("channel.field.headers")
+                        .placeholder("{\"X-Token\":\"...\"}")
+        );
+    }
+
+    @Override
+    public String recipientOf(NotifyChannel channelConfig, NotifyTargets targets) {
         return urlOf(channelConfig);
     }
 
     @Override
-    public void send(NotifyChannel channelConfig, AlertRule rule, AlertEvent event) {
+    public void send(NotifyChannel channelConfig, AlertRule rule, AlertEvent event, NotifyTargets targets) {
         String url = urlOf(channelConfig);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        Object declared = NotifierSupport.parseConfig(objectMapper, channelConfig).get("headers");
+        if (declared instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) declared).entrySet()) {
+                if (entry.getKey() != null && entry.getValue() != null) {
+                    headers.set(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+                }
+            }
+        }
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("eventId", event.getId());

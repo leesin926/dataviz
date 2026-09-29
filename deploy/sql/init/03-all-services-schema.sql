@@ -342,6 +342,65 @@ CREATE TABLE IF NOT EXISTS `notify_channel` (
     KEY `idx_tenant_type` (`tenant_id`, `type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知渠道配置';
 
+-- 通知对象（阶段 AQ1，与 patch/2026-09-28-notify-target.sql 同形）：
+-- 通道只管"走哪条路出去"，"发给谁"在规则侧按通知组引用，因此收件人能按规则动态调整。
+-- 四张表都带 tenant_id ⇒ 新表默认进多租户过滤，不需要改 common-mybatis 的 IGNORE_TENANT_TABLES。
+CREATE TABLE IF NOT EXISTS `alert_contact` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(64) NOT NULL COMMENT '显示名（告警消息里 @ 的就是它）',
+    `email` VARCHAR(128) DEFAULT NULL COMMENT '邮件收件地址',
+    `mobile` VARCHAR(32) DEFAULT NULL COMMENT '手机号：短信收件人 + 钉钉/企微机器人 @ 的对象',
+    `remark` VARCHAR(256) DEFAULT NULL COMMENT '备注（值班岗位、职责范围等）',
+    `enabled` TINYINT NOT NULL DEFAULT 1 COMMENT '停用即不收件（离职/换岗），保留行以留住历史组成员关系',
+    `tenant_id` BIGINT DEFAULT NULL,
+    `create_by` VARCHAR(64) DEFAULT NULL,
+    `update_by` VARCHAR(64) DEFAULT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `idx_tenant_enabled` (`tenant_id`, `enabled`),
+    KEY `idx_tenant_name` (`tenant_id`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='告警联系人（通知对象的最小单位）';
+
+CREATE TABLE IF NOT EXISTS `alert_notify_group` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(128) NOT NULL,
+    `description` VARCHAR(512) DEFAULT NULL,
+    `enabled` TINYINT NOT NULL DEFAULT 1 COMMENT '停用组 = 整组一次不收件，比逐个停联系人更适合"这块今天不归我们管"',
+    `tenant_id` BIGINT DEFAULT NULL,
+    `create_by` VARCHAR(64) DEFAULT NULL,
+    `update_by` VARCHAR(64) DEFAULT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `idx_tenant_enabled` (`tenant_id`, `enabled`),
+    KEY `idx_tenant_name` (`tenant_id`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='告警通知组（联系人的集合，规则引用它）';
+
+CREATE TABLE IF NOT EXISTS `alert_notify_group_member` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `group_id` BIGINT NOT NULL,
+    `contact_id` BIGINT NOT NULL,
+    `tenant_id` BIGINT DEFAULT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_group_contact` (`group_id`, `contact_id`),
+    KEY `idx_contact` (`contact_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知组成员关系';
+
+CREATE TABLE IF NOT EXISTS `alert_rule_notify_group` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `rule_id` BIGINT NOT NULL,
+    `group_id` BIGINT NOT NULL,
+    `tenant_id` BIGINT DEFAULT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_rule_group` (`rule_id`, `group_id`),
+    KEY `idx_group` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='告警规则与通知组的引用关系';
+
 USE `db_admin`;
 
 -- =============================================

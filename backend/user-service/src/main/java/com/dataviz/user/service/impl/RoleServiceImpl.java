@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -110,12 +111,33 @@ public class RoleServiceImpl implements RoleService {
     @Transactional(rollbackFor = Exception.class)
     public void assignPermissions(Long roleId, List<Long> permissionIds, Long tenantId) {
         requireRoleInTenant(roleId, tenantId);
+        List<Long> ids = normalizePermissionIds(permissionIds);
+        // 引用完整性：授权表没有外键，一个不存在的 permission_id 会安静地插进去，
+        // 于是"这个角色有 20 项权限"里有一项永远取不出码（界面上看不见、也删不掉）。
+        // 只判"这张表里有没有"，不判"操作者自己有没有这项码" —— 后者是 API-41 未拍的语义，不在这里固化。
+        if (!ids.isEmpty() && permissionMapper.selectBatchIds(ids).size() != ids.size()) {
+            throw new BizException("授权列表包含不存在或已删除的权限项");
+        }
         roleMapper.deletePermissionsByRoleId(roleId);
-        if (permissionIds != null && !permissionIds.isEmpty()) {
-            roleMapper.insertBatchRolePermissions(roleId, permissionIds);
+        if (!ids.isEmpty()) {
+            roleMapper.insertBatchRolePermissions(roleId, ids);
         }
         // 授权改的是 Redis 快照的"上游"，快照本身不会自己变 ⇒ 不驱逐就等用户下次登录才生效
         sessionEvictor.evictRoleMembers(roleId);
+    }
+
+    @Override
+    public List<Long> getRolePermissionIds(Long roleId, Long tenantId) {
+        requireRoleInTenant(roleId, tenantId);
+        return roleMapper.selectPermissionIdsByRoleId(roleId);
+    }
+
+    /** 去掉 null 与重复项：重复 id 会撞 sys_role_permission 的唯一键，而 500 的文案对调用方毫无意义。 */
+    private List<Long> normalizePermissionIds(List<Long> permissionIds) {
+        if (permissionIds == null || permissionIds.isEmpty()) {
+            return new ArrayList<Long>();
+        }
+        return permissionIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
     }
 
     @Override

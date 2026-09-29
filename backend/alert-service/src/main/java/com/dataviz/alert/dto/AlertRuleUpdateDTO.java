@@ -29,4 +29,10 @@ public class AlertRuleUpdateDTO {
     private String severity;
 
     private List<String> notifyChannels;
+
+    /**
+     * 通知组。null 表示"这次不改挂载关系"，空数组表示"一个都不发了" ——
+     * 与 {@code notifyChannels} 的 null 语义保持一致，否则只想改阈值会把收件人一起冲掉。
+     */
+    private List<Long> notifyGroupIds;
 }

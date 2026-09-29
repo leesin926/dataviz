@@ -25,7 +25,7 @@ public class NotifyChannel {
     private String name;
 
     /**
-     * EMAIL / SMS / WEBHOOK / DINGTALK
+     * EMAIL / SMS / WEBHOOK / DINGTALK / WECHAT / FEISHU（大写，与 AlertNotifier.channel() 一致）
      */
     private String type;
 

@@ -44,16 +44,35 @@ public class DingTalkNotifier implements AlertNotifier {
     }
 
     @Override
-    public String recipientOf(NotifyChannel channelConfig) {
+    public List<ChannelField> fields() {
+        return ChannelField.list(
+                // 地址本身就带 access_token，所以既是 URL 又是口令：两个标记都要，缺一个就会漏（要么明文回给前端，要么保存侧不判地址段）
+                ChannelField.of("webhook", ChannelField.KIND_TEXT).required().secret().url()
+                        .label("channel.field.dingtalkWebhook")
+                        .placeholder("https://oapi.dingtalk.com/robot/send?access_token=..."),
+                // @ 谁（原先的 mobiles）改由规则挂的通知组提供，见 NotifyTargets；
+                // atAll 留在这里：它是"这个群机器人要不要@所有人"的行为开关，不是"发给谁"
+                ChannelField.of("atAll", ChannelField.KIND_SWITCH).label("channel.field.atAll")
+        );
+    }
+
+    @Override
+    public String targetKind() {
+        return TARGET_MOBILE;
+    }
+
+    @Override
+    public String recipientOf(NotifyChannel channelConfig, NotifyTargets targets) {
         // 群机器人地址里带 access_token，日志和告警记录只留前缀，不把口令落库
         String webhook = webhookUrlOf(channelConfig);
         int tokenAt = webhook.indexOf("access_token=");
-        return tokenAt < 0 ? webhook : webhook.substring(0, tokenAt) + "access_token=***";
+        String masked = tokenAt < 0 ? webhook : webhook.substring(0, tokenAt) + "access_token=***";
+        return targets.mobiles().isEmpty() ? masked : masked + " @ " + String.join(",", targets.mobiles());
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void send(NotifyChannel channelConfig, AlertRule rule, AlertEvent event) {
+    public void send(NotifyChannel channelConfig, AlertRule rule, AlertEvent event, NotifyTargets targets) {
         Map<String, Object> config = NotifierSupport.parseConfig(objectMapper, channelConfig);
         String webhook = OutboundUrlGuard.requireAllowed(
                 NotifierSupport.requireText(config, "webhook", channelConfig.getName()),
@@ -63,7 +82,7 @@ public class DingTalkNotifier implements AlertNotifier {
         text.put("content", NotifierSupport.formatMessage(rule, event));
 
         Map<String, Object> at = new LinkedHashMap<>();
-        List<String> mobiles = NotifierSupport.stringList(config, "mobiles");
+        List<String> mobiles = targets.mobiles();
         at.put("atMobiles", mobiles);
         at.put("isAtAll", Boolean.TRUE.equals(config.get("atAll")));
 

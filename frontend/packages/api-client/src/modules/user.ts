@@ -108,6 +108,16 @@ export async function assignRolePermissions(id: string | number, permissionIds: 
   await request.post(`/role/${id}/permissions`, permissionIds)
 }
 
+/**
+ * 角色当前的授权 id。
+ * 后端是"先删后插"的全量覆盖，所以界面必须先把它读回来当初始勾选态 ——
+ * 不回显就保存，等于把没显示出来的那部分授权清掉。
+ */
+export async function getRolePermissionIds(id: string | number): Promise<Array<string | number>> {
+  const res = await request.get<R<Array<string | number>>>(`/role/${id}/permissions`)
+  return res.data.data ?? []
+}
+
 /** 菜单权限树 */
 export async function getPermissionTree(): Promise<PermissionNode[]> {
   const res = await request.get<R<PermissionNode[]>>('/permission/tree')

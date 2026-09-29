@@ -75,12 +75,25 @@ public class RoleController {
         return R.ok(roleService.pageRoles(page, size, Long.valueOf(tenantId)));
     }
 
+    /**
+     * 角色当前的授权 id —— 给"分配权限"界面回显用。
+     * 用 list 码而不是 edit：角色管理页本身的数据源就是 /role/list（system:role:list），
+     * 所以"进得来页面却打不开抽屉"这种组合不会出现。
+     */
+    @GetMapping("/{id}/permissions")
+    @RequiresPermission("system:role:list")
+    @Operation(summary = "List permission ids assigned to a role")
+    public R<List<Long>> getRolePermissions(@PathVariable("id") Long id,
+                                                 @RequestHeader("X-Tenant-Id") String tenantId) {
+        return R.ok(roleService.getRolePermissionIds(id, Long.valueOf(tenantId)));
+    }
+
     @PostMapping("/{id}/permissions")
     @RequiresPermission("system:role:edit")
     @Operation(summary = "Assign permissions to role")
     public R<Void> assignPermissions(@PathVariable("id") Long id,
-                                           @RequestBody List<Long> permissionIds,
-                                           @RequestHeader("X-Tenant-Id") String tenantId) {
+                                     @RequestBody List<Long> permissionIds,
+                                     @RequestHeader("X-Tenant-Id") String tenantId) {
         roleService.assignPermissions(id, permissionIds, Long.valueOf(tenantId));
         return R.ok();
     }

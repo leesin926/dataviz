@@ -13,6 +13,14 @@
         </foreach>
     </insert>
 
+    <!-- sys_role_permission 没有 tenant_id 列（租户归属由 sys_role 决定），已在 common-mybatis 的
+         IGNORE_TENANT_TABLES 里；这里先 requireRoleInTenant 挡过角色本体，语句本身不再带租户条件。 -->
+    <select id="selectPermissionIdsByRoleId" resultType="java.lang.Long">
+        SELECT permission_id
+        FROM sys_role_permission
+        WHERE role_id = #{roleId}
+    </select>
+
     <!-- 口径与 selectUsernamesByRoleId 保持一致：join 用户表只滤 deleted，不滤 status（停用账号仍然挂在这个角色上）。 -->
     <select id="countMembersByRoleId" resultType="java.lang.Long">
         SELECT COUNT(1)

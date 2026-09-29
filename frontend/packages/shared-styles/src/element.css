@@ -155,11 +155,12 @@
   content: '';
   position: absolute;
   inset: 0;
+  z-index: -1; /* 靠这一层压到内容之下；不能用 `.dv-page > * { position: relative }` 抬内容 ——
+                  Element Plus 的 el-dialog / el-drawer 默认 append-to-body=false，`.el-overlay` 就落在 `.dv-page` 的直系子里，
+                  那条规则会把 `.el-overlay` 的 `position: fixed` 顶成 `relative`（同特异度、我们这份样式后加载），
+                  于是弹窗渲染成一个零高度的普通块：接口都发了、界面什么都不出现。 */
   background: var(--dv-grad-page);
   pointer-events: none;
-}
-.dv-page > * {
-  position: relative;
 }
 
 /* 页头：标题 + 说明 + 操作区 */

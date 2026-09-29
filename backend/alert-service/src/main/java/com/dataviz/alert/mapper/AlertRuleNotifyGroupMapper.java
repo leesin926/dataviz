@@ -1,0 +1,9 @@
+package com.dataviz.alert.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.dataviz.alert.entity.AlertRuleNotifyGroup;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface AlertRuleNotifyGroupMapper extends BaseMapper<AlertRuleNotifyGroup> {
+}

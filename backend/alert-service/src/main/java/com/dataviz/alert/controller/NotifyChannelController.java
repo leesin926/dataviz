@@ -1,8 +1,14 @@
 package com.dataviz.alert.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.dataviz.alert.entity.NotifyChannel;
-import com.dataviz.alert.mapper.NotifyChannelMapper;
+import com.dataviz.alert.dto.ChannelTestDTO;
+import com.dataviz.alert.dto.NotifyChannelDTO;
+import com.dataviz.alert.service.NotifyChannelService;
+import com.dataviz.alert.vo.ChannelSchemaVO;
+import com.dataviz.alert.vo.ChannelTestVO;
+import com.dataviz.alert.vo.NotifyChannelVO;
+import com.dataviz.common.core.result.PageQuery;
+import com.dataviz.common.core.result.PageResult;
+import com.dataviz.common.core.result.R;
 import com.dataviz.common.security.annotation.RequiresPermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +16,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 通知渠道配置。表单由 {@code /schema} 驱动：前端不写死任何渠道的字段，
+ * 因此加一种渠道只需要在后端加一个 {@code @Component}。
+ * <p>
+ * 这个控制器原先直接操作 mapper 并把实体整条回给调用方 —— 那张表的 {@code config} 里是群机器人 token、
+ * SMTP 口令、短信 AK/SK，任何 {@code alert:read} 都能读到。现在读走脱敏 VO，写走服务层校验。
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/alert/channel")
@@ -18,45 +31,69 @@ import java.util.List;
 @RequiresPermission("alert:read")
 public class NotifyChannelController {
 
-    private final NotifyChannelMapper notifyChannelMapper;
+    private final NotifyChannelService notifyChannelService;
+
+    /** 各渠道的类型码 + 配置项声明（管理端配置页据此渲染表单） */
+    @GetMapping("/schema")
+    public R<List<ChannelSchemaVO>> schema() {
+        return R.ok(notifyChannelService.schemas());
+    }
+
+    @GetMapping("/page")
+    public R<PageResult<NotifyChannelVO>> page(PageQuery pageQuery,
+                                               @RequestParam(required = false) String keyword,
+                                               @RequestParam(required = false) String type) {
+        return R.ok(notifyChannelService.page(pageQuery, keyword, type));
+    }
+
+    @GetMapping("/{id}")
+    public R<NotifyChannelVO> getById(@PathVariable Long id) {
+        return R.ok(notifyChannelService.detail(id));
+    }
 
     @PostMapping
     @RequiresPermission("alert:write")
-    public Long create(@RequestBody NotifyChannel channel) {
-        notifyChannelMapper.insert(channel);
-        log.info("Created notify channel: id={}, type={}", channel.getId(), channel.getType());
-        return channel.getId();
+    public R<Long> create(@RequestBody NotifyChannelDTO dto) {
+        return R.ok(notifyChannelService.create(dto));
     }
 
     @PutMapping
     @RequiresPermission("alert:write")
-    public void update(@RequestBody NotifyChannel channel) {
-        notifyChannelMapper.updateById(channel);
-        log.info("Updated notify channel: id={}", channel.getId());
-    }
-
-    @GetMapping("/{id}")
-    public NotifyChannel getById(@PathVariable Long id) {
-        NotifyChannel channel = notifyChannelMapper.selectById(id);
-        if (channel == null) {
-            throw new RuntimeException("Notify channel not found: " + id);
-        }
-        return channel;
+    public R<Void> update(@RequestBody NotifyChannelDTO dto) {
+        notifyChannelService.update(dto);
+        return R.ok();
     }
 
     @DeleteMapping("/{id}")
     @RequiresPermission("alert:write")
-    public void delete(@PathVariable Long id) {
-        notifyChannelMapper.deleteById(id);
-        log.info("Deleted notify channel: id={}", id);
+    public R<Void> delete(@PathVariable Long id) {
+        notifyChannelService.delete(id);
+        return R.ok();
     }
 
-    @GetMapping("/list")
-    public List<NotifyChannel> list(@RequestParam(required = false) String type) {
-        LambdaQueryWrapper<NotifyChannel> wrapper = new LambdaQueryWrapper<>();
-        if (type != null) {
-            wrapper.eq(NotifyChannel::getType, type);
-        }
-        return notifyChannelMapper.selectList(wrapper);
+    @PostMapping("/{id}/enable")
+    @RequiresPermission("alert:write")
+    public R<Void> enable(@PathVariable Long id) {
+        notifyChannelService.setEnabled(id, true);
+        return R.ok();
+    }
+
+    @PostMapping("/{id}/disable")
+    @RequiresPermission("alert:write")
+    public R<Void> disable(@PathVariable Long id) {
+        notifyChannelService.setEnabled(id, false);
+        return R.ok();
+    }
+
+    /**
+     * 用一条合成消息实测该渠道；失败原因作为结果回，不抛异常（详见服务层注释）。
+     * {@code recipients} 是给本次实测的临时收件人；传空则走与真实派发<b>同一条</b>解析路
+     * （这条请求没有规则，所以组那一段必然落空，实际取到的是渠道里存的历史收件人 —— 取不到就是空）。
+     */
+    @PostMapping("/{id}/test")
+    @RequiresPermission("alert:write")
+    public R<ChannelTestVO> test(@PathVariable Long id,
+                                 @RequestBody(required = false) ChannelTestDTO body) {
+        return R.ok(notifyChannelService.test(id, body == null ? null : body.getRecipients()));
     }
 }
