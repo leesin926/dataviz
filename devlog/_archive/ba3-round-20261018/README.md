@@ -9,6 +9,8 @@
 | `tmp-probe-login.sh` | 判"8087 是被回收还是自己崩"用的存活探针：`/v3/api-docs` 拉全量再数端口 | 只走免登面；读数 **200 / 14,031 B**，跨 8 分钟仍 LISTENING |
 | `8087-startup.snapshot.log` | WMI 分离式启动那次的启动日志（**cp 快照**，不是原件） | 原件 `devlog/ba3-8087.log` **在跑着的 JVM 句柄里**（`mv` 报 `Device or resource busy`，只能 `cp`）。⚠️ **这份快照同样不在 git 里** —— `.gitignore:59` 排除 `*.log`，我试着改名成 `.log.data` 时被上面的句柄挡住。**结论：启动日志只在本地留证，台账里引的是字节数与尾部行内容，不是"已入库的文件"** |
 
+| `ba3-8087.err`（2 B）/ `tmp-ba2-8087.err`（0 B） | 8087 两次启动的 stderr 捕获 | **空 = 没有崩溃栈**，与"被外部回收、不是自己崩"的结论一致（BA3 台账 §19.35.6）。2026-10-19 BD 收尾时从 `devlog/` 根目录 **cp** 进来并清掉原件（`.err` 不在 `.gitignore` 的 `*.log` 排除内，所以这两份是真入库） |
+
 **为什么这几件能进 git**：里面只有表名、列名、账号名和端口读数，**没有口令、没有 token、没有连接串**。`tmp-*.sql` 用 `docker exec … MYSQL_PWD="$MYSQL_ROOT_PASSWORD"` 的既有安全路径执行，口令不落盘也不回显。
 
 **没进 git 的本轮证据**：`devlog/ba3-8087.log` / `.err`（`*.log` 排除，且 JVM 句柄占用期间不能动）。
