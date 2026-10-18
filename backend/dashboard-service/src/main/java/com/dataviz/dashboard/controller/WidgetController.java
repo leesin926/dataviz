@@ -2,6 +2,7 @@ package com.dataviz.dashboard.controller;
 
 import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.dashboard.dto.WidgetCreateDTO;
+import com.dataviz.dashboard.dto.WidgetUpdateDTO;
 import com.dataviz.dashboard.service.WidgetService;
 import com.dataviz.dashboard.vo.WidgetVO;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class WidgetController {
 
     @PutMapping
     @RequiresPermission("dashboard:write")
-    public void update(@RequestBody WidgetCreateDTO dto) {
+    public void update(@RequestBody WidgetUpdateDTO dto) {
         widgetService.update(dto);
     }
 

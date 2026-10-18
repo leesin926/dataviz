@@ -2,7 +2,9 @@ package com.dataviz.dashboard.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dataviz.dashboard.dto.WidgetCreateDTO;
+import com.dataviz.dashboard.dto.WidgetUpdateDTO;
 import com.dataviz.dashboard.entity.DashboardWidget;
+import com.dataviz.dashboard.mapper.DashboardMapper;
 import com.dataviz.dashboard.mapper.WidgetMapper;
 import com.dataviz.dashboard.service.WidgetService;
 import com.dataviz.dashboard.vo.WidgetVO;
@@ -23,10 +25,18 @@ import com.dataviz.common.core.result.ErrorCode;
 public class WidgetServiceImpl implements WidgetService {
 
     private final WidgetMapper widgetMapper;
+    private final DashboardMapper dashboardMapper;
 
     @Override
     @Transactional
     public Long create(WidgetCreateDTO dto) {
+        // dashboard_widget 没有 deleted 列，收下的孤儿行永远清不掉也不会出现在任何列表里，所以父级必须在插入前验存在
+        if (dto.getDashboardId() == null) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "组件所属仪表盘 id 不能为空");
+        }
+        if (dashboardMapper.selectById(dto.getDashboardId()) == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "仪表盘不存在: " + dto.getDashboardId());
+        }
         DashboardWidget widget = new DashboardWidget();
         BeanUtils.copyProperties(dto, widget);
         widgetMapper.insert(widget);
@@ -36,12 +46,15 @@ public class WidgetServiceImpl implements WidgetService {
 
     @Override
     @Transactional
-    public void update(WidgetCreateDTO dto) {
-        DashboardWidget widget = widgetMapper.selectById(dto.getDashboardId());
-        if (widget == null) {
-            throw new BizException(ErrorCode.NOT_FOUND, "Widget not found");
+    public void update(WidgetUpdateDTO dto) {
+        if (dto.getId() == null) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "组件 id 不能为空");
         }
-        BeanUtils.copyProperties(dto, widget);
+        DashboardWidget widget = widgetMapper.selectById(dto.getId());
+        if (widget == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "Widget not found: " + dto.getId());
+        }
+        BeanUtils.copyProperties(dto, widget, "id");
         widgetMapper.updateById(widget);
         log.info("Updated widget: id={}", widget.getId());
     }

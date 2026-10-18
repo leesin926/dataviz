@@ -1,6 +1,7 @@
 package com.dataviz.dashboard.service;
 
 import com.dataviz.dashboard.dto.WidgetCreateDTO;
+import com.dataviz.dashboard.dto.WidgetUpdateDTO;
 import com.dataviz.dashboard.vo.WidgetVO;
 
 import java.util.List;
@@ -9,7 +10,7 @@ public interface WidgetService {
 
     Long create(WidgetCreateDTO dto);
 
-    void update(WidgetCreateDTO dto);
+    void update(WidgetUpdateDTO dto);
 
     WidgetVO getById(Long id);
 

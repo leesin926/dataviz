@@ -33,6 +33,9 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional
     public Long create(DashboardCreateDTO dto) {
+        if (!StringUtils.hasText(dto.getName())) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "仪表盘名称不能为空");
+        }
         Dashboard dashboard = new Dashboard();
         BeanUtils.copyProperties(dto, dashboard);
         dashboard.setStatus(0);
@@ -46,6 +49,12 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional
     public void update(DashboardUpdateDTO dto) {
+        if (dto.getId() == null) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "仪表盘 id 不能为空");
+        }
+        if (dto.getName() != null && !StringUtils.hasText(dto.getName())) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "仪表盘名称不能为空");
+        }
         Dashboard dashboard = dashboardMapper.selectById(dto.getId());
         if (dashboard == null) {
             throw new BizException(ErrorCode.NOT_FOUND, "Dashboard not found: " + dto.getId());

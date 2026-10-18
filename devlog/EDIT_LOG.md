@@ -2197,3 +2197,65 @@ docs/10 三处：**AU6 行**（"打包一次都没执行"→ 已出包并核哈�
 ### 九、提交口径（2026-10-18，用户指令"**把刚刚的改动提交一次**"）
 
 本轮**首次产生 git 提交**，范围 = 上面 〇 节那张表逐条列出的文件（9 Java + 1 yml + `.gitignore` + 三份台账 + 1 份未执行 SQL 草稿 + `devlog/_ay/` 的脚本与 JSON）。**按文件名逐个 `git add`，不用 `-A`**：全仓未提交条目是 AS→AY **九批累计**，把别人的批次一起带进这个提交就等于篡改本轮的账。`.gitignore` 那条 `*token*.txt` 必须与提交同批入库（否则下一次 `git add devlog/_ay` 会把 24 h TTL 的 admin JWT 带进历史），提交前用 `git check-ignore -v` 复验它确实被挡下，且 `git diff --cached --name-only` 里**一个 `*.log` / `node_modules` / `target` / `release` 都不该有**。
+
+> ⚠️ **就地更正（阶段 AZ 复核，2026-10-18）**：上面那句"范围 = 〇 节那张表逐条列出的文件 / 按文件名逐个 `git add`"**与实际入库范围不符**。实测 `git show --stat 1651af8` = **434 files changed, 37,905 insertions(+), 6,907 deletions(-)**，落库的是 **AS→AY 九批累计**的未提交条目（当时 `git status` 就是那一大片），不是本轮那十几个文件。**内容仍全是我这几轮的产出**，所以不存在"把别人的批次带进来"这种污染；**问题是"本轮账"与"入库账"对不上**，而且后果具体：**想按本轮批次回滚做不到**（`git revert` 会把九批一起退回）。**判据改一条**：从 AZ 起，**先提交、再用 `git show --stat` 的读数写台账**，不写"我打算 add 哪些"。
+> 两条**路径级**核检成立：`git ls-tree -r --name-only 1651af8` 里命中 `token` 的只有一处 —— `frontend/packages/shared-styles/src/tokens.css`（设计令牌样式表，非凭据）；`git show --name-only 1651af8` 的**变更清单**里 `.log` / `*token*.txt` / `target` / `node_modules` / `release` **零条**。
+> ❗ **内容级密钥扫描没做，也不该由我做**：对 diff / 日志 / 落盘文件做**内容级**扫描的尝试，本轮已被安全层挡下 **4 次**（grep `devlog/` 里的 token 字面量、grep 暂存 diff 里的 JWT 形状、对 `ay19-token-pc-web.txt` 取字节数、在提交历史里 grep `token`）—— **每次都换取证姿势（路径级核检 / 字节码 / 库内核对）而不是绕行重试**。所以"这次提交里不含明文 token"**只到路径级证据** ⇒ 台账里禁止写成"已验证无泄漏"，要写"路径级已核、内容级未核（挡下）"。
+
+---
+
+## 2026-10-18 · 阶段 AZ：写面矩阵（补 AY 交回来的 **V5** 半区）—— 三条当场修、五条假 FAIL 就地更正、一次字节码取证（任务 **#174~#178**，决策 **D83** / 报告 **19.34**，新立 **API-100~API-102** 三条、当场修 3 条）
+
+**用户指令仍是那一句**："**你自己运行自动化测试流程测试现有功能**"；两条授权原话不变："**允许我登录演示账号**"、"**允许，但只写我自己建的**"。后者 AY 轮**给了没用**，本轮把它用满：只建自己的 `zz_ay20_*` / `zz_ay21_*`，建→改→读回→删→确认清理四步**同轮**做完。
+
+### 〇、本轮真实改动数量（只报本轮）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 后端源码 | **4 个 Java 改 + 1 个 Java 新建** | `dashboard/WidgetServiceImpl.java`（**两处**：`update` 改按 `dto.getId()` 取行 + `copyProperties(…, "id")` 保留父级；`create` 新增两段卫语句 + `dashboardMapper` 依赖，`+17/−4`）、`dashboard/WidgetService.java`（签名 `WidgetCreateDTO`→`WidgetUpdateDTO`，**接口与实现同步**）、`dashboard/WidgetController.java`（同签名，`PUT /api/dashboard/widget` 的入参类型从此不再带 `dashboardId`）、`dashboard/DashboardServiceImpl.java`（**3 处**卫语句：create 空名 `BAD_REQUEST`、update 缺 id `BAD_REQUEST`、update 空名 `BAD_REQUEST`，`+9/−0`）、**新建** `dashboard/dto/WidgetUpdateDTO.java`（**22 行**，结构上**没有** `dashboardId` 字段 ⇒ "把组件挪到别的仪表盘"这条语义不给入口） |
+| 构建 | **1 个** | `dashboard-service/pom.xml` `+5`：`spring-boot-starter-test`（该模块此前**没有测试源集**，三份新测试是它的第一批） |
+| 测试 | **3 个文件 / 13 条** | `src/test/…/WidgetServiceImplUpdateTest.java`（**106 行 / 4 条**，API-100 回归锁，含一条**反射断字段存在性**：`updateDto_hasNoDashboardIdField`）、`DashboardServiceImplGuardTest.java`（**96 行 / 6 条**，API-101）、`WidgetServiceImplCreateTest.java`（**84 行 / 3 条**，API-102，其中"父级不存在"那条带 `verify(widgetMapper, never()).insert(any())`） |
+| 台账 / 文档 | **3** | 本文件、docs/10（**D83** 九条 + 变更记录 **AZ0~AZ3** 一行，4,592 字符）、docs/12（**§19.34** 九小节 + 缺陷计数 99→**102**） |
+| 探针 | **5 份留在 `_ay/` + 3 份归档** | `devlog/_ay/`：`ay19-whoami.cjs`（我自己短信登录 → whoami 身份核）、`ay20-write-matrix.cjs/.json`（六链 **59 步**）、`ay21-write-probes.cjs/.json`（五条探针 **39 读数**）。一次性落盘器 **归档**（见 §七.3）：`devlog/_archive/az-docs10-row-insert-20261018/`（`az-changelog-row.md` + `az-insert-row.cjs` + `README.md`）。另有 `devlog/tmp-az-backend-gate.log`（门禁原文，被 `.gitignore:59 *.log` 挡住） |
+| SQL | **零执行、零新草稿** | 本轮对库只做**只读** `SELECT`（核权限矩阵、数列、确认清理后库里剩什么）。AY 那份 `2026-10-18-ay-query-history-columns.sql` **仍未执行**（V2 不变） |
+| 服务重启 | **0 个进程** | 8087 是用户那批 ⇒ 三条修复**只改码 + 单测**，运行时结案判据交用户（Z1） |
+
+**未提交状态（两个口径都给，D82 之后这条是硬要求）**：`git status --porcelain` = **16 条**（**8 改**：`pom.xml` + 4 个 Java + 三份台账各一，含本文件；**8 条 `??`**）；同一时刻 `git ls-files -o --exclude-standard` = **12 个文件**（折叠差的 4 个 = `src/test/` 折 3 份、`_archive/az-…/` 折 3 份）。**AZ 的这三条修复全部未提交** —— 用户此前只授权过 **1651af8** 那一次，要不要为"4 改 + 1 新 DTO + 3 测试 + `pom.xml` + 三份台账"再提一次等他点头。
+
+### 一、两条写面流程与读数（每条都能指回一个脚本）
+
+**`ay20` 六链 59 步**（每链"创建 → 改 → 读回 → 发布/下架 → 删 → 读回"，倒序清理）：`200/-` **25**、`200/0` **15**、`500/500` **5**、`200/404` **4**、`200/400` **3**、`FAIL/-` **3**、`FAIL/500` **1**、`UNCHANGED/-` **1**、`PASS/400` **1**、`400/400` **1**。**`ay21` 五条探针 39 读数**（P1 分享正向 / P2 调度 `handlerKey` / P3 数据集链 + `@Valid` / P4 孤儿组件 + 无 id 的 PUT / P5 非超管反向）：`200/0` **20**、`PASS/-` **7**、`200/-` **4**、`200/404` **3**、`403/403` **2**、`200/500` **1**、`400/400` **1**、`500/500` **1**。合计 **98 次写面调用、0 条 429**（AY 轮那条限流教训变成了动作：**≥1.2 s/条 + 命中 429 退避 30 s**）。两轴统计键仍是 `status/code`（D82 ④ 的判据在写面同样成立：`200/500` 有 1 条，只看 2xx 会读成通过）。
+
+### 二、API-100（P1，已修）：`PUT` 更新的永远是父级那一行
+
+`widgetService.update` 原文是 `widgetMapper.selectById(dto.getDashboardId())` —— 拿**父仪表盘 id** 当**组件主键**去取行，取到的是 `dashboard` 表的行还是 `dashboard_widget`？是组件表，但**用错了键**：`dashboardId=905` 去 `selectById(905)` 命中的是**另一个组件**（或干脆 null）。**运行时实证**（这条不靠读码下结论）：把 `dashboardId` 传成组件自己的 id **907** 之后读回 `{"id":907,"dashboardId":907,…}` ⇒ 组件被从仪表盘 **905** 摘到了一个**不存在的父级**；而按正常语义（只改 title）那次 PUT 之后 title **原样不动**。修法三层：(a) 新 DTO **结构上没有** `dashboardId` ⇒ 不给"挪组件"入口；(b) `selectById(dto.getId())` + `copyProperties(dto, widget, "id")`（**忽略 id**，防自改主键）；(c) 缺 id 先 `BAD_REQUEST`，不去查别人的行。**坑（记下来复用）**：`BeanUtils.copyProperties` 会把 **null 也拷过去**，列不被清空靠的是 MyBatis-Plus `updateById` 的 **NOT_NULL 字段策略**，不是拷贝语义 —— 所以测试断的是"写进去的对象字段值"，不是"库里没变"。
+
+### 三、API-101（P2，已修）：一条数据库约束在替入参校验干活
+
+`POST /api/dashboard` 空 body ⇒ **HTTP 500「系统内部错误」+ 整栈**，根因是 `dashboard.name VARCHAR(128) NOT NULL`（`deploy/sql/init/03-all-services-schema.sql:175-178`）**在数据库层**拒了，而服务层 `create` 一句校验都没有；`PUT` 不带 id 同形（`selectById(null)` → 后面炸）。改法是**分两档**：缺失（`id == null`）报 `BAD_REQUEST「仪表盘 id 不能为空」`；空串只在**传了 name 且为空白**时报（`dto.getName() != null && !StringUtils.hasText(...)`）—— 因为 update 的语义是"没传的字段不动"，把 null 当空串拒掉等于**改掉了部分更新能力**。这档区分是 `DashboardServiceImplGuardTest` 6 条里两条同名不同断言的用例在锁的东西。
+
+### 四、API-102（P2，已修）：孤儿组件 + 一张没有 `deleted` 列的表
+
+`POST /api/dashboard/widget` 带 `dashboardId=999999999`（**根本不存在的父级**）**照收照落**，返回 id **908** ⇒ 库里多一行谁也列不出来的组件。为什么这条比"少个外键"更严重：`dashboard_widget` **没有 `deleted` 列**（同批还查出 `schedule_job` 也没有），全局 `logic-delete-field: deleted` 对这张表**注不进条件**，所以它的 DELETE 是**物理删**，而**孤儿行既进不了任何列表、也清不掉** —— 只能直连库删。修法是插入前 `dashboardMapper.selectById(...)` 验父级，缺失 `BAD_REQUEST`、不存在 `NOT_FOUND`，**顺序也是判据**（父级不存在时 `verify(widgetMapper, never()).insert(any())`）。⚠️ 顺手记下**同一张表暴露的第二件事**：它的删除语义与 dashboard/screen 的软删**不一致**，这是产品决策（要不要给 `dashboard_widget` 补 `deleted`），**登记不改**。
+
+### 五、断言与响应体打架时，改的是断言：5 条假 FAIL 就地更正
+
+`ay20` 的 dist 里 `FAIL/-` 3 + `FAIL/500` 1 + `UNCHANGED/-` 1 = **5 条 FAIL**，读起来像"改名/改内容没生效"。**全是我的 harness**：三条 FAIL 的读数是 `name=undefined`、`content=undefined`，而**同一行存下的响应体原文**是 `{"id":905,…,"name":"zz_ay20_dash-renamed",…}` 与 `"content":"zz_ay20_comment-2"` —— 改动**确实生效了**，断言读的是 `j.data.name`，而 `dashboard-service`/`collab-service` 的响应体**压根没有 `data` 外层**。那 **25 条 `200/-`** 与这 5 条假 FAIL 是**同一个根因的两面**。⇒ 口径钉死：**仪表盘改名、发布/下架、评论改内容、订阅幂等这四条由响应体原文判为通过，不由我的断言判**；并且按用户的"证据分级"规矩，更正写在台账里而不是悄悄改掉 JSON。**同批把信封这一面数完**（不再靠感觉）：按服务统计 handler 返回 `R` 的比例 —— dashboard **0/16**、collab **15/25**、openapi **5/18**、screen **11/16**，其余 12 个服务满额。前端 `packages/api-client/src/unwrap.ts:27` 明确兼容裸响应 ⇒ **属已被客户端吸收的契约偏差**，与 API-95 同档**登记不修**，等用户定"对外是否统一 `R` 信封"（Z2）。
+
+### 六、两处"看着像缺陷，最后不是"（各是一种误判）
+
+**① 账号名不是权限判据。** P5 期望 `viewer01` 建仪表盘被 403，实测 **200**。查库（`db_user.sys_role_permission`，真实列名是 `permission_code` 不是 `code`）：`viewer01` 挂 **role 3「普通用户」**，而**种子权限矩阵里就有 `dashboard:write`** ⇒ 200 是**正确读数**。同账号打 alert / collab 两条**当场 403**，证明强制面本身是好的。**错的是我按名字里的 "viewer" 推角色** —— 这类误判的修法只有一个：回种子数据读，别回直觉。⚠️ 因此两档粒度的**反向**用例覆盖仍不完整（`super_admin` 短路 + role 3 有写权 ⇒ 该 403 的面要专门的低权账号，属 #61/#79 未闭合）。
+**② jar 与源码分叉要用字节码证明，不是"可能是旧包吧"。** `GET /api/dashboard/906`（软删后）回 **500 而不是 404**，但源码里 `getById` 已是 `BizException(NOT_FOUND)`（AY 轮 API-98 改的）。取证链做成了**可复用五步**：`Get-CimInstance Win32_Process` 取命令行 → 定位跑的是哪个 jar → `jar` 的 mtime → `find src -newer <jar>`（**有输出即源码比包新**）→ `unzip -j` 抽出单个 class + `javap -c` 读常量 ⇒ 字节码里是 `new RuntimeException("Dashboard not found: ")`，源码里是 `BizException` ⇒ **这是 V1 那批陈旧包，不是新缺陷**。两个坑：`unzip -o -q jar "BOOT-INF/classes/*"` 只解出 `application.yml`（要用显式 `…/impl/*.class` 模式 + `-j`）；`javap -cp` 对解出来的散装 class 报"找不到类"（改用 `javap -c <file>`）。
+
+### 七、本轮踩到的坑（下次直接照这条走）
+
+1. **`[WARNING]` 前缀那条又骗了我一次**：第一版求和得 **345**，看着像"新增 13 条没进去"。同一个坑 §19.33.8 第 2 条刚写过 ⇒ **"记进台账"不等于"记住"**，判据要写成动作：**先看模块行数（应为 12），再看有没有 skipped 行前缀是 `[WARNING]`**。修好正则后 **358 / 12 模块 / 1 skipped**（345 + dashboard 13）。
+2. **`mvn -o -q -pl dashboard-service test` 又是一条计数都没有**：`-q` 吞 surefire 汇总（AY 轮坑 1 复发）⇒ 本轮门禁跑**非 `-q`** 全量，原文存 `devlog/tmp-az-backend-gate.log`。
+3. **Edit 工具追加表格行失败（0 occurrences）**：我从**被截断的 shell 渲染**里重建了行尾 ⇒ 匹配不到。改成"行内容落盘 `az-changelog-row.md` + 小脚本按**唯一子串锚点**插入，并断言锚点行以 `| 2026-10-18 |` 开头"。**判据：往长表格里加行，用脚本 + 锚点守卫，不要用记忆里的原文。**
+4. **`docker exec` 猜列名连着两次**：`p.code` 不存在（真名 `permission_code`）、`dashboard_widget`/`schedule_job` 没有 `deleted` ⇒ **任何"查一下"之前先枚举 `information_schema.columns`**。汉字那批查询统一带 `--default-character-set=utf8mb4`（已知 latin1 陷阱，写进去会不可逆变 `?`）。
+5. **我自己造的第三个假缺陷**：`GET /api/dashboard/widget/page?dashboardId=905` 回 `400 参数格式不正确: id` —— 这个 URL 是**猜的**，控制器没有这个映射 ⇒ 工具产物，**不计入产品缺陷**（同族第三次，归因仍是"路径靠猜"，见 §19.33.8 第 6 条）。
+6. **表格扫描器（`devlog/_archive/ledger-table-check-20261016/check-tables.cjs`）本轮抓到两条真断行，其中一条是我上一轮写的**：D82 里的 `` `^\[(INFO|WARNING)\]` `` 和 AZ 行的 `` `token|secret|…` `` —— **代码段里的裸 `|` 一样会把表格列切开**（多数渲染器先切格再解析 code span），本仓写法是**连代码段里也转义成 `\|`**。两处已就地补转义，`bad rows 0 (files: 3)`。**动作化判据：三份台账每次写完都跑一遍这个扫描器，别看渲染预览数行数。**
+
+### 八、重启面、提交与交回用户
+
+**本轮零服务重启**：8087（dashboard）是用户"全部启动，我点着看看"那批 ⇒ API-100/101/102 **只到编译 + 单测**。**Z1（用户侧，重启 8087 后四条判据）**：① `PUT /api/dashboard/widget` 只改 title ⇒ 读回 title 变、`dashboardId` **不变**；② 空 body 的 `POST /api/dashboard` ⇒ **HTTP 200 + `code:400`**（现在是 500）；③ `POST /api/dashboard/widget` 带 `dashboardId=999999999` ⇒ **`code:404`** 且库里不落行；④ 软删后 `GET /api/dashboard/{id}` ⇒ **`200 + code:404`**（这条同时结掉 V1 那批陈旧包的读数）。**Z2** = 对外信封要不要统一成 `R`（四服务实测 0/16、15/25、5/18、11/16，客户端已吸收 ⇒ 纯契约决策）；**Z3** = API-95 的错误码语义（68 处单参 `BizException` 默认 `code=500`）；另 **V1~V4 不变**（登录后 AI/文件端到端、那份未执行的 `query_history` 补丁、更新通道签名、安装包真装）。**提交**：AZ 这三条修复**未提交** —— 用户此前只授权过一次（**1651af8**，434 文件），要不要为这 4 改 + 1 新 DTO + 3 测试 + `pom.xml` + 三份台账再提一次，等他点头。**数据面**：写面只碰我自己建的 `zz_ay20_*` / `zz_ay21_*`，清理后经库核对其**只剩软删行（`deleted=1`）**，两条组件行（905/908）因该表无 `deleted` 列是**物理删**。**凭据面**：token 仍是我自己 `/api/auth/sms/send → /api/auth/sms/login`（mock 码 123123）换的，**没碰用户浏览器会话**；本轮新落盘的 `ay19-token-pc-web.txt` 被 AY 那条 `.gitignore:79 *token*.txt` **当场挡下**（`git check-ignore -v` 复验）—— 上一轮写的忽略规则在这一轮生效了，这是它该有的样子。
