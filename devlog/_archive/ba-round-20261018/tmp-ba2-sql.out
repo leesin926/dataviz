@@ -1,0 +1,21 @@
++-------------+-----------+-------------+----------------+
+| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT |
++-------------+-----------+-------------+----------------+
+| dataset_id  | bigint    | YES         | NULL           |
+| query_json  | json      | YES         | NULL           |
+| status      | varchar   | NO          | SUCCESS        |
+| deleted     | tinyint   | NO          | 0              |
+| create_by   | varchar   | YES         | NULL           |
+| update_by   | varchar   | YES         | NULL           |
+| update_time | datetime  | YES         | NULL           |
++-------------+-----------+-------------+----------------+
++------------+--------------+
+| total_rows | visible_rows |
++------------+--------------+
+|          9 |            9 |
++------------+--------------+
++-----------+-------------+
+| main_rows | backup_rows |
++-----------+-------------+
+|         9 |           9 |
++-----------+-------------+

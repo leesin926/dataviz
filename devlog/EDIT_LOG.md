@@ -2259,3 +2259,69 @@ docs/10 三处：**AU6 行**（"打包一次都没执行"→ 已出包并核哈�
 ### 八、重启面、提交与交回用户
 
 **本轮零服务重启**：8087（dashboard）是用户"全部启动，我点着看看"那批 ⇒ API-100/101/102 **只到编译 + 单测**。**Z1（用户侧，重启 8087 后四条判据）**：① `PUT /api/dashboard/widget` 只改 title ⇒ 读回 title 变、`dashboardId` **不变**；② 空 body 的 `POST /api/dashboard` ⇒ **HTTP 200 + `code:400`**（现在是 500）；③ `POST /api/dashboard/widget` 带 `dashboardId=999999999` ⇒ **`code:404`** 且库里不落行；④ 软删后 `GET /api/dashboard/{id}` ⇒ **`200 + code:404`**（这条同时结掉 V1 那批陈旧包的读数）。**Z2** = 对外信封要不要统一成 `R`（四服务实测 0/16、15/25、5/18、11/16，客户端已吸收 ⇒ 纯契约决策）；**Z3** = API-95 的错误码语义（68 处单参 `BizException` 默认 `code=500`）；另 **V1~V4 不变**（登录后 AI/文件端到端、那份未执行的 `query_history` 补丁、更新通道签名、安装包真装）。**提交**：AZ 这三条修复**未提交** —— 用户此前只授权过一次（**1651af8**，434 文件），要不要为这 4 改 + 1 新 DTO + 3 测试 + `pom.xml` + 三份台账再提一次，等他点头。**数据面**：写面只碰我自己建的 `zz_ay20_*` / `zz_ay21_*`，清理后经库核对其**只剩软删行（`deleted=1`）**，两条组件行（905/908）因该表无 `deleted` 列是**物理删**。**凭据面**：token 仍是我自己 `/api/auth/sms/send → /api/auth/sms/login`（mock 码 123123）换的，**没碰用户浏览器会话**；本轮新落盘的 `ay19-token-pc-web.txt` 被 AY 那条 `.gitignore:79 *token*.txt` **当场挡下**（`git check-ignore -v` 复验）—— 上一轮写的忽略规则在这一轮生效了，这是它该有的样子。
+
+---
+
+## 2026-10-18 · 阶段 BA：把交回自己的四件 handback 全跑完 —— 三条同族当场修、一次"构建把产物写坏"、一份补丁的两步在活库上早成立
+
+**本轮的驱动指令是新的那一句**："**不用问我，你自己决定执行**"。它覆盖的是 AZ/AY 末尾交回我自己手里的那批动作（AZ 三条修复入库、重启 8087、跑 Z1 四条运行时判据、执行 `query_history` 补丁）；**没有覆盖**凭据归属（登录仍是我自己用演示账号换的 token）、**也没有覆盖** SQL 决定权（D82 ⑥ —— 本轮执行的是上一轮已审定并落盘的脚本，不是本轮新写的 ALTER）。
+
+### 〇、本轮真实改动数量（只报本轮）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 后端源码 | **2 个 Java 改** | `dashboard/WidgetServiceImpl.java`（**两处**：`create` 补四条 `requireText`、`update` 补四条 `requireTextIfPresent` + 两个私有卫语句）、`common-core/exception/GlobalExceptionHandler.java`（新增 `HttpMessageNotReadableException` handler → `400`，Jackson 原文只进 WARN） |
+| 测试 | **2 个文件改 / 净新增 4 条** | `WidgetServiceImplCreateTest`（3 → **5 条**：缺 `configJson`、缺 `widgetType` 各一条，都断言 `never()` 落库）、`WidgetServiceImplUpdateTest`（4 → **6 条**：空白 `configJson` 拦成 400 **且** null 仍放行 —— 后者是 partial 语义的反向锁） |
+| SQL | **1 份补丁执行 + 1 份状态更正 + 4 份只读/清理** | 执行 `deploy/sql/patch/2026-10-18-ay-query-history-columns.sql`（读数 `devlog/_archive/ba-round-20261018/tmp-ba2-sql.out`）；同文件头 **6 行**改成"已于 20:36 执行、第 2/3 步在活库上是无操作"；新增 `ba2-precheck.sql`、`ba2-precheck2.sql`、`ba2-inspect.sql`、`ba2-cleanup.sql` |
+| 台账 / 文档 | **3** | 本文件、docs/10（**D84** 四条 + 变更记录 **BA0~BA2** 一行）、docs/12（**§19.35** 五节 + 头部 BA bullet「累计 105」+ **§19.34.9 就地更正**） |
+| 探针 | **4 份留在 `_ay/`** | `ba1-z1-criteria.cjs` + 同名 `.json`（16 步 + 4 条反向探针，`status`/`code` 两轴 + PASS/FAIL/READ 判据）、`ba2-analysis-history.cjs` + 同名 `.json`（A1~A4） |
+| 归档 | **1 个目录 / 5 份** | `devlog/_archive/ba-round-20261018/`：门禁日志、两次 package 日志（含失败那次）、SQL 读数、8087 启动日志快照（正被 JVM 占用 ⇒ **拷贝**而非移动） |
+| 服务重启 | **1 个进程、2 次停启** | 只动我自己起的 8087：PID **82744 → 72204 → 89828**（jar 依次 20:28:35 / 20:36:12）。**其余 16 个进程零重启** |
+| 库内数据变更 | **全是本轮我自己写的行** | `dashboard_widget` 实删 2 行（910、911，该表无 `deleted` 列）、`dashboard` 907 补软删（其余 908~913 已是 `deleted=1`）、`query_history` 插 1 删 1（回到 9 行）；补丁自带的备份表 `_ay_query_history_bak`（9 行） |
+| git | **2 次提交** | `b098f1d`（AZ 那批，**20 文件 / +2,025 / −7**）、`df3b1ed`（BA 这批，**14 文件 / +537 / −1**）—— 两条 scope 都取自 `git show --stat`，不是我自己数的（D83 那条新规则第一次生效） |
+
+**未提交状态**：`git status --porcelain` 现在只剩 `devlog/_archive/ba-round-20261018/`（5 份证据日志，按惯例不入库）与 8087 正在写的 `devlog/tmp-ba2-8087.log`/`.err`。
+
+### 一、Z1 判据：不重启就没有结案权，而第二轮跑才有发现
+
+`ba1-z1-criteria.cjs` 两轮：**第一轮**（jar 含 API-103/104）13 条判据 PASS，唯一那行"读数不判"是 `S11c 更新传空白 configJson` = **`500/500`**；**修完 API-105、重打包、重启，第二轮**同一行变 **`200/400`**「configJson 不能为空」。
+
+这轮把 AZ 交回的三条 handback 一起结掉，读数都在 `ba1-z1-criteria.json` 里逐行存着：`PUT` 不带 id → `200/400`、空 body / 空白名建仪表盘 → `200/400`、`dashboardId=999999999` 建组件 → `200/404` 且该父级下组件数仍 **1**（无孤儿）、软删后 `GET /api/dashboard/{id}` → `200/404`（**AZ 那次 `javap` 取证的结论被复核为真**：旧包里是 `RuntimeException`，新包里已是 `BizException`）。
+
+**判据口径**：只跑第一轮的话，那行 `500` 就只是输出里的一行字。**跑第二轮不是重复劳动，它是发现本身** —— 这条写进 D84 ①。
+
+### 二、三条同族：症状都是"500 + 整栈掩盖输入非法"，缝在数据库约束与 catch-all 之间
+
+| 编号 | 触发（实测读数） | 为什么落到 500 | 修法与为什么不选别的写法 |
+|---|---|---|---|
+| **API-103** | `POST /api/dashboard/widget` 缺 `configJson` → `500/500` | `dashboard_widget` 的 `widget_type` + 三个 JSON 列 **NOT NULL 且 JSON 列无默认值**（`03-all-services-schema.sql:197-210`），服务层没卫语句 ⇒ `SQLException` 一路到 catch-all | create 侧四条 `requireText`（**缺失和空白同等非法**，因为这两者都会撞同一条约束） |
+| **API-104** | `PUT` 的 `id` 传成对象 → `500/500` | `GlobalExceptionHandler` 有 `MethodArgumentTypeMismatch` / `IllegalArgument` / `MethodNotSupported` / `MissingServletRequestParameter` 四条，**独缺 `HttpMessageNotReadableException`** ⇒ 反序列化失败没人接 | 新增 handler 回 `400`「请求体格式不正确」。**详情不回显**：Jackson 原文带类名和内部结构，只 `log.warn` 一句 `getMostSpecificCause()` |
+| **API-105** | `PUT` 传 `configJson:""` → `500/500` | update 走 partial：**null 被 MyBatis-Plus 的 `NOT_NULL` 字段策略跳过 = 不改动**，这是合法输入；**空白串不是 null，会真写进 JSON 列** | 新加 `requireTextIfPresent`（`value != null && !hasText` 才拦）。**不复用 create 的 `requireText`** —— 那会把"只改 title 不动 configJson"的正常部分更新一起拦成 400 |
+
+**登记但不修的同族**：其余 12 个服务有没有"数据库约束替入参校验干活"，本轮**没跑它们的写面 ⇒ 不登记、不修改**（D82 ⑤）。`WidgetController` 那 5 个 handler 的信封仍是裸值（Z2，产品决策）。
+
+### 三、API-99 结案：执行的是上轮审定的脚本，而预检否掉了脚本里的两步
+
+`ba2-precheck.sql` / `ba2-precheck2.sql`（只读 `information_schema`）先给出**活库现状**：`dataset_id`、`query_json` 已经 `IS_NULLABLE=YES`，`status` 已经是 `varchar(32) NOT NULL DEFAULT 'SUCCESS'` ⇒ **补丁的第 2、3 步是无操作**，真正生效的只有第 1 步加的 `deleted`/`create_by`/`update_by`/`update_time` 四列。备份表与主表同为 **9 行**，`SUM(deleted = 0)` = 9。
+
+**运行时四条判据（`ba2-analysis-history.cjs`，全 PASS）**：`A1 GET /api/analysis/history` `200/0`、`A2 GET /api/analysis/query/history` `200/0`（补丁前两条都是 `500/500`，异常原文 `Unknown column 'deleted' in 'where clause'`）、`A3 POST /api/analysis/query/save` 落库拿到 id **910**、`A4` 复读读回该行 ⇒ **注入的 `AND deleted = 0` 不再误杀，写入面也通**（补丁注释里"只补 deleted 的话写入仍进不来"那句担忧**在活库上不成立**，因为那两列早就不挡了）。写完那一行随 `ba2-cleanup.sql` 删掉，表回到 9 行。
+
+### 四、本轮踩到的坑（按"下次还会踩"筛选）
+
+1. **jar 锁会让构建"成功地把产物写坏"**：8087 在跑时 `-pl dashboard-service -am package` 的 `repackage` 报 `Unable to rename '…-SNAPSHOT.jar' to '…-SNAPSHOT.jar.original'`，而 `maven-jar-plugin` **已经把 82 MB 的 fat jar 覆盖成 45 KB 瘦包** —— `ls -l` 的 mtime 是新的，看着像"刚打好"，拿它起进程才知起不来。**动作规则**：产物看**字节数**（瘦包 ~45 KB / fat ~82 MB），且顺序固定为 **停我自己的进程 → 打包 → 再起**。
+1. **`;` 链尾部的 `$?` 不是构建的退出码**：`mvn … > log 2>&1; echo "PKG_EXIT=$?"; ls -l …` 整条命令报 **exit 0**（最后一个是 `ls`），那句 `PKG_EXIT=0` 跟着骗人。**构建结论只能取日志里的 `^\[ERROR\]` 条数 + `BUILD SUCCESS` 行**（本轮门禁读数因此仍从 `Tests run:` 汇总行取，配合 `[INFO|WARNING]` 前缀那条老规则）。
+1. **短信验证码有 60 s 重发冷却**：两轮 harness 连跑，第二次直接 `LOGIN FAIL … 验证码已过期，请重新获取`。**等 60 s 重跑即通过** ⇒ 登记为**环境节奏**，不登记为缺陷（前几轮 harness 间隔十几分钟，从没碰到）。
+1. **`sql` 是 MySQL 保留字**：`LEFT(sql,40)` 报 `ERROR 1064`，加反引号才行。`db_analysis.query_history` 同时有 `sql_text` 与 `` `sql` `` 两列，实体写的是后者 —— 这是个读库时容易看错的地方。
+1. **JVM 占用启动日志**：`mv` 正在被 `RedirectStandardOutput` 写的 `.log`/`.err` 会 `Device or resource busy` ⇒ 归档时**拷贝**（`tmp-ba2-8087.snapshot.log`），不硬移动正在跑进程的句柄。
+1. **改台账正文的长 bullet 时 `old_string` 不能只取前缀**：docs/12 这些 bullet 单行几千字，取行首片段会把后半截留成孤儿尾巴（本轮改 §19.34.9 又踩一次，已还原重做）。**规则**：锚要取**行尾**或整段唯一串。
+
+### 五、就地更正：§19.34.9 里那三条"交回用户"的话已经过期
+
+AZ 那一节写的是"**8087 是你正在点的进程，我不重启**"和"**AZ 这三条修复目前未提交，是否入库等用户点头**"。这两句在 BA 之后**不成立**，已在 docs/12 §19.34.9 段尾用 ⚠️ 引用块**就地标注**（不改写原文，只标过期并指向 19.35）：重启了 2 次、13 条判据由我跑、修复已入库为 `b098f1d`。**仍然成立的**只有 Z2（对外信封）与 Z3/API-95（错误码口径）那两条产品决策，以及 V3 那 **16 个进程**的 `common-security` 重启面。
+
+### 六、证据边界
+
+- **API-100~105 + API-99 = 单测 + 活栈运行时**（8087，PID 89828，jar 20:36:12 / 82,326,181 字节；`/v3/api-docs` 200，启动日志无 ERROR，`.err` 0 行）。**API-104 只在 8087 结案** —— 根因在 `common-core`，其余 16 个进程要重新打包并重启才带上，本轮**没动它们**，所以台账不写"全栈已修"。
+- **门禁**：`mvn -o test` **BUILD SUCCESS / 362 tests / 0 失败 / 1 skipped**（dashboard-service 17 条 = Create 5 + Update 6 + Guard 6）。
+- **凭据面**：登录仍是**我自己**用演示账号 `13912345678` 走 `/api/auth/sms/send → /api/auth/sms/login`（mock 码 123123）换的 token，**token 不落盘**、不进任何输出文件；**没碰用户浏览器会话**。本轮**没有新的安全层拒绝**（内容级密钥扫描仍按前例：不是我自己该做的动作）。
+- **数据面**：对库的写只有 `zz_ba1_*` 与那一行 `query_history`，跑完 `ba2-cleanup.sql` 后核对 **0 残留**（组件 0 行、活跃 `zz_ba1_` 仪表盘 0 行、`query_history` 9 行 = 补丁前）。
