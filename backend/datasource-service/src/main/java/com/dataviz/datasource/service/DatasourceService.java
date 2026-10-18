@@ -66,4 +66,11 @@ public interface DatasourceService {
      * 执行只读查询
      */
     Map<String, Object> executeQuery(QueryExecuteDTO dto);
+
+    /**
+     * 结构化批量写入（仅 INSERT，服务间内部端点专用）。
+     *
+     * @return 实际写入行数
+     */
+    int writeBatch(WriteBatchDTO dto);
 }

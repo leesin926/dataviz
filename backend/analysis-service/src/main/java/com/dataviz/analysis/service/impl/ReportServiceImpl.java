@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.dataviz.common.core.exception.BizException;
+import com.dataviz.common.core.result.ErrorCode;
 
 /**
  * 报告服务实现类
@@ -57,7 +59,7 @@ public class ReportServiceImpl implements ReportService {
     public void updateReport(Long id, ReportUpdateDTO dto) {
         AnalysisReport report = reportMapper.selectById(id);
         if (report == null) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Report not found: " + id);
         }
 
         if (dto.getName() != null) report.setName(dto.getName());
@@ -75,7 +77,7 @@ public class ReportServiceImpl implements ReportService {
     public void deleteReport(Long id) {
         AnalysisReport report = reportMapper.selectById(id);
         if (report == null) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Report not found: " + id);
         }
         reportMapper.deleteById(id);
         log.info("Report deleted: id={}", id);
@@ -85,7 +87,7 @@ public class ReportServiceImpl implements ReportService {
     public ReportVO getReportById(Long id) {
         AnalysisReport report = reportMapper.selectById(id);
         if (report == null) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Report not found: " + id);
         }
         return convertToVO(report);
     }
@@ -109,7 +111,7 @@ public class ReportServiceImpl implements ReportService {
     public void publishReport(Long id) {
         AnalysisReport report = reportMapper.selectById(id);
         if (report == null) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Report not found: " + id);
         }
         report.setIsPublished(1);
         reportMapper.updateById(report);
@@ -121,7 +123,7 @@ public class ReportServiceImpl implements ReportService {
     public void unpublishReport(Long id) {
         AnalysisReport report = reportMapper.selectById(id);
         if (report == null) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Report not found: " + id);
         }
         report.setIsPublished(0);
         reportMapper.updateById(report);
@@ -132,7 +134,7 @@ public class ReportServiceImpl implements ReportService {
     public ReportDataVO getReportData(Long id) {
         AnalysisReport report = reportMapper.selectById(id);
         if (report == null) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Report not found: " + id);
         }
 
         ReportDataVO dataVO = new ReportDataVO();

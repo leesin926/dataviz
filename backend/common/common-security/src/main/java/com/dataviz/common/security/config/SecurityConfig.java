@@ -37,7 +37,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             // 写成 /auth/sms/** 等于替将来可能新增的短信端点预先免登。
             "/auth/sms/send",
             "/auth/sms/login",
-            // 第三方登录（auth-service）。网关侧写的是 /api/auth/sso/**，本服务侧因 StripPrefix=1 路径已去掉 /api（见 D38）。
+            // 第三方登录（auth-service）。网关侧写的是 /api/auth/sso/*，本服务侧因 StripPrefix=1 路径已去掉 /api（见 D38）。
             // 这里刻意逐条列举而非用通配：新增 sso 端点时若漏配，失败方向是"多拦一道 401"，而不是"意外变成免登公开接口"。
             "/auth/sso/login",
             "/auth/sso/callback",
@@ -48,11 +48,13 @@ public class SecurityConfig implements WebMvcConfigurer {
             "/user/internal/**",
             "/api/datasource/internal/**",
             "/api/model/internal/**",
+            // 三条带变量尾段的免登路径一律 /* 而不是 /**：AntPathMatcher 的 /** 连零段都匹配，
+            // 于是 /api/screen/share 这类"前缀本身"会被免掉拦截器、直接进 GET /{id} 处理器（网关侧同批收紧，见 AuthGlobalFilter）。
             // 大屏分享链接（screen-service 提供，其余服务无此路由）
-            "/api/screen/share/**",
+            "/api/screen/share/*",
             // 图片直读（file-service，仅 image/*）与免登全局开关（admin-service，仅白名单 key）
-            "/api/file/view/**",
-            "/api/admin/config/public/**",
+            "/api/file/view/*",
+            "/api/admin/config/public/*",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/v3/api-docs/**",

@@ -19,8 +19,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "jsx": "preserve",
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {

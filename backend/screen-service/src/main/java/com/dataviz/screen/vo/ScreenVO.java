@@ -41,6 +41,9 @@ public class ScreenVO {
     /** 列表接口专用：端 -> 该端单独配置的画布尺寸。与 variants 分开命名，避免同一个字段两种结构 */
     private Map<String, Object> variantSizes;
 
+    /** 列表接口专用：组件个数。列表不带 components 大字段，没有这个计数前端只能显示 0 */
+    private Integer componentCount;
+
     private String adaptMode;
 
     private Long viewCount;

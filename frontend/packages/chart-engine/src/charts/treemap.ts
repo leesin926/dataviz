@@ -5,7 +5,7 @@ import type { ChartData } from '../renderer/BaseRenderer'
 /**
  * 矩形树图选项构建
  */
-export function buildTreemapOption(config: ChartConfig, data: ChartData): EChartsOption {
+export function buildTreemapOption(_config: ChartConfig, data: ChartData): EChartsOption {
   const treeData = data.dimensions.map((dim, i) => ({
     name: dim,
     value: data.series[0]?.data[i] as number,

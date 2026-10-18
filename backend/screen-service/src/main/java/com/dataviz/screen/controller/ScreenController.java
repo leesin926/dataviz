@@ -42,7 +42,10 @@ public class ScreenController {
         return R.ok(screenService.getById(id, platform));
     }
 
-    /** 免登录分享读取（网关与服务层均已放行 /api/screen/share/**），仅已发布大屏可见 */
+    /**
+     * 免登录分享读取（网关与服务层各放行 {@code /api/screen/share/*}，恰好一段而不是 {@code /**}：
+     * 裸 {@code /api/screen/share} 会落到上面那个 {@code GET /{id}} 上，见 API-93），仅已发布大屏可见。
+     */
     @GetMapping("/share/{token}")
     public R<ScreenVO> getByShareToken(@PathVariable String token,
                                        @RequestParam(required = false) String platform) {

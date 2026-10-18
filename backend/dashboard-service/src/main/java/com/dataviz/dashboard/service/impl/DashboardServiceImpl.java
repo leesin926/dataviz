@@ -19,6 +19,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.dataviz.common.core.exception.BizException;
+import com.dataviz.common.core.result.ErrorCode;
 
 @Slf4j
 @Service
@@ -46,7 +48,7 @@ public class DashboardServiceImpl implements DashboardService {
     public void update(DashboardUpdateDTO dto) {
         Dashboard dashboard = dashboardMapper.selectById(dto.getId());
         if (dashboard == null) {
-            throw new RuntimeException("Dashboard not found: " + dto.getId());
+            throw new BizException(ErrorCode.NOT_FOUND, "Dashboard not found: " + dto.getId());
         }
         BeanUtils.copyProperties(dto, dashboard);
         dashboardMapper.updateById(dashboard);
@@ -57,7 +59,7 @@ public class DashboardServiceImpl implements DashboardService {
     public DashboardVO getById(Long id) {
         Dashboard dashboard = dashboardMapper.selectById(id);
         if (dashboard == null) {
-            throw new RuntimeException("Dashboard not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Dashboard not found: " + id);
         }
         dashboardMapper.incrementViewCount(id);
         DashboardVO vo = new DashboardVO();
@@ -98,7 +100,7 @@ public class DashboardServiceImpl implements DashboardService {
     public void publish(Long id) {
         Dashboard dashboard = dashboardMapper.selectById(id);
         if (dashboard == null) {
-            throw new RuntimeException("Dashboard not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Dashboard not found: " + id);
         }
         dashboard.setStatus(1);
         dashboardMapper.updateById(dashboard);
@@ -110,7 +112,7 @@ public class DashboardServiceImpl implements DashboardService {
     public void unpublish(Long id) {
         Dashboard dashboard = dashboardMapper.selectById(id);
         if (dashboard == null) {
-            throw new RuntimeException("Dashboard not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Dashboard not found: " + id);
         }
         dashboard.setStatus(0);
         dashboardMapper.updateById(dashboard);
@@ -122,7 +124,7 @@ public class DashboardServiceImpl implements DashboardService {
     public Long copy(Long id) {
         Dashboard source = dashboardMapper.selectById(id);
         if (source == null) {
-            throw new RuntimeException("Dashboard not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Dashboard not found: " + id);
         }
         Dashboard copy = new Dashboard();
         BeanUtils.copyProperties(source, copy);

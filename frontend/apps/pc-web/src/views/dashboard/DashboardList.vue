@@ -41,10 +41,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" :label="t('common.createdAt')" width="180" />
-        <el-table-column :label="t('common.operations')" width="210" fixed="right">
+        <el-table-column :label="t('common.operations')" width="300" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
             <el-button link type="primary" @click="handlePublish(row)">{{ t('common.publish') }}</el-button>
+            <el-button v-permission="'collab:write'" link type="primary" @click="handleApply(row)">
+              {{ t('collab.apply') }}
+            </el-button>
+            <el-button link type="primary" @click="openCollab(row)">{{ t('collab.drawerShort') }}</el-button>
             <el-button link type="danger" @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
@@ -62,6 +66,8 @@
         @current-change="handlePageChange"
       />
     </el-card>
+
+    <CollabDrawer v-model="collabVisible" target-type="DASHBOARD" :target-id="collabId" :target-name="collabName" />
   </div>
 </template>
 
@@ -72,8 +78,9 @@
   import { Plus } from '@element-plus/icons-vue'
   import type { Dashboard } from '@dataviz/shared-types'
   import { rowsOf, totalOf } from '@dataviz/shared-types'
-  import { deleteDashboard, listDashboards, publishDashboard } from '@dataviz/api-client'
+  import { applyApproval, deleteDashboard, listDashboards, publishDashboard } from '@dataviz/api-client'
   import { useI18n } from 'vue-i18n'
+  import CollabDrawer from '@/components/CollabDrawer.vue'
 
   const router = useRouter()
   const { t } = useI18n()
@@ -84,6 +91,36 @@
   const total = ref(0)
   const pageNum = ref(1)
   const pageSize = ref(10)
+
+  const collabVisible = ref(false)
+  const collabId = ref<string | number>('')
+  const collabName = ref('')
+
+  function openCollab(row: Dashboard) {
+    collabId.value = row.id
+    collabName.value = row.name ?? ''
+    collabVisible.value = true
+  }
+
+  /**
+   * 审批发布（M06-06-02）在这一版的后端里只是"记一张单子"：
+   * 通过不会上线，驳回也不会锁住发布按钮，且这条链路上没有任何通知。
+   * 所以下确认框时把这句说在前面，而不是让用户以为点了申请就进了发布流程。
+   */
+  async function handleApply(row: Dashboard) {
+    const confirmed = await ElMessageBox.confirm(
+      t('collab.applyConfirm', { name: row.name }),
+      t('collab.apply'),
+      { type: 'info', confirmButtonText: t('common.confirm'), cancelButtonText: t('common.cancel') },
+    ).catch(() => false)
+    if (!confirmed) return
+    try {
+      await applyApproval({ targetType: 'DASHBOARD', targetId: row.id })
+      ElMessage.success(t('collab.applied'))
+    } catch (e) {
+      ElMessage.error((e as Error).message)
+    }
+  }
 
   function statusLabel(status: string): string {
     if (status === 'published') return t('dashboard.statusPublished')

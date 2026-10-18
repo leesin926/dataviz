@@ -9,7 +9,8 @@
   import { ref, computed } from 'vue'
   import type { ScreenComponent } from '@dataviz/shared-types'
   import { CANVAS_INK } from '@dataviz/shared-types'
-  import { formatDate } from '@dataviz/shared-utils'
+  import { DATE_FORMATS, formatDate } from '@dataviz/shared-utils'
+  import type { DateFormat } from '@dataviz/shared-utils'
   import { pxOf, strOf, useInterval } from './props'
 
   const props = defineProps<{
@@ -36,7 +37,10 @@
   useInterval(() => {
     const now = new Date()
     time.value = formatDate(now, 'HH:mm:ss')
-    date.value = formatDate(now, strOf(p.value.dateFormat, 'YYYY-MM-DD'))
+    // dateFormat 是设计器里的自由文本，不在枚举内就退回默认，不能直接把 string 塞给 formatDate
+    const raw = strOf(p.value.dateFormat, 'YYYY-MM-DD')
+    const format = (DATE_FORMATS as readonly string[]).includes(raw) ? (raw as DateFormat) : 'YYYY-MM-DD'
+    date.value = formatDate(now, format)
   }, 1000)
 </script>
 

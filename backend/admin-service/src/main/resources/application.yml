@@ -33,3 +33,9 @@ mybatis-plus:
 logging:
   level:
     com.dataviz.admin: debug
+
+platform:
+  license:
+    # 许可证签发密钥：只从环境变量进来，代码里没有默认值。
+    # 留空时激活会直接失败并说明原因 —— 回退到内置默认密钥等于给所有部署发了一把万能钥匙。
+    secret: ${LICENSE_SECRET:}

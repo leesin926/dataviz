@@ -151,7 +151,11 @@ export async function getEtlRunLogs(taskId: string | number): Promise<string[]> 
       l.endTime ? `~ ${l.endTime}` : '',
       l.recordsRead != null ? `读取 ${l.recordsRead} 行` : '',
       l.recordsWritten != null ? `写入 ${l.recordsWritten} 行` : '',
-      l.errorMessage ? `错误: ${l.errorMessage}` : '',
+      // 非失败状态也可能带说明文（源端读满上限被截断、执行被停止）。一律叫「错误」的话，
+      // 一次成功但没搬完的搬运会被读成故障，而"没搬完"恰恰是看历史的人最需要知道的那件事。
+      l.errorMessage
+        ? (l.status === 'FAILED' || l.status === 'ERROR' ? `错误: ${l.errorMessage}` : `提示: ${l.errorMessage}`)
+        : '',
     ].filter(Boolean)
     return parts.join(' ')
   })

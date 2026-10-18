@@ -39,8 +39,19 @@ public class DagExecutor {
 
     /**
      * Execute a DAG defined as JSON.
+     *
+     * @param instanceId run key used for cancellation; ETL passes the task id so 「停止」 hits the running task
+     * @return what the run moved, in the accounting sense described by {@link DagRunSummary}
      */
-    public void execute(String dagJson, Long instanceId) {
+    public DagRunSummary execute(String dagJson, Long instanceId) {
+        // 失败时要把"跑过哪些节点、搬了多少行"带出去，所以这几个累加器声明在 try 外面
+        Map<String, String> nodeTypes = new HashMap<>();
+        // Node outputs keyed by node ID
+        Map<String, NodeResult> nodeResults = new ConcurrentHashMap<>();
+        // Shared state across all nodes
+        Map<String, Object> sharedState = new ConcurrentHashMap<>();
+        int plannedNodes = 0;
+        boolean cancelled = false;
         try {
             DagDefinition dag = objectMapper.readValue(dagJson, DagDefinition.class);
             List<DagNode> nodes = dag.getNodes();
@@ -49,23 +60,24 @@ public class DagExecutor {
             if (nodes == null || nodes.isEmpty()) {
                 throw new IllegalArgumentException("DAG has no nodes");
             }
+            plannedNodes = nodes.size();
 
             // Topological sort
             List<List<DagNode>> levels = topologicalSort(nodes, edges);
             log.info("DAG execution plan: {} levels, {} total nodes", levels.size(), nodes.size());
 
-            // Shared state across all nodes
-            Map<String, Object> sharedState = new ConcurrentHashMap<>();
-            // Node outputs keyed by node ID
-            Map<String, NodeResult> nodeResults = new ConcurrentHashMap<>();
+            for (DagNode node : nodes) {
+                nodeTypes.put(node.getId(), node.getType());
+            }
 
             cancelledInstances.put(instanceId, false);
             instanceFutures.put(instanceId, ConcurrentHashMap.newKeySet());
 
             // Execute level by level (nodes within the same level run in parallel)
-            for (int i = 0; i < levels.size(); i++) {
+            for (int i = 0; i < levels.size() && !cancelled; i++) {
                 if (Boolean.TRUE.equals(cancelledInstances.get(instanceId))) {
                     log.info("DAG execution cancelled at level {}", i);
+                    cancelled = true;
                     break;
                 }
 
@@ -114,19 +126,73 @@ public class DagExecutor {
                         throw new RuntimeException("Node execution timed out");
                     } catch (ExecutionException e) {
                         throw new RuntimeException("Node execution failed: " + e.getCause().getMessage(), e.getCause());
+                    } catch (CancellationException e) {
+                        // 「停止」按钮先置 cancelledInstances 再 cancel(true)，这里收到的就是这个异常。
+                        // 当成失败的话，一次正常的人工停止会变成"任务异常"，还把已读到的行数抹成 0。
+                        log.info("DAG execution cancelled while waiting for level {}", i);
+                        cancelled = true;
+                        break;
                     }
                 }
             }
 
-            log.info("DAG execution completed for instance: {}", instanceId);
+            // 最后一层执行期间才按下的停止不会让上面的 break 生效，所以停止状态在这里补判一次
+            boolean stopped = cancelled || Boolean.TRUE.equals(cancelledInstances.get(instanceId));
+            log.info("DAG execution finished for instance: {}, cancelled={}", instanceId, stopped);
+            return summarize(nodeTypes, nodeResults, plannedNodes, stopped);
 
         } catch (Exception e) {
             log.error("DAG execution failed for instance: {}", instanceId, e);
-            throw new RuntimeException("DAG execution failed: " + e.getMessage(), e);
+            DagRunSummary partial = nodeResults.isEmpty()
+                    ? null : summarize(nodeTypes, nodeResults, plannedNodes, cancelled);
+            throw new DagExecutionException("DAG execution failed: " + e.getMessage(), partial, e);
         } finally {
             cancelledInstances.remove(instanceId);
             instanceFutures.remove(instanceId);
         }
+    }
+
+    /**
+     * 记账：源端节点读到的行进 rowsRead，目标端节点写入的行进 rowsWritten，中间节点两边都不进。
+     * <p>
+     * 只数首尾是因为这两个数会被写进任务历史当成"这一批搬了多少"。把 filter 之类的中间行数也
+     * 累进去，同一批数据会在读取数里出现两次，历史列表里的读数就再也没法和库里的行数对上。
+     */
+    private DagRunSummary summarize(Map<String, String> nodeTypes,
+                                    Map<String, NodeResult> nodeResults,
+                                    int plannedNodes,
+                                    boolean cancelled) {
+        long rowsRead = 0;
+        long rowsWritten = 0;
+        List<String> warnings = new ArrayList<>();
+
+        for (Map.Entry<String, NodeResult> entry : nodeResults.entrySet()) {
+            NodeResult result = entry.getValue();
+            String canonical = operatorFactory.canonicalType(nodeTypes.get(entry.getKey()));
+            if (DagRunSummary.SOURCE_TYPE.equals(canonical)) {
+                rowsRead += result.getRowCount();
+                if (isTruncated(result)) {
+                    warnings.add("源端节点 " + entry.getKey() + " 一次读取到上限 " + DagRunSummary.READ_ROW_CEILING
+                            + " 行，源表可能还有数据没搬完（本引擎暂未分页抽取）");
+                }
+            } else if (DagRunSummary.SINK_TYPE.equals(canonical)) {
+                rowsWritten += result.getRowCount();
+            }
+        }
+
+        return DagRunSummary.builder()
+                .rowsRead(rowsRead)
+                .rowsWritten(rowsWritten)
+                .executedNodes(nodeResults.size())
+                .plannedNodes(plannedNodes)
+                .cancelled(cancelled)
+                .warnings(warnings)
+                .build();
+    }
+
+    private boolean isTruncated(NodeResult result) {
+        Map<String, Object> metadata = result.getMetadata();
+        return metadata != null && Boolean.TRUE.equals(metadata.get("truncated"));
     }
 
     /**

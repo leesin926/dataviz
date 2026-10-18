@@ -1,0 +1,12 @@
+PUT /api/dashboard POST /api/dashboard
+PUT /api/dashboard/widget POST /api/dashboard/widget
+POST /api/dashboard/{id}/unpublish
+POST /api/dashboard/{id}/publish
+POST /api/dashboard/{id}/copy
+GET /api/dashboard/{id} DELETE /api/dashboard/{id}
+GET /api/dashboard/widget/{id} DELETE /api/dashboard/widget/{id}
+GET /api/dashboard/widget/list/{dashboardId}
+GET /api/dashboard/templates
+GET /api/dashboard/share/link/{dashboardId}
+GET /api/dashboard/share/embed/{dashboardId}
+GET /api/dashboard/page

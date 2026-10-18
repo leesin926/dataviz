@@ -15,8 +15,6 @@ export class DataAdapter {
     const dimFields = config.dimensions.map((d) => d.field)
     const measureFields = config.measures.map((m) => m.field)
 
-    // 按维度生成维度值
-    const dimensions: string[] = dimFields.length > 0 ? dimFields : ['index']
     const measures: string[] = measureFields
 
     // 多系列支持: 当存在多个维度时,以最后一个维度作为系列名

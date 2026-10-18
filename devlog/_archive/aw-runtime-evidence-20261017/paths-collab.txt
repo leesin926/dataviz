@@ -1,0 +1,21 @@
+GET /api/collab/comments/{id} PUT /api/collab/comments/{id} DELETE /api/collab/comments/{id}
+GET /api/collab/comment/{id} PUT /api/collab/comment/{id} DELETE /api/collab/comment/{id}
+POST /api/collab/subscriptions
+POST /api/collab/subscription
+POST /api/collab/comments
+POST /api/collab/comment
+POST /api/collab/approval
+POST /api/collab/approval/{id}/reject
+POST /api/collab/approval/{id}/approve
+GET /api/collab/subscriptions/my
+GET /api/collab/subscriptions/check
+GET /api/collab/subscription/list/{userId}
+GET /api/collab/subscription/check
+GET /api/collab/comments/target/{targetType}/{targetId}
+GET /api/collab/comments/replies/{parentId}
+GET /api/collab/comment/replies/{parentId}
+GET /api/collab/comment/list
+GET /api/collab/approval/{id}
+GET /api/collab/approval/list
+DELETE /api/collab/subscriptions/{id}
+DELETE /api/collab/subscription/{id}

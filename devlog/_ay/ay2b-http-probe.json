@@ -1,0 +1,406 @@
+{
+ "viaGateway": [
+  {
+   "method": "GET",
+   "path": "/api/auth/captcha",
+   "status": 200,
+   "ms": 95,
+   "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":{\"captchaKey\":\"e5f3ca1a3762407da9532435d26d28e9\",\"captchaImage\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAsCAIAAAAIMtamAAAC6klEQVR4Xu3ZsWoXQRDH8ZRK3kEU8SUsUkvQXl8heQBTpEojWNiFlIK+gK2ViGUI2OYttrBK5cKQYdjfzN7u3u7dbrLwLXJzd38DH+Zyfzxw/+5mQ3eAo9lYTcLhm4T99uP9Nx/OgyZhd5FcCh41CXspV46bhHvGbAVy3CTcofVsskm4XXXluEnYvEZy3CQs7+/3nzjkWstxMcLT40/rw499AHk8y28zOS5GWCV",
+   "envelope": null
+  },
+  {
+   "method": "POST",
+   "path": "/api/auth/login",
+   "status": 200,
+   "ms": 19,
+   "body": "{\"code\":500,\"message\":\"Captcha has expired\",\"data\":null,\"timestamp\":1792319957806,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "POST",
+   "path": "/api/auth/sms/send",
+   "status": 400,
+   "ms": 12,
+   "body": "{\"code\":400,\"message\":\"Phone format is invalid; Terminal is not supported\",\"data\":null,\"timestamp\":1792319957818,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "POST",
+   "path": "/api/auth/sms/login",
+   "status": 400,
+   "ms": 14,
+   "body": "{\"code\":400,\"message\":\"Phone format is invalid; Terminal is not supported\",\"data\":null,\"timestamp\":1792319957833,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/share/ay_nonexistent_token",
+   "status": 200,
+   "ms": 18,
+   "body": "{\"code\":404,\"message\":\"大屏不存在或链接无效\",\"data\":null,\"timestamp\":1792319957851,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/share/..%2f..%2f..%2fetc%2fpasswd",
+   "status": 400,
+   "ms": 9,
+   "body": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 400 – Bad Request</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 400 –",
+   "envelope": null
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/share/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "status": 200,
+   "ms": 26,
+   "body": "{\"code\":404,\"message\":\"大屏不存在或链接无效\",\"data\":null,\"timestamp\":1792319957884,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/share/ay%27%20OR%201%3D1%20--",
+   "status": 200,
+   "ms": 24,
+   "body": "{\"code\":404,\"message\":\"大屏不存在或链接无效\",\"data\":null,\"timestamp\":1792319957909,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/file/view/ay_nonexistent",
+   "status": 400,
+   "ms": 14,
+   "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792319957923,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/config/public",
+   "status": 400,
+   "ms": 16,
+   "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792319957937,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/config/public/mourning",
+   "status": 200,
+   "ms": 13,
+   "body": "{\"code\":403,\"message\":\"Config key is not public: mourning\",\"data\":null,\"timestamp\":1792319957953,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/ws/public",
+   "status": 400,
+   "ms": 10,
+   "body": "Can \"Upgrade\" only to \"WebSocket\".",
+   "envelope": null
+  },
+  {
+   "method": "GET",
+   "path": "/api/auth/ay_no_such_path",
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/user/ay_no_such_path",
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/datasource/ay_no_such_path",
+   "status": 401,
+   "ms": 2,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/etl/ay_no_such_path",
+   "status": 401,
+   "ms": 2,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/model/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/analysis/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/dashboard/ay_no_such_path",
+   "status": 401,
+   "ms": 2,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/ay_no_such_path",
+   "status": 401,
+   "ms": 2,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/collab/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/alert/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/ai/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/openapi/ay_no_such_path",
+   "status": 401,
+   "ms": 2,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/file/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/schedule/ay_no_such_path",
+   "status": 401,
+   "ms": 2,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/monitor/ay_no_such_path",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/config/123",
+   "status": 401,
+   "ms": 3,
+   "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/config/public",
+   "status": 400,
+   "ms": 16,
+   "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792319958101,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/config/public/",
+   "status": 400,
+   "ms": 13,
+   "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792319958114,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/config/public/mourning",
+   "status": 200,
+   "ms": 11,
+   "body": "{\"code\":403,\"message\":\"Config key is not public: mourning\",\"data\":null,\"timestamp\":1792319958125,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/share/%2e%2e%2fadmin",
+   "status": 400,
+   "ms": 8,
+   "body": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 400 – Bad Request</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 400 –",
+   "envelope": null
+  },
+  {
+   "method": "GET",
+   "path": "/api/screen/share/x%0aevil",
+   "status": 200,
+   "ms": 19,
+   "body": "{\"code\":404,\"message\":\"大屏不存在或链接无效\",\"data\":null,\"timestamp\":1792319958151,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "GET",
+   "path": "/api/auth/login",
+   "status": 405,
+   "ms": 24,
+   "body": "{\"code\":405,\"message\":\"请求方法不允许\",\"data\":null,\"timestamp\":1792319958176,\"success\":false}",
+   "envelope": true
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/auth/captcha",
+   "status": 405,
+   "ms": 7,
+   "body": "{\"code\":405,\"message\":\"请求方法不允许\",\"data\":null,\"timestamp\":1792319958184,\"success\":false}",
+   "envelope": true
+  }
+ ],
+ "direct": [
+  {
+   "seg": "auth",
+   "port": 8081,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958012,\"success\":false}"
+  },
+  {
+   "seg": "user",
+   "port": 8082,
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958017,\"success\":false}"
+  },
+  {
+   "seg": "datasource",
+   "port": 8083,
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958021,\"success\":false}"
+  },
+  {
+   "seg": "etl",
+   "port": 8084,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958025,\"success\":false}"
+  },
+  {
+   "seg": "model",
+   "port": 8085,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958031,\"success\":false}"
+  },
+  {
+   "seg": "analysis",
+   "port": 8086,
+   "status": 401,
+   "ms": 6,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958037,\"success\":false}"
+  },
+  {
+   "seg": "dashboard",
+   "port": 8087,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958042,\"success\":false}"
+  },
+  {
+   "seg": "screen",
+   "port": 8088,
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958046,\"success\":false}"
+  },
+  {
+   "seg": "collab",
+   "port": 8089,
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958051,\"success\":false}"
+  },
+  {
+   "seg": "alert",
+   "port": 8090,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958055,\"success\":false}"
+  },
+  {
+   "seg": "ai",
+   "port": 8091,
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958059,\"success\":false}"
+  },
+  {
+   "seg": "openapi",
+   "port": 8092,
+   "status": 401,
+   "ms": 4,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958064,\"success\":false}"
+  },
+  {
+   "seg": "admin",
+   "port": 8093,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958068,\"success\":false}"
+  },
+  {
+   "seg": "file",
+   "port": 8094,
+   "status": 405,
+   "ms": 4,
+   "body": "{\"code\":405,\"message\":\"请求方法不允许\",\"data\":null,\"timestamp\":1792319958071,\"success\":false}"
+  },
+  {
+   "seg": "schedule",
+   "port": 8095,
+   "status": 401,
+   "ms": 6,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958077,\"success\":false}"
+  },
+  {
+   "seg": "monitor",
+   "port": 8096,
+   "status": 401,
+   "ms": 5,
+   "body": "{\"code\":401,\"message\":\"未认证或认证已过期\",\"data\":null,\"timestamp\":1792319958082,\"success\":false}"
+  }
+ ]
+}

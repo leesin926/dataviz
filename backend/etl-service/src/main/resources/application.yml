@@ -50,6 +50,18 @@ logging:
   level:
     com.dataviz.etl: DEBUG
 
+# ETL 的两条服务间通道：源端抽取（只读查询）与目标端落库（结构化批量写入）。
+# etl 侧不持任何业务库口令，只把「表名 + 列名 + 标量值」发过去，口令仍留在 datasource-service。
+datasource-service:
+  base-url: ${DATASOURCE_SERVICE_URL:http://localhost:8083}
+  query-read-timeout-seconds: 35
+  write-read-timeout-seconds: 60
+
+# 与各服务配成同一个值，否则内部端点会回 403
+internal:
+  api:
+    token: ${INTERNAL_API_TOKEN:dataviz-internal-dev-token}
+
 management:
   endpoints:
     web:

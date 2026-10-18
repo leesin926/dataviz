@@ -5,7 +5,7 @@ import type { ChartData } from '../renderer/BaseRenderer'
 /**
  * 热力图选项构建
  */
-export function buildHeatmapOption(config: ChartConfig, data: ChartData): EChartsOption {
+export function buildHeatmapOption(_config: ChartConfig, data: ChartData): EChartsOption {
   const xData = data.dimensions
   const yData = Array.from(new Set((data.raw || []).map((r) => String(r[data.measures[0]] ?? ''))))
   const heatData: number[][] = []

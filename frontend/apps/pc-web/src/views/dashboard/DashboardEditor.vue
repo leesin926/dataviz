@@ -80,7 +80,7 @@
     { labelKey: 'dashboard.wImage', value: 'image' },
     { labelKey: 'dashboard.wKpi', value: 'kpi' },
     { labelKey: 'dashboard.wFilter', value: 'filter' },
-  ]
+  ] as const
 
   const emptyData = {
     columns: [{ field: 'x', type: 'string' }],

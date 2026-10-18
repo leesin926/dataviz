@@ -1,0 +1,153 @@
+[
+ {
+  "port": "8080",
+  "name": "gateway-service",
+  "http": 404,
+  "endpoints": 0,
+  "servers": []
+ },
+ {
+  "port": "8081",
+  "name": "auth-service",
+  "http": 200,
+  "endpoints": 12,
+  "servers": [
+   "http://localhost:8081"
+  ]
+ },
+ {
+  "port": "8082",
+  "name": "user-service",
+  "http": 200,
+  "endpoints": 33,
+  "servers": [
+   "http://localhost:8082"
+  ]
+ },
+ {
+  "port": "8083",
+  "name": "datasource-service",
+  "http": 200,
+  "endpoints": 12,
+  "servers": [
+   "http://localhost:8083"
+  ]
+ },
+ {
+  "port": "8084",
+  "name": "etl-service",
+  "http": 200,
+  "endpoints": 12,
+  "servers": [
+   "http://localhost:8084"
+  ]
+ },
+ {
+  "port": "8085",
+  "name": "model-service",
+  "http": 200,
+  "endpoints": 17,
+  "servers": [
+   "http://localhost:8085"
+  ]
+ },
+ {
+  "port": "8086",
+  "name": "analysis-service",
+  "http": 200,
+  "endpoints": 21,
+  "servers": [
+   "http://localhost:8086"
+  ]
+ },
+ {
+  "port": "8087",
+  "name": "dashboard-service",
+  "http": 200,
+  "endpoints": 16,
+  "servers": [
+   "http://localhost:8087"
+  ]
+ },
+ {
+  "port": "8088",
+  "name": "screen-service",
+  "http": 200,
+  "endpoints": 16,
+  "servers": [
+   "http://localhost:8088"
+  ]
+ },
+ {
+  "port": "8089",
+  "name": "collab-service",
+  "http": 200,
+  "endpoints": 25,
+  "servers": [
+   "http://localhost:8089"
+  ]
+ },
+ {
+  "port": "8090",
+  "name": "alert-service",
+  "http": 200,
+  "endpoints": 37,
+  "servers": [
+   "http://localhost:8090"
+  ]
+ },
+ {
+  "port": "8091",
+  "name": "ai-service",
+  "http": 200,
+  "endpoints": 12,
+  "servers": [
+   "http://localhost:8091"
+  ]
+ },
+ {
+  "port": "8092",
+  "name": "openapi-service",
+  "http": 200,
+  "endpoints": 18,
+  "servers": [
+   "http://localhost:8092"
+  ]
+ },
+ {
+  "port": "8093",
+  "name": "admin-service",
+  "http": 200,
+  "endpoints": 20,
+  "servers": [
+   "http://localhost:8093"
+  ]
+ },
+ {
+  "port": "8094",
+  "name": "file-service",
+  "http": 200,
+  "endpoints": 7,
+  "servers": [
+   "http://localhost:8094"
+  ]
+ },
+ {
+  "port": "8095",
+  "name": "schedule-service",
+  "http": 200,
+  "endpoints": 12,
+  "servers": [
+   "http://localhost:8095"
+  ]
+ },
+ {
+  "port": "8096",
+  "name": "monitor-service",
+  "http": 200,
+  "endpoints": 11,
+  "servers": [
+   "http://localhost:8096"
+  ]
+ }
+]

@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.dataviz.common.core.exception.BizException;
+import com.dataviz.common.core.result.ErrorCode;
 
 @Slf4j
 @Service
@@ -37,7 +39,7 @@ public class WidgetServiceImpl implements WidgetService {
     public void update(WidgetCreateDTO dto) {
         DashboardWidget widget = widgetMapper.selectById(dto.getDashboardId());
         if (widget == null) {
-            throw new RuntimeException("Widget not found");
+            throw new BizException(ErrorCode.NOT_FOUND, "Widget not found");
         }
         BeanUtils.copyProperties(dto, widget);
         widgetMapper.updateById(widget);
@@ -48,7 +50,7 @@ public class WidgetServiceImpl implements WidgetService {
     public WidgetVO getById(Long id) {
         DashboardWidget widget = widgetMapper.selectById(id);
         if (widget == null) {
-            throw new RuntimeException("Widget not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Widget not found: " + id);
         }
         WidgetVO vo = new WidgetVO();
         BeanUtils.copyProperties(widget, vo);

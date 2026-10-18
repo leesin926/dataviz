@@ -1,0 +1,17 @@
+GET /api/analysis/report/{id} PUT /api/analysis/report/{id} DELETE /api/analysis/report/{id}
+GET /api/analysis/perm-rule/{id} PUT /api/analysis/perm-rule/{id} DELETE /api/analysis/perm-rule/{id}
+POST /api/analysis/report
+POST /api/analysis/report/{id}/unpublish
+POST /api/analysis/report/{id}/publish
+POST /api/analysis/query
+POST /api/analysis/query/save
+POST /api/analysis/query/execute
+POST /api/analysis/perm-rule
+POST /api/analysis/export/excel
+POST /api/analysis/export/csv
+GET /api/analysis/report/{id}/data
+GET /api/analysis/report/list
+GET /api/analysis/query/history
+GET /api/analysis/perm-rule/list
+GET /api/analysis/perm-rule/explain
+GET /api/analysis/history

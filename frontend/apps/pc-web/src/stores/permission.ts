@@ -3,6 +3,22 @@ import { ref, computed } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
 import type { Permission } from '@dataviz/shared-types'
 
+/** 必须留在 store 之外：递归的 RouteRecordRaw 联合类型放进 setup 返回值里会让 TS 无法推断 usePermissionStore（TS7056/TS2742） */
+export function filterRoutesByPermission(rawRoutes: RouteRecordRaw[], perms: string[]): RouteRecordRaw[] {
+  const result: RouteRecordRaw[] = []
+  for (const route of rawRoutes) {
+    const perm = route.meta?.permission as string | undefined
+    if (perm && !perms.includes(perm) && !perms.includes('*')) continue
+    if (route.children) {
+      const copy: RouteRecordRaw = { ...route, children: filterRoutesByPermission(route.children, perms) }
+      result.push(copy)
+    } else {
+      result.push(route)
+    }
+  }
+  return result
+}
+
 export const usePermissionStore = defineStore('permission', () => {
   const routes = ref<RouteRecordRaw[]>([])
   const addedRoutes = ref<RouteRecordRaw[]>([])
@@ -24,19 +40,6 @@ export const usePermissionStore = defineStore('permission', () => {
 
   function hasPermission(code: string): boolean {
     return permissions.value.includes(code) || permissions.value.includes('*')
-  }
-
-  function filterRoutesByPermission(rawRoutes: RouteRecordRaw[], perms: string[]): RouteRecordRaw[] {
-    return rawRoutes
-      .filter((r) => {
-        const perm = r.meta?.permission as string | undefined
-        if (!perm) return true
-        return perms.includes(perm) || perms.includes('*')
-      })
-      .map((r) => ({
-        ...r,
-        children: r.children ? filterRoutesByPermission(r.children, perms) : undefined,
-      }))
   }
 
   function generateRoutes(menuPermissions: Permission[]): RouteRecordRaw[] {

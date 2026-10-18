@@ -103,7 +103,9 @@ export class EChartsRenderer extends BaseRenderer {
   }
 
   exportImage(type = 'png'): string | null {
-    return this.chart?.getDataURL({ type, pixelRatio: 2, backgroundColor: '#fff' }) ?? null
+    // 对外签名保持 string（CanvasRenderer 与 ChartEngine.vue 都用它），进 getDataURL 前收口成 ECharts 认的三种
+    const format: 'png' | 'jpeg' | 'svg' = type === 'svg' || type === 'jpeg' ? type : 'png'
+    return this.chart?.getDataURL({ type: format, pixelRatio: 2, backgroundColor: '#fff' }) ?? null
   }
 
   dispose(): void {

@@ -19,14 +19,17 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Query engine that processes visual analysis queries.
  * <p>
- * Pipeline: Resolve dataset -> Generate SQL -> Apply permission filters -> Execute -> Cache result
+ * Pipeline: Resolve dataset -> Resolve data permission -> Generate SQL -> Execute -> Cache result
  * </p>
  */
 @Slf4j
@@ -35,7 +38,7 @@ import java.util.Map;
 public class QueryEngine {
 
     private final SqlBuilder sqlBuilder;
-    private final PermissionFilter permissionFilter;
+    private final DataPermissionResolver dataPermissionResolver;
     private final StringRedisTemplate redisTemplate;
     private final ModelServiceClient modelServiceClient;
     private final DatasourceQueryClient datasourceQueryClient;
@@ -53,6 +56,15 @@ public class QueryEngine {
      * Execute an analysis query through the full pipeline.
      */
     public QueryResultVO execute(AnalysisQueryDTO queryDTO, Long tenantId, Long userId) {
+        return execute(queryDTO, tenantId, userId, null, null);
+    }
+
+    /**
+     * @param rowLimit  本页行数；null 表示沿用查询自带的 limit（交互查询走这条）
+     * @param rowOffset 偏移行数；导出全量时逐页往前推
+     */
+    public QueryResultVO execute(AnalysisQueryDTO queryDTO, Long tenantId, Long userId,
+                                 Integer rowLimit, Integer rowOffset) {
         long start = System.currentTimeMillis();
         log.info("Executing query for dataset: {}, user: {}", queryDTO.getDatasetId(), userId);
 
@@ -71,39 +83,133 @@ public class QueryEngine {
             throw new BizException(ErrorCode.FORBIDDEN, "无权访问该数据集");
         }
 
-        // 2. Build SQL from visual config, then apply permission filters
-        String sql = sqlBuilder.buildSql(queryDTO, meta);
-        String filteredSql = permissionFilter.applyPermission(sql, userId, tenantId);
-        log.debug("Final SQL: {}", filteredSql);
+        // 2. 行列数据权限：行谓词进 SQL 的 WHERE，受限列既挡显式引用也挡 SELECT * 的回列
+        DataPermission permission = dataPermissionResolver.resolve(tenantId, userId, queryDTO.getDatasetId());
+        rejectRestrictedReferences(queryDTO, permission);
+        String sql = sqlBuilder.buildSql(queryDTO, meta, rowLimit, rowOffset, permission.rowPredicate());
+        log.debug("Final SQL: {}", sql);
 
-        // 3. Cache lookup happens after the SQL is final, so the key covers permissions as well
-        QueryResultVO cached = readCache(filteredSql, tenantId, userId);
+        // 3. Cache lookup happens after the SQL is final, and the key also carries the column
+        //    restriction — 列权限不改 SQL 文本，只把它挡在键外会让新配的规则在 TTL 内继续漏列
+        QueryResultVO cached = readCache(sql, permission, tenantId, userId);
         if (cached != null) {
             cached.setExecutionTime(System.currentTimeMillis() - start);
             log.info("Query cache hit for dataset: {}", queryDTO.getDatasetId());
-            return cached;
+            return maskRestrictedColumns(cached, permission);
         }
 
         // 4. Execute against the bound datasource (read-only endpoint; this service holds no credentials)
         DatasourceQueryResult data = datasourceQueryClient.query(
-                meta.getDatasourceId(), filteredSql, resolveRowLimit(queryDTO), null);
+                meta.getDatasourceId(), sql, resolveRowLimit(queryDTO, rowLimit), null);
 
         QueryResultVO result = new QueryResultVO();
-        result.setColumns(data.getColumns() == null ? Collections.emptyList() : data.getColumns());
-        List<Map<String, Object>> rows = data.getRows() == null ? Collections.emptyList() : data.getRows();
+        result.setColumns(data.getColumns() == null ? Collections.<String>emptyList() : data.getColumns());
+        List<Map<String, Object>> rows = data.getRows() == null ? Collections.<Map<String, Object>>emptyList() : data.getRows();
         result.setRows(rows);
         result.setRowCount(rows.size());
         result.setTruncated(data.isTruncated());
-        result.setSql(filteredSql);
+        result.setSql(sql);
         result.setExecutionTime(System.currentTimeMillis() - start);
 
-        writeCache(filteredSql, tenantId, userId, result);
+        QueryResultVO visible = maskRestrictedColumns(result, permission);
+        writeCache(sql, permission, tenantId, userId, visible);
 
-        log.info("Query completed: {} rows in {}ms", result.getRowCount(), result.getExecutionTime());
+        log.info("Query completed: {} rows in {}ms", visible.getRowCount(), visible.getExecutionTime());
+        return visible;
+    }
+
+    /**
+     * 显式点名了受限列就直接拒绝，而不是悄悄少给一列。
+     * <p>静默丢列的症状是"这个维度怎么总是空的"，用户不会知道是被权限遮了；报错至少能说出是哪一列。</p>
+     */
+    private void rejectRestrictedReferences(AnalysisQueryDTO queryDTO, DataPermission permission) {
+        if (!permission.hasColumnRestriction()) {
+            return;
+        }
+        Set<String> used = new LinkedHashSet<>();
+        if (queryDTO.getDimensions() != null) {
+            for (AnalysisQueryDTO.DimensionConfig item : queryDTO.getDimensions()) {
+                addReference(used, item == null ? null : item.getField());
+            }
+        }
+        if (queryDTO.getMetrics() != null) {
+            for (AnalysisQueryDTO.MetricConfig item : queryDTO.getMetrics()) {
+                addReference(used, item == null ? null : item.getField());
+            }
+        }
+        if (queryDTO.getFilters() != null) {
+            for (AnalysisQueryDTO.FilterConfig item : queryDTO.getFilters()) {
+                addReference(used, item == null ? null : item.getField());
+            }
+        }
+        if (queryDTO.getMetricFilters() != null) {
+            for (AnalysisQueryDTO.MetricFilterConfig item : queryDTO.getMetricFilters()) {
+                addReference(used, item == null ? null : item.getField());
+            }
+        }
+        if (queryDTO.getOrders() != null) {
+            for (AnalysisQueryDTO.OrderConfig item : queryDTO.getOrders()) {
+                addReference(used, item == null ? null : item.getField());
+            }
+        }
+        List<String> violated = new ArrayList<>();
+        for (String column : permission.restrictedColumns()) {
+            if (used.contains(normalize(column))) {
+                violated.add(column);
+            }
+        }
+        if (!violated.isEmpty()) {
+            throw new BizException(ErrorCode.FORBIDDEN,
+                    "查询引用了无权访问的字段: " + String.join(", ", violated));
+        }
+    }
+
+    private static void addReference(Set<String> sink, String field) {
+        String normalized = normalize(field);
+        if (!normalized.isEmpty()) {
+            sink.add(normalized);
+        }
+    }
+
+    /** 与 SqlBuilder.column 的清洗口径一致，避免 `部门 编码` 这类脏名字绕过比对 */
+    private static String normalize(String field) {
+        return field == null ? "" : field.replaceAll("[^a-zA-Z0-9_]", "").toLowerCase();
+    }
+
+    /** SELECT * 时结果列来自数据源，受限列在这里裁掉；聚合查询的别名同名列也一并裁（聚合值本身就是泄露面） */
+    private QueryResultVO maskRestrictedColumns(QueryResultVO result, DataPermission permission) {
+        if (!permission.hasColumnRestriction() || result.getColumns() == null || result.getColumns().isEmpty()) {
+            return result;
+        }
+        Set<String> hidden = new LinkedHashSet<>();
+        for (String column : permission.restrictedColumns()) {
+            hidden.add(normalize(column));
+        }
+        List<String> kept = new ArrayList<>(result.getColumns().size());
+        for (String column : result.getColumns()) {
+            if (column == null || !hidden.contains(normalize(column))) {
+                kept.add(column);
+            }
+        }
+        if (kept.size() == result.getColumns().size()) {
+            return result;
+        }
+        result.setColumns(kept);
+        if (result.getRows() != null) {
+            for (Map<String, Object> row : result.getRows()) {
+                if (row != null) {
+                    row.keySet().removeIf(key -> key != null && hidden.contains(normalize(key)));
+                }
+            }
+            result.setRowCount(result.getRows().size());
+        }
         return result;
     }
 
-    private int resolveRowLimit(AnalysisQueryDTO queryDTO) {
+    private int resolveRowLimit(AnalysisQueryDTO queryDTO, Integer rowLimit) {
+        if (rowLimit != null && rowLimit > 0) {
+            return Math.min(rowLimit, ROWS_CEILING);
+        }
         Integer limit = queryDTO.getLimit();
         if (limit == null || limit <= 0) {
             return SqlBuilder.DEFAULT_LIMIT;
@@ -111,16 +217,16 @@ public class QueryEngine {
         return Math.min(limit, ROWS_CEILING);
     }
 
-    private String cacheKey(String sql, Long tenantId, Long userId) {
-        return CACHE_PREFIX + tenantId + ":" + userId + ":" + sha256Hex(sql);
+    private String cacheKey(String sql, DataPermission permission, Long tenantId, Long userId) {
+        return CACHE_PREFIX + tenantId + ":" + userId + ":" + sha256Hex(sql + "\n" + permission.fingerprint());
     }
 
-    private QueryResultVO readCache(String sql, Long tenantId, Long userId) {
+    private QueryResultVO readCache(String sql, DataPermission permission, Long tenantId, Long userId) {
         if (cacheTtlSeconds <= 0) {
             return null;
         }
         try {
-            String payload = redisTemplate.opsForValue().get(cacheKey(sql, tenantId, userId));
+            String payload = redisTemplate.opsForValue().get(cacheKey(sql, permission, tenantId, userId));
             if (payload == null || payload.isEmpty()) {
                 return null;
             }
@@ -132,12 +238,12 @@ public class QueryEngine {
         }
     }
 
-    private void writeCache(String sql, Long tenantId, Long userId, QueryResultVO result) {
+    private void writeCache(String sql, DataPermission permission, Long tenantId, Long userId, QueryResultVO result) {
         if (cacheTtlSeconds <= 0) {
             return;
         }
         try {
-            redisTemplate.opsForValue().set(cacheKey(sql, tenantId, userId),
+            redisTemplate.opsForValue().set(cacheKey(sql, permission, tenantId, userId),
                     objectMapper.writeValueAsString(result), Duration.ofSeconds(cacheTtlSeconds));
         } catch (Exception e) {
             log.warn("查询缓存写入失败: {}", e.getMessage());

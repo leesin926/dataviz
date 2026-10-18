@@ -1,4 +1,4 @@
-import type { ChartConfig, ChartFilter } from '@dataviz/shared-types'
+import type { ChartFilter } from '@dataviz/shared-types'
 
 export interface DrillState {
   stack: DrillLevel[]

@@ -47,6 +47,9 @@ export class ChartRenderer {
   setTheme(theme: ThemeName): void {
     if (this.currentTheme === theme) return
     this.currentTheme = theme
+    // 内置主题是构造函数里 new ChartThemeManager() 时注册进 echarts 的，切主题必须同步回去，
+    // 否则 getThemeNames()/getCurrentTheme() 与实际渲染用的主题脱节
+    this.themeManager.setCurrentTheme(theme)
     this.initInstance()
   }
 

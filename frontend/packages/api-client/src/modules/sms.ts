@@ -17,6 +17,7 @@ export function isValidPhone(phone: string): boolean {
 /**
  * 登录发起端。后端按"手机号 + 终端"隔离验证码与重发闸门，所以同一个人换端登录不再互相踩；
  * 值必须落在后端 {@code SmsTerminalConstant.PATTERN} 的白名单里，两边漏一边就是发码直接失败。
+ * 后三个值对应的 uni 端已归档，但**不删**：白名单是后端语义，删一边就发码失败；H5 分享页若要登录仍靠它们区分。
  */
 export type SmsTerminal =
   | 'admin'

@@ -5,13 +5,17 @@ import 'dayjs/locale/zh-cn'
 dayjs.extend(relativeTime)
 dayjs.locale('zh-cn')
 
-export type DateFormat =
-  | 'YYYY-MM-DD'
-  | 'YYYY-MM-DD HH:mm:ss'
-  | 'YYYY/MM/DD'
-  | 'YYYY-MM-DD HH:mm'
-  | 'MM-DD HH:mm'
-  | 'HH:mm:ss'
+/** 支持的日期格式清单：类型与运行时校验共用这一份，避免设计器填了枚举外的串却过编译 */
+export const DATE_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY-MM-DD HH:mm:ss',
+  'YYYY/MM/DD',
+  'YYYY-MM-DD HH:mm',
+  'MM-DD HH:mm',
+  'HH:mm:ss',
+] as const
+
+export type DateFormat = (typeof DATE_FORMATS)[number]
 
 /**
  * 格式化日期时间

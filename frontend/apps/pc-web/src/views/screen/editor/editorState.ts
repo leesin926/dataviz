@@ -13,7 +13,6 @@ import {
   ChartType,
   chartConfigFromPreset,
   defaultChartConfig,
-  defaultComponentProps,
   getComponentDefinition,
   isRenderableOnPlatform,
   listComponentDefinitions,

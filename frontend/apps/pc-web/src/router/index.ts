@@ -60,6 +60,15 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'nav.analysis', icon: 'DataAnalysis', group: 'nav.groupDesign' },
       },
       {
+        // AI 助手：8091 的 chat / nl2sql / recommend / insight 四组端点此前在前端零入口
+        // （api-client 里那四个路径是凭空写的，后端一条都没有）。ai:read / ai:write 见 D66 码表，补丁已执行（AW5）。
+        // 未配置大模型时页面显式标"未接入"并给出原因，不显示编造的结论。
+        path: 'ai',
+        name: 'AiAssistant',
+        component: () => import('@/views/ai/AiAssistant.vue'),
+        meta: { titleKey: 'nav.ai', icon: 'MagicStick', group: 'nav.groupDesign', permission: 'ai:read' },
+      },
+      {
         path: 'datasource',
         name: 'Datasource',
         component: () => import('@/views/datasource/DatasourceList.vue'),
@@ -88,6 +97,16 @@ const routes: RouteRecordRaw[] = [
         name: 'AuditLog',
         component: () => import('@/views/monitor/AuditLog.vue'),
         meta: { titleKey: 'nav.monitor', icon: 'Notebook', group: 'nav.groupOps' },
+      },
+      {
+        // 协作待办（M09-03-04）与我的关注放在设计端：主体是"我做过的单子和我关注的资源"，
+        // 全后端只读会话取身份，没有跨主体入口。裁决动作要 collab:write；
+        // 该码在 2026-10-16-r1-permission-codes.sql 补丁里，未执行前除超管外一律 403。
+        // 管理端另有一个"审批中心"看全量流水，两边不是重复：这里只看自己的。
+        path: 'collab',
+        name: 'MyCollab',
+        component: () => import('@/views/collab/MyCollab.vue'),
+        meta: { titleKey: 'nav.collab', icon: 'Stamp', group: 'nav.groupOps' },
       },
     ],
   },

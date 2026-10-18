@@ -21,9 +21,10 @@
         <el-table-column :label="t('model.fieldCount')" width="120" align="center">
           <template #default="{ row }">{{ (row.dimensions?.length ?? 0) + (row.measures?.length ?? 0) }}</template>
         </el-table-column>
-        <el-table-column :label="t('common.operations')" width="160" fixed="right">
+        <el-table-column :label="t('common.operations')" width="250" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
+            <el-button link type="primary" @click="openCollab(row)">{{ t('collab.drawerShort') }}</el-button>
             <el-button link type="danger" @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
@@ -32,6 +33,13 @@
         </template>
       </el-table>
     </el-card>
+
+    <!--
+      功能点 M09-03-02「批注」在这一版落到"数据集级评论"：后端 collab 的评论只有
+      targetType/targetId/parentId/content，没有列、行或字段级坐标，做不出真正的数据批注。
+      入口放在这里是可以的（对象确实是这个数据集），但界面文案不得写成"批注到某一列"。
+    -->
+    <CollabDrawer v-model="collabVisible" target-type="DATASET" :target-id="collabId" :target-name="collabName" />
   </div>
 </template>
 
@@ -44,11 +52,22 @@
   import type { QueryDataset } from '@dataviz/shared-types'
   import { rowsOf } from '@dataviz/shared-types'
   import { deleteDataset, listDatasets } from '@dataviz/api-client'
+  import CollabDrawer from '@/components/CollabDrawer.vue'
 
   const router = useRouter()
   const { t } = useI18n()
   const loading = ref(false)
   const list = ref<QueryDataset[]>([])
+
+  const collabVisible = ref(false)
+  const collabId = ref<string | number>('')
+  const collabName = ref('')
+
+  function openCollab(row: QueryDataset) {
+    collabId.value = row.id
+    collabName.value = row.name ?? ''
+    collabVisible.value = true
+  }
 
   async function loadData() {
     loading.value = true

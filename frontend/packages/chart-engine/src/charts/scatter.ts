@@ -5,7 +5,7 @@ import type { ChartData } from '../renderer/BaseRenderer'
 /**
  * 散点图选项构建
  */
-export function buildScatterOption(config: ChartConfig, data: ChartData): EChartsOption {
+export function buildScatterOption(_config: ChartConfig, data: ChartData): EChartsOption {
   const showSize = data.measures.length >= 3
 
   return {
@@ -23,7 +23,7 @@ export function buildScatterOption(config: ChartConfig, data: ChartData): EChart
     series: data.series.map((s) => ({
       name: s.name,
       type: 'scatter' as const,
-      data: s.data as unknown[],
+      data: s.data as (number | string | null)[][],
       symbolSize: showSize ? 20 : 10,
       emphasis: { focus: 'series' as const },
     })),

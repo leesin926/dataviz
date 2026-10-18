@@ -1,0 +1,11 @@
+PUT /api/monitor/health/update
+POST /api/monitor/registry/register
+POST /api/monitor/registry/metrics/report
+POST /api/monitor/registry/metrics/reportBatch
+POST /api/monitor/registry/heartbeat
+GET /api/monitor/services
+GET /api/monitor/services/{serviceName}/instances
+GET /api/monitor/metrics
+GET /api/monitor/metrics/history
+GET /api/monitor/health/{serviceName}
+DELETE /api/monitor/registry/deregister

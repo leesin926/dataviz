@@ -6,6 +6,7 @@ import com.dataviz.collab.entity.CollabComment;
 import com.dataviz.collab.mapper.CommentMapper;
 import com.dataviz.collab.service.CommentService;
 import com.dataviz.collab.vo.CommentVO;
+import com.dataviz.common.security.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.dataviz.common.core.exception.BizException;
+import com.dataviz.common.core.result.ErrorCode;
 
 @Slf4j
 @Service
@@ -27,6 +30,10 @@ public class CommentServiceImpl implements CommentService {
     public Long create(CommentCreateDTO dto) {
         CollabComment comment = new CollabComment();
         BeanUtils.copyProperties(dto, comment);
+        // 作者从会话取，不接受入参：DTO 里没有作者字段，而公共填充器是按 String 填 createBy 的
+        // （见 MybatisPlusConfig.insertFill），本表 create_by 是 BIGINT ⇒ 类型对不上、填充被跳过 ⇒
+        // 不写这一句的话每条新评论的作者都是 NULL，"编辑/删除他人评论"这种校验根本无从加起。
+        comment.setCreateBy(SecurityContextHolder.getUserId());
         commentMapper.insert(comment);
         log.info("Created comment: id={}, targetType={}, targetId={}", 
                 comment.getId(), dto.getTargetType(), dto.getTargetId());
@@ -38,7 +45,7 @@ public class CommentServiceImpl implements CommentService {
     public void update(Long id, String content) {
         CollabComment comment = commentMapper.selectById(id);
         if (comment == null) {
-            throw new RuntimeException("Comment not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Comment not found: " + id);
         }
         comment.setContent(content);
         commentMapper.updateById(comment);
@@ -56,7 +63,7 @@ public class CommentServiceImpl implements CommentService {
     public CommentVO getById(Long id) {
         CollabComment comment = commentMapper.selectById(id);
         if (comment == null) {
-            throw new RuntimeException("Comment not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Comment not found: " + id);
         }
         CommentVO vo = new CommentVO();
         BeanUtils.copyProperties(comment, vo);
@@ -68,7 +75,11 @@ public class CommentServiceImpl implements CommentService {
         LambdaQueryWrapper<CollabComment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CollabComment::getTargetType, targetType)
                .eq(CollabComment::getTargetId, targetId)
-               .isNull(CollabComment::getParentId)
+               // 顶层判定必须同时认 NULL 和 0：演示数据写的是 NULL，而 DDL 的 parent_id 带
+               // DEFAULT 0 —— 入参 parentId 为空时 MyBatis-Plus 默认按 NOT_NULL 策略把这一列整条
+               // 跳过，落库拿到的是 0。只查 IS NULL 的后果是"演示评论看得见、自己发的顶层评论
+               // 刷新后消失"。
+               .and(w -> w.isNull(CollabComment::getParentId).or().eq(CollabComment::getParentId, 0L))
                .orderByDesc(CollabComment::getCreateTime);
         List<CollabComment> list = commentMapper.selectList(wrapper);
         return list.stream().map(c -> {

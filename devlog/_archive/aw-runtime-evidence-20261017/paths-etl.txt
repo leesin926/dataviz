@@ -1,0 +1,10 @@
+GET /api/etl/task/{id} PUT /api/etl/task/{id} DELETE /api/etl/task/{id}
+POST /api/etl/task
+POST /api/etl/task/{id}/stop
+POST /api/etl/task/{id}/start
+POST /api/etl/task/{id}/pause
+GET /api/etl/task/{id}/metrics
+GET /api/etl/task/{id}/logs
+GET /api/etl/task/list
+GET /api/etl/operator/{type}/schema
+GET /api/etl/operator/list

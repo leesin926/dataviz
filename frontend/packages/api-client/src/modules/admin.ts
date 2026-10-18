@@ -110,22 +110,23 @@ export async function getPublicConfig(configKey: string): Promise<string | null>
   return res.data?.data ?? null
 }
 
-/** 许可证信息（后端返回裸 Map，无 R 包装） */
-export async function getLicenseInfo(): Promise<LicenseInfo> {
-  const res = await request.get<LicenseInfo>('/admin/license/info')
-  return res.data
+/**
+ * 许可证信息。后端三个端点现在都是 R&lt;LicenseVO&gt;，
+ * 未激活时 data 里 activated=false 而不是 data=null —— 少一次 ?? null 分支。
+ */
+export async function getLicenseInfo(): Promise<LicenseInfo | null> {
+  const res = await request.get<R<LicenseInfo>>('/admin/license/info')
+  return res.data.data ?? null
 }
 
-/** 激活许可证 */
-export async function activateLicense(licenseKey: string): Promise<{ success?: boolean; message?: string }> {
-  const res = await request.post<{ success?: boolean; message?: string }>('/admin/license/activate', {
-    licenseKey,
-  })
-  return res.data
+/** 激活许可证：验签失败由后端抛业务错误（HTTP 非 200），走 request 拦截器变成异常 */
+export async function activateLicense(licenseKey: string): Promise<LicenseInfo | null> {
+  const res = await request.post<R<LicenseInfo>>('/admin/license/activate', { licenseKey })
+  return res.data.data ?? null
 }
 
-/** 重新校验许可证（后端返回裸 Map） */
-export async function validateLicense(): Promise<{ valid?: boolean; message?: string }> {
-  const res = await request.get<{ valid?: boolean; message?: string }>('/admin/license/validate')
-  return res.data
+/** 重新校验许可证（与 info 同源，给前端一个显式复查动作） */
+export async function validateLicense(): Promise<LicenseInfo | null> {
+  const res = await request.get<R<LicenseInfo>>('/admin/license/validate')
+  return res.data.data ?? null
 }

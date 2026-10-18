@@ -12,8 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -25,6 +23,9 @@ public class ApiAuthServiceImpl implements ApiAuthService {
     private final StringRedisTemplate redisTemplate;
 
     private static final String RATE_LIMIT_KEY_PREFIX = "openapi:rate:";
+
+    /** 与 {@code OpenApiAuthFilter} 同一口径：配额缺失时按 60 次/分钟，而不是放开或报错 */
+    private static final int DEFAULT_RATE_LIMIT = 60;
 
     @Override
     public OpenApiClient authenticate(String appKey, String appSecret, String clientIp) {
@@ -59,7 +60,10 @@ public class ApiAuthServiceImpl implements ApiAuthService {
         String countStr = redisTemplate.opsForValue().get(key);
         long count = countStr != null ? Long.parseLong(countStr) : 0;
 
-        if (count >= client.getRateLimit()) {
+        // rate_limit 在库里可空（默认值只对新行生效），直接自动拆箱会让这条老鉴权路 500
+        int limit = client.getRateLimit() == null || client.getRateLimit() <= 0
+                ? DEFAULT_RATE_LIMIT : client.getRateLimit();
+        if (count >= limit) {
             return false;
         }
 
@@ -77,7 +81,13 @@ public class ApiAuthServiceImpl implements ApiAuthService {
             // Empty means all IPs allowed
             return true;
         }
-        List<String> ipList = Arrays.asList(allowedIps.split(","));
-        return ipList.contains(clientIp) || ipList.contains("*");
+        for (String entry : allowedIps.split(",")) {
+            String candidate = entry.trim();
+            // 精确清单：子串匹配会让配了 10.0.0.15 顺带放行 10.0.0.1
+            if (candidate.equals(clientIp) || "*".equals(candidate)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

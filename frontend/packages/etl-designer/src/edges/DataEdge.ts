@@ -11,7 +11,8 @@ export interface DataEdgeOptions {
 }
 
 export class DataEdge {
-  static create(source: string, target: string, options: DataEdgeOptions = {}): EtlEdge {
+  // DataEdgeOptions 的样式在 EtlEdge 里没有对应字段，原先的 options 参数从未被读取（已删除，缺陷已登记）
+  static create(source: string, target: string): EtlEdge {
     return {
       id: `edge_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       source,

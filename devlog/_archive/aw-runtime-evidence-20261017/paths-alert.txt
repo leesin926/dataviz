@@ -1,0 +1,29 @@
+PUT /api/alert/rule POST /api/alert/rule
+PUT /api/alert/notify-group POST /api/alert/notify-group
+PUT /api/alert/contact POST /api/alert/contact
+PUT /api/alert/channel POST /api/alert/channel
+POST /api/alert/rule/{id}/test
+POST /api/alert/rule/{id}/enable
+POST /api/alert/rule/{id}/disable
+POST /api/alert/notify-group/{id}/enable
+POST /api/alert/notify-group/{id}/disable
+POST /api/alert/event/resolve
+POST /api/alert/event/acknowledge
+POST /api/alert/contact/{id}/enable
+POST /api/alert/contact/{id}/disable
+POST /api/alert/channel/{id}/test
+POST /api/alert/channel/{id}/enable
+POST /api/alert/channel/{id}/disable
+GET /api/alert/rule/{id} DELETE /api/alert/rule/{id}
+GET /api/alert/rule/page
+GET /api/alert/notify-group/{id} DELETE /api/alert/notify-group/{id}
+GET /api/alert/notify-group/page
+GET /api/alert/notify-group/options
+GET /api/alert/event/stats
+GET /api/alert/event/page
+GET /api/alert/contact/{id} DELETE /api/alert/contact/{id}
+GET /api/alert/contact/page
+GET /api/alert/contact/options
+GET /api/alert/channel/{id} DELETE /api/alert/channel/{id}
+GET /api/alert/channel/schema
+GET /api/alert/channel/page

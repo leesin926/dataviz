@@ -15,6 +15,18 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 对外统一入口。这条端点<b>不上用户权限码</b>（R1 的 C 档：建议不套）：
+ * 它的主体是外部应用（appKey/appSecret 在请求体里自证），套 {@code openapi:*} 等于要求外部系统
+ * 先有平台账号会话，任何真实集成都会当场断。
+ * <p>两条必须一起记住的现状：
+ * ① {@code routeRequest} 还是 TODO 占位，只回显路径与方法，并没有真的转发 —— 所以它现在既不产生
+ * 数据风险，也谈不上 API-33 那类 SSRF；等真接转发时必须回来补目标白名单。
+ * ② {@code getClientIp} 直接取 {@code X-Forwarded-For} 最左值，而那个头是客户端自写的；
+ * 这个值会进 {@code open_api_log.ip} 当审计字段。同口径的修法已在
+ * {@code OpenApiAuthFilter.resolveClientIp}（默认只信 TCP 对端，按可信跳数从右往左数）落过，
+ * 这里还没改，因为它属于"占位接口要不要现在当真"的同一批决策。</p>
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/openapi/proxy")

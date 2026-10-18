@@ -2,6 +2,8 @@
   "name": "@dataviz/pc-desktop",
   "version": "1.0.0",
   "private": true,
+  "description": "DataViz 可视化大屏桌面端（多窗口、离线大屏、导出、自动更新）",
+  "author": "DataViz Team",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
@@ -22,6 +24,7 @@
     "@dataviz/shared-types": "workspace:*",
     "@dataviz/shared-utils": "workspace:*",
     "@dataviz/shared-styles": "workspace:*",
+    "@dataviz/screen-engine": "workspace:*",
     "@dataviz/api-client": "workspace:*"
   },
   "devDependencies": {
@@ -34,5 +37,47 @@
     "electron-builder": "^24.0.0",
     "concurrently": "^8.2.0",
     "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.dataviz.desktop",
+    "productName": "DataViz Desktop",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "!**/node_modules/**/*"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DataViz 桌面端",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://REPLACE-WITH-INTRANET-UPDATE-HOST/updates/win32"
+      }
+    ]
   }
 }

@@ -60,6 +60,8 @@ export interface Screen {
    * 列表不带完整 variants，避免把三端组件一并传出去；详情接口仍然只有 variants。
    */
   variantSizes?: Partial<Record<ScreenPlatform, { width: number | null; height: number | null }>>
+  /** 列表接口专用：组件个数（列表不带 components，只有这个计数）；详情接口不带 */
+  componentCount?: number
   isTemplate?: boolean
   /** 分享标识：发布后生成，用于免登录链接 /s/:shareToken */
   shareToken?: string
@@ -148,7 +150,7 @@ export type ScreenComponentCategory = 'chart' | 'text' | 'media' | 'decoration' 
 /**
  * 组件契约（GoView plugin 思路）：所有组件——内置与自定义——都必须注册一份定义。
  * 自定义组件开发 = 实现本接口声明元数据与投放端，再在各端渲染包中
- * 以 registerRenderer(type, impl) 绑定具体渲染器（web: screen-engine；uni: uni-screen-engine）。
+ * 以 registerRenderer(type, impl) 绑定具体渲染器（web: screen-engine；uni 渲染器随三个 uni 端归档，见 frontend/_archive/uni-apps-20261017/）。
  */
 export interface ScreenComponentDefinition {
   /** 全局唯一，与 ScreenComponent.type 对应 */
@@ -677,6 +679,8 @@ export interface ScreenConfig {
   /** @deprecated 旧版单屏灰度开关，已废弃（哀悼模式改为管理端全局配置驱动），保留仅为兼容历史数据 */
   grayMode?: boolean
   adaptationMode: 'scale' | 'fixed-width' | 'responsive'
+  /** 编辑器网格吸附开关：设计端写、展示端不读 */
+  gridSnap?: boolean
   gridSize?: number
   globalRefreshInterval?: number
 }

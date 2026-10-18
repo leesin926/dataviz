@@ -1,6 +1,7 @@
 package com.dataviz.monitor.controller;
 
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.monitor.service.MetricService;
 import com.dataviz.monitor.service.ServiceRegistryService;
 import com.dataviz.monitor.vo.MetricHistoryVO;
@@ -14,12 +15,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 监控查询控制器
+ * 监控查询控制器。四条端点全是只读，类级读码覆盖，没有方法级写码。
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/monitor")
 @RequiredArgsConstructor
+@RequiresPermission("monitor:read")
 public class MonitorController {
 
     private final ServiceRegistryService serviceRegistryService;

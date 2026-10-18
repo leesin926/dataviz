@@ -33,7 +33,7 @@ export function buildBarOption(config: ChartConfig, data: ChartData): EChartsOpt
     series: data.series.map((s) => ({
       name: s.name,
       type: 'bar' as const,
-      data: s.data,
+      data: s.data as (number | string | null)[],
       stack: isStack ? 'total' : undefined,
       barMaxWidth: 40,
       emphasis: { focus: 'series' as const },

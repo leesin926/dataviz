@@ -1,0 +1,51 @@
+[
+  {
+    "url": "http://localhost:8080/api/screen/share",
+    "status": 401,
+    "ms": 102,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+    "note": "bare, expect 401"
+  },
+  {
+    "url": "http://localhost:8080/api/admin/config/public",
+    "status": 401,
+    "ms": 4,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+    "note": "bare, expect 401"
+  },
+  {
+    "url": "http://localhost:8080/api/file/view",
+    "status": 401,
+    "ms": 6,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+    "note": "bare, expect 401"
+  },
+  {
+    "url": "http://localhost:8080/api/auth/sso",
+    "status": 401,
+    "ms": 5,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+    "note": "bare, expect 401"
+  },
+  {
+    "url": "http://localhost:8080/api/screen/ws/share",
+    "status": 401,
+    "ms": 3,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}",
+    "note": "bare, expect 401"
+  },
+  {
+    "url": "http://localhost:8080/api/admin/config/public/mourning_mode",
+    "status": 200,
+    "ms": 17,
+    "body": "{\"code\":403,\"message\":\"Config key is not public: mourning_mode\",\"data\":null,\"timestamp\":1792321766790,\"success\":false}",
+    "note": "tail, expect NOT 401 (免登)"
+  },
+  {
+    "url": "http://localhost:8080/api/screen/share/nope-not-a-token",
+    "status": 200,
+    "ms": 23,
+    "body": "{\"code\":404,\"message\":\"大屏不存在或链接无效\",\"data\":null,\"timestamp\":1792321768029,\"success\":false}",
+    "note": "tail, expect NOT 401 (免登)"
+  }
+]

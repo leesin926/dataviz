@@ -1,0 +1,17 @@
+{
+  "entityTotal": 8,
+  "unknown": [],
+  "missingCol": [
+    {
+      "svc": "analysis-service",
+      "table": "query_history",
+      "entity": "QueryHistory",
+      "base": "TenantEntity",
+      "logicOff": false,
+      "file": "backend\\analysis-service\\src\\main\\java\\com\\dataviz\\analysis\\entity\\QueryHistory.java",
+      "schema": "db_analysis",
+      "ddlFile": "03-all-services-schema.sql",
+      "hasDelete": false
+    }
+  ]
+}

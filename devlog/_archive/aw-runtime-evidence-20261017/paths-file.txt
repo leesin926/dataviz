@@ -1,0 +1,7 @@
+POST /api/file/upload
+POST /api/file/uploadBatch
+GET /api/file/view/{id}
+GET /api/file/list
+GET /api/file/info/{id}
+GET /api/file/download/{id}
+DELETE /api/file/{id}

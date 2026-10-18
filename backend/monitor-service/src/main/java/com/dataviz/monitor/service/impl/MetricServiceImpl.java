@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -62,24 +63,35 @@ public class MetricServiceImpl implements MetricService {
         if (instanceId != null && !instanceId.isEmpty()) {
             wrapper.eq(MonitorMetric::getInstanceId, instanceId);
         }
-        // 只取最新一条记录，按metricName分组取最新
         wrapper.orderByDesc(MonitorMetric::getTimestamp);
         List<MonitorMetric> metrics = monitorMetricMapper.selectList(wrapper);
 
-        return metrics.stream().map(m -> {
-            MetricVO vo = new MetricVO();
-            vo.setId(m.getId());
-            vo.setServiceName(m.getServiceName());
-            vo.setInstanceId(m.getInstanceId());
-            vo.setMetricName(m.getMetricName());
-            vo.setMetricValue(m.getMetricValue());
-            vo.setMetricType(m.getMetricType());
-            if (m.getTags() != null) {
-                vo.setTags(JsonUtils.fromJson(m.getTags(), new TypeReference<Map<String, String>>() {}));
+        // 这条端点的语义是"当前指标"，所以每个 (实例, 指标名) 只留最新一条。
+        // 直接返回查询结果会把整张历史表倒序吐给调用方，监控页拿到的不是现值而是几个月的点。
+        Map<String, MonitorMetric> latestPerMetric = new LinkedHashMap<>();
+        for (MonitorMetric m : metrics) {
+            String key = m.getInstanceId() + "|" + m.getMetricName();
+            if (!latestPerMetric.containsKey(key)) {
+                latestPerMetric.put(key, m);
             }
-            vo.setTimestamp(m.getTimestamp());
-            return vo;
-        }).collect(Collectors.toList());
+        }
+
+        return latestPerMetric.values().stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    private MetricVO toVO(MonitorMetric m) {
+        MetricVO vo = new MetricVO();
+        vo.setId(m.getId());
+        vo.setServiceName(m.getServiceName());
+        vo.setInstanceId(m.getInstanceId());
+        vo.setMetricName(m.getMetricName());
+        vo.setMetricValue(m.getMetricValue());
+        vo.setMetricType(m.getMetricType());
+        if (m.getTags() != null && !m.getTags().isEmpty()) {
+            vo.setTags(JsonUtils.fromJson(m.getTags(), new TypeReference<Map<String, String>>() {}));
+        }
+        vo.setTimestamp(m.getTimestamp());
+        return vo;
     }
 
     @Override

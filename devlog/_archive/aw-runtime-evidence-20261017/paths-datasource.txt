@@ -1,0 +1,10 @@
+GET /api/datasource/{id} PUT /api/datasource/{id} DELETE /api/datasource/{id}
+POST /api/datasource
+POST /api/datasource/{id}/test-connection
+POST /api/datasource/test-connection
+POST /api/datasource/internal/write
+POST /api/datasource/internal/query
+POST /api/datasource/execute
+GET /api/datasource/{id}/tables
+GET /api/datasource/{id}/tables/{tableName}/columns
+GET /api/datasource/list

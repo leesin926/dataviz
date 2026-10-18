@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { User, UserInfo } from '@dataviz/shared-types'
+import type { UserInfo } from '@dataviz/shared-types'
 import { login as apiLogin, logout as apiLogout, getCurrentUser, smsLogin as apiSmsLogin } from '@dataviz/api-client'
 import { setToken, clearToken, getToken } from '@dataviz/api-client'
-import { setLocal, getLocal, removeLocal } from '@dataviz/shared-utils'
+import { setLocal, removeLocal } from '@dataviz/shared-utils'
 import { router } from '@/router'
 
 export const useUserStore = defineStore('user', () => {

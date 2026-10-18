@@ -1,0 +1,3 @@
+const http=require('http')
+function call(p){return new Promise(r=>{const q=http.request({host:'127.0.0.1',port:8080,path:p,method:'GET',timeout:8000},s=>{let b='';s.on('data',c=>b+=c);s.on('end',()=>r({p,status:s.statusCode,ct:s.headers['content-type'],body:b.slice(0,120)}))});q.on('timeout',()=>{q.destroy();r({p,status:'ERR',body:'timeout'})});q.on('error',e=>r({p,status:'ERR',body:String(e.message)}));q.end()})}
+;(async()=>{for(const p of ['/api/file/view/1','/api/file/view/999999','/api/file/view','/api/file/view/1/2']){const r=await call(p);console.log(`${p} -> ${r.status} | ct=${r.ct} | ${String(r.body).replace(/\s+/g,' ').slice(0,100)}`)}})()

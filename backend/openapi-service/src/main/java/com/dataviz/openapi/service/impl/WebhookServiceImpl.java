@@ -1,6 +1,7 @@
 package com.dataviz.openapi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.dataviz.common.core.exception.BizException;
 import com.dataviz.openapi.dto.WebhookCreateDTO;
 import com.dataviz.openapi.entity.OpenApiWebhook;
 import com.dataviz.openapi.mapper.WebhookMapper;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.dataviz.common.core.result.ErrorCode;
 
 @Slf4j
 @Service
@@ -36,9 +38,12 @@ public class WebhookServiceImpl implements WebhookService {
     @Override
     @Transactional
     public void update(WebhookCreateDTO dto) {
-        OpenApiWebhook webhook = webhookMapper.selectById(dto.getAppId());
+        if (dto.getId() == null) {
+            throw new BizException("修改回调地址必须带 id");
+        }
+        OpenApiWebhook webhook = webhookMapper.selectById(dto.getId());
         if (webhook == null) {
-            throw new RuntimeException("Webhook not found");
+            throw new BizException("Webhook not found: " + dto.getId());
         }
         BeanUtils.copyProperties(dto, webhook);
         webhookMapper.updateById(webhook);
@@ -56,7 +61,7 @@ public class WebhookServiceImpl implements WebhookService {
     public WebhookVO getById(Long id) {
         OpenApiWebhook webhook = webhookMapper.selectById(id);
         if (webhook == null) {
-            throw new RuntimeException("Webhook not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "Webhook not found: " + id);
         }
         WebhookVO vo = new WebhookVO();
         BeanUtils.copyProperties(webhook, vo);

@@ -58,6 +58,11 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
 
     /**
      * Whitelist of paths that do not require authentication.
+     * <p>
+     * 带变量尾段的条目一律写 {@code /*} 而不是 {@code /**}：AntPathMatcher 的 {@code /**} 连零段都匹配，
+     * 于是 {@code /api/screen/share}、{@code /api/admin/config/public} 这类"前缀本身"免鉴权进到
+     * {@code GET /{id}} 处理器（实测回 400 "参数格式不正确: id" 而不是 401）。那两处当时只是被
+     * "路径变量是 Long"侥幸挡住的，所以这里把通配收紧成"必须恰好一段"。
      */
     private static final List<String> WHITE_LIST = Arrays.asList(
             "/api/auth/login",
@@ -68,16 +73,20 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             // 逐条列举而不是 /api/auth/sms/**：以后这里若加了要鉴权的端点，通配会替它免登。
             "/api/auth/sms/send",
             "/api/auth/sms/login",
-            "/api/auth/sso/**",
+            "/api/auth/sso/*",
             // 大屏分享链接：免登录展示，业务侧仅返回已发布配置
-            "/api/screen/share/**",
+            "/api/screen/share/*",
             // 图片直读：<img>/CSS 背景带不了 Authorization 头
-            "/api/file/view/**",
+            "/api/file/view/*",
             // 免登可读的全局开关（后端仅放行白名单 key）
-            "/api/admin/config/public/**",
+            "/api/admin/config/public/*",
             // 免登全局配置推送通道。刻意写死整条路径而不是 /api/admin/ws/**：
             // 以后新增的 WS 通道多半要鉴权，用通配等于默认替它免登。
             "/api/admin/ws/public",
+            // 大屏分享页的变更推送通道：浏览器给 WebSocket 带不上 Authorization 头，握手必须免登。
+            // 尾段就是分享令牌本身（/api/screen/ws/share/{token}），与免登 HTTP 端点同构：
+            // 能连上的前提是已经拿到令牌，令牌错了业务侧一样拒。
+            "/api/screen/ws/share/*",
             "/actuator/health",
             "/actuator/info",
             "/v3/api-docs/**",

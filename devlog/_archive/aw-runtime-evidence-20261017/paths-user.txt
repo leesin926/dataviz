@@ -1,0 +1,25 @@
+GET /user/{id} PUT /user/{id} DELETE /user/{id}
+PUT /user/{id}/status/{status}
+PUT /user/{id}/password/reset
+PUT /user/internal/auth-user/{userId}/login-info
+GET /role/{id} PUT /role/{id} DELETE /role/{id}
+PUT /permission/{id} DELETE /permission/{id}
+GET /dept/{id} PUT /dept/{id} DELETE /dept/{id}
+POST /user
+POST /user/{id}/roles
+POST /role
+GET /role/{id}/permissions POST /role/{id}/permissions
+POST /permission
+POST /dept
+GET /user/{id}/permissions
+GET /user/page
+GET /user/internal/auth-user
+GET /user/internal/auth-user/{userId}
+GET /user/internal/auth-user/{userId}/role-codes
+GET /user/internal/auth-user/{userId}/permission-codes
+GET /user/internal/auth-user/by-phone
+GET /user/current
+GET /role/page
+GET /role/list
+GET /permission/tree
+GET /dept/tree

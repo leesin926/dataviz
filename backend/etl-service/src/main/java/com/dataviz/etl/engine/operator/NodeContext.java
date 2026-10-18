@@ -3,6 +3,8 @@ package com.dataviz.etl.engine.operator;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,6 +69,62 @@ public class NodeContext {
             return Integer.parseInt((String) value);
         }
         return null;
+    }
+
+    /**
+     * Get a config value as Long. Accepts a JSON number or its string form.
+     */
+    public Long getConfigLong(String key) {
+        Object value = getConfigValue(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        String text = value.toString().trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(text);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(key + " 不是合法 ID: " + text);
+        }
+    }
+
+    /**
+     * Get a config value as a list of trimmed strings.
+     * <p>
+     * 设计器把列表存成 JSON 数组，演示数据和手改的 DAG 里是同串 —— 两种都接。这里不收
+     * "只有一种形状"的假设：另一种一来，症状是整个任务跑不起来，而报错只会说"配置缺字段"。
+     */
+    public List<String> getConfigList(String key) {
+        Object value = getConfigValue(key);
+        List<String> out = new ArrayList<>();
+        if (value == null) {
+            return out;
+        }
+        if (value instanceof Collection<?>) {
+            for (Object item : (Collection<?>) value) {
+                addIfPresent(out, item);
+            }
+            return out;
+        }
+        for (String part : value.toString().split(",")) {
+            addIfPresent(out, part);
+        }
+        return out;
+    }
+
+    private static void addIfPresent(List<String> target, Object value) {
+        if (value == null) {
+            return;
+        }
+        String trimmed = value.toString().trim();
+        if (!trimmed.isEmpty()) {
+            target.add(trimmed);
+        }
     }
 
     /**

@@ -1,0 +1,486 @@
+{
+  "startedAt": "2026-10-16T17:36:53.301Z",
+  "docs": [
+    {
+      "name": "auth",
+      "port": 8081,
+      "apiDocs": 200,
+      "getEndpoints": 5,
+      "withPathParams": 0,
+      "probe": "/token/validate"
+    },
+    {
+      "name": "user",
+      "port": 8082,
+      "apiDocs": 200,
+      "getEndpoints": 16,
+      "withPathParams": 8,
+      "probe": "/user/page"
+    },
+    {
+      "name": "datasource",
+      "port": 8083,
+      "apiDocs": 200,
+      "getEndpoints": 4,
+      "withPathParams": 3,
+      "probe": "/api/datasource/list"
+    },
+    {
+      "name": "etl",
+      "port": 8084,
+      "apiDocs": 200,
+      "getEndpoints": 6,
+      "withPathParams": 4,
+      "probe": "/api/etl/task/list"
+    },
+    {
+      "name": "model",
+      "port": 8085,
+      "apiDocs": 200,
+      "getEndpoints": 7,
+      "withPathParams": 4,
+      "probe": "/api/model/metric/list"
+    },
+    {
+      "name": "analysis",
+      "port": 8086,
+      "apiDocs": 200,
+      "getEndpoints": 8,
+      "withPathParams": 3,
+      "probe": "/api/analysis/report/list"
+    },
+    {
+      "name": "dashboard",
+      "port": 8087,
+      "apiDocs": 200,
+      "getEndpoints": 7,
+      "withPathParams": 5,
+      "probe": "/api/dashboard/templates"
+    },
+    {
+      "name": "screen",
+      "port": 8088,
+      "apiDocs": 200,
+      "getEndpoints": 5,
+      "withPathParams": 4,
+      "probe": "/api/screen/list"
+    },
+    {
+      "name": "collab",
+      "port": 8089,
+      "apiDocs": 200,
+      "getEndpoints": 12,
+      "withPathParams": 7,
+      "probe": "/api/collab/subscriptions/my"
+    },
+    {
+      "name": "alert",
+      "port": 8090,
+      "apiDocs": 200,
+      "getEndpoints": 13,
+      "withPathParams": 4,
+      "probe": "/api/alert/rule/page"
+    },
+    {
+      "name": "ai",
+      "port": 8091,
+      "apiDocs": 200,
+      "getEndpoints": 4,
+      "withPathParams": 2,
+      "probe": "/api/ai/insight/list"
+    },
+    {
+      "name": "openapi",
+      "port": 8092,
+      "apiDocs": 200,
+      "getEndpoints": 5,
+      "withPathParams": 3,
+      "probe": "/api/openapi/key/clients"
+    },
+    {
+      "name": "admin",
+      "port": 8093,
+      "apiDocs": 200,
+      "getEndpoints": 11,
+      "withPathParams": 5,
+      "probe": "/api/admin/tenant/page"
+    },
+    {
+      "name": "file",
+      "port": 8094,
+      "apiDocs": 200,
+      "getEndpoints": 4,
+      "withPathParams": 3,
+      "probe": "/api/file/list"
+    },
+    {
+      "name": "schedule",
+      "port": 8095,
+      "apiDocs": 200,
+      "getEndpoints": 6,
+      "withPathParams": 2,
+      "probe": "/api/schedule/job/list"
+    },
+    {
+      "name": "monitor",
+      "port": 8096,
+      "apiDocs": 200,
+      "getEndpoints": 5,
+      "withPathParams": 2,
+      "probe": "/api/monitor/services"
+    }
+  ],
+  "gateway": [
+    {
+      "name": "auth",
+      "path": "/api/auth/token/validate",
+      "status": 401,
+      "ms": 14,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "user",
+      "path": "/api/user/user/page",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "datasource",
+      "path": "/api/datasource/api/datasource/list",
+      "status": 401,
+      "ms": 3,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "etl",
+      "path": "/api/etl/api/etl/task/list",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "model",
+      "path": "/api/model/api/model/metric/list",
+      "status": 401,
+      "ms": 3,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "analysis",
+      "path": "/api/analysis/api/analysis/report/list",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "dashboard",
+      "path": "/api/dashboard/api/dashboard/templates",
+      "status": 401,
+      "ms": 2,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "screen",
+      "path": "/api/screen/api/screen/list",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "collab",
+      "path": "/api/collab/api/collab/subscriptions/my",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "alert",
+      "path": "/api/alert/api/alert/rule/page",
+      "status": 401,
+      "ms": 2,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "ai",
+      "path": "/api/ai/api/ai/insight/list",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "openapi",
+      "path": "/api/openapi/api/openapi/key/clients",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "admin",
+      "path": "/api/admin/api/admin/tenant/page",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "file",
+      "path": "/api/file/api/file/list",
+      "status": 401,
+      "ms": 3,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "schedule",
+      "path": "/api/schedule/api/schedule/job/list",
+      "status": 401,
+      "ms": 4,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "name": "monitor",
+      "path": "/api/monitor/api/monitor/services",
+      "status": 401,
+      "ms": 3,
+      "code": 401,
+      "message": "Missing or invalid Authorization header",
+      "layer": "gateway-or-plain"
+    }
+  ],
+  "direct": [
+    {
+      "name": "auth",
+      "port": 8081,
+      "path": "/token/validate",
+      "status": 401,
+      "ms": 5,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "user",
+      "port": 8082,
+      "path": "/user/page",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "datasource",
+      "port": 8083,
+      "path": "/api/datasource/list",
+      "status": 401,
+      "ms": 7,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "etl",
+      "port": 8084,
+      "path": "/api/etl/task/list",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "model",
+      "port": 8085,
+      "path": "/api/model/metric/list",
+      "status": 401,
+      "ms": 7,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "analysis",
+      "port": 8086,
+      "path": "/api/analysis/report/list",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "dashboard",
+      "port": 8087,
+      "path": "/api/dashboard/templates",
+      "status": 401,
+      "ms": 5,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "screen",
+      "port": 8088,
+      "path": "/api/screen/list",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "collab",
+      "port": 8089,
+      "path": "/api/collab/subscriptions/my",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "alert",
+      "port": 8090,
+      "path": "/api/alert/rule/page",
+      "status": 401,
+      "ms": 5,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "ai",
+      "port": 8091,
+      "path": "/api/ai/insight/list",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "openapi",
+      "port": 8092,
+      "path": "/api/openapi/key/clients",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "admin",
+      "port": 8093,
+      "path": "/api/admin/tenant/page",
+      "status": 401,
+      "ms": 5,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "file",
+      "port": 8094,
+      "path": "/api/file/list",
+      "status": 401,
+      "ms": 6,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "schedule",
+      "port": 8095,
+      "path": "/api/schedule/job/list",
+      "status": 401,
+      "ms": 5,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    },
+    {
+      "name": "monitor",
+      "port": 8096,
+      "path": "/api/monitor/services",
+      "status": 401,
+      "ms": 7,
+      "code": 401,
+      "message": "未认证或认证已过期",
+      "layer": "service"
+    }
+  ],
+  "public": [
+    {
+      "path": "/api/auth/captcha",
+      "status": 200,
+      "ms": 1520,
+      "code": 0,
+      "message": "操作成功",
+      "layer": "service"
+    },
+    {
+      "path": "/api/admin/config/public",
+      "status": 400,
+      "ms": 20,
+      "code": 400,
+      "message": "参数格式不正确: id",
+      "layer": "service"
+    },
+    {
+      "path": "/api/screen/share/smoke-nope",
+      "status": 200,
+      "ms": 598,
+      "code": 404,
+      "message": "大屏不存在或链接无效",
+      "layer": "service"
+    }
+  ],
+  "internal": [
+    {
+      "path": "/api/user/internal/by-username?username=admin",
+      "status": 403,
+      "ms": 2,
+      "code": 403,
+      "message": "Internal API is not reachable through the gateway",
+      "layer": "gateway-or-plain"
+    },
+    {
+      "path": "/api/user/internal/page-role?userId=1",
+      "status": 403,
+      "ms": 2,
+      "code": 403,
+      "message": "Internal API is not reachable through the gateway",
+      "layer": "gateway-or-plain"
+    }
+  ],
+  "finishedAt": "2026-10-16T17:37:02.008Z"
+}

@@ -1,0 +1,5401 @@
+{
+  "n": 117,
+  "skipped": 2,
+  "idCache": {
+    "userid": "1",
+    "tenantid": "1",
+    "id": "1",
+    "rolecode": "super_admin",
+    "parentid": "0",
+    "permissioncode": "system",
+    "sourcedatasourceid": "901",
+    "targetdatasourceid": "901",
+    "datasourceid": "902",
+    "datasetid": "901",
+    "targetid": "901",
+    "applicantid": "905",
+    "ruleid": "912",
+    "code": "default",
+    "responsecode": "200",
+    "instanceid": "screen-8088-01"
+  },
+  "rows": [
+    {
+      "port": "8081",
+      "raw": "/api/token/validate",
+      "vars": [],
+      "svc": "auth-service",
+      "path": "/api/token/validate",
+      "status": 404,
+      "msg": "undefined",
+      "ctype": "application/json",
+      "bytes": 133,
+      "json": {
+        "timestamp": "2026-10-18T10:49:12.178+00:00",
+        "path": "/api/token/validate",
+        "status": 404,
+        "error": "Not Found",
+        "requestId": "c863110c-22"
+      }
+    },
+    {
+      "port": "8081",
+      "raw": "/api/token/check",
+      "vars": [],
+      "svc": "auth-service",
+      "path": "/api/token/check",
+      "status": 404,
+      "msg": "undefined",
+      "ctype": "application/json",
+      "bytes": 130,
+      "json": {
+        "timestamp": "2026-10-18T10:49:12.201+00:00",
+        "path": "/api/token/check",
+        "status": 404,
+        "error": "Not Found",
+        "requestId": "c863110c-23"
+      }
+    },
+    {
+      "port": "8081",
+      "raw": "/api/auth/userinfo",
+      "vars": [],
+      "svc": "auth-service",
+      "path": "/api/auth/userinfo",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1136,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "userId": 1,
+          "username": "admin",
+          "nickname": "系统管理员",
+          "tenantId": "1",
+          "deptId": null,
+          "roles": [
+            "super_admin"
+          ],
+          "permissions": [
+            "screen:read",
+            "datasource:write",
+            "schedule:write",
+            "file:write",
+            "system:menu:list",
+            "etl:read",
+            "screen",
+            "system:user:query",
+            "monitor:read",
+            "system:user:add",
+            "system:dept:delete",
+            "dashboard:read",
+            "openapi:write",
+            "model",
+            "etl",
+            "alert:read",
+            "dashboard",
+            "system:role:delete",
+            "screen:write",
+            "monitor:write",
+            "openapi",
+            "etl:write",
+            "ai",
+            "model:read",
+            "analysis",
+            "platform:write",
+            "system",
+            "collab",
+            "datasource",
+            "alert:write",
+            "platform:read",
+            "system:tenant:list",
+            "system:menu:add",
+            "system:role:list",
+            "system:user:delete",
+            "system:user:edit",
+            "system:role:edit",
+            "system:dept:list",
+            "system:menu:delete",
+            "file",
+            "file:read",
+            "alert",
+            "collab:write",
+            "openapi:read",
+            "system:role:add",
+            "analysis:write",
+            "analysis:read",
+            "system:dept:edit",
+            "system:user:list",
+            "ai:read",
+            "collab:read",
+            "model:write",
+            "monitor",
+            "schedule:read",
+            "dashboard:write",
+            "schedule",
+            "ai:write",
+            "datasource:read",
+            "system:menu:edit",
+            "system:dept:add"
+          ],
+          "expireTime": null,
+          "loginIp": null,
+          "loginTime": null
+        },
+        "timestamp": 1792320552326,
+        "success": true
+      }
+    },
+    {
+      "port": "8081",
+      "raw": "/api/auth/sso/callback",
+      "vars": [],
+      "svc": "auth-service",
+      "path": "/api/auth/sso/callback",
+      "status": 400,
+      "code": 400,
+      "msg": "缺少必要参数: code",
+      "ctype": "application/json",
+      "bytes": 91,
+      "json": {
+        "code": 400,
+        "message": "缺少必要参数: code",
+        "data": null,
+        "timestamp": 1792320552338,
+        "success": false
+      }
+    },
+    {
+      "port": "8081",
+      "raw": "/api/auth/captcha",
+      "vars": [],
+      "svc": "auth-service",
+      "path": "/api/auth/captcha",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1417,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "captchaKey": "5e966bf241ad462480ce0b6746c92622",
+          "captchaImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAsCAIAAAAIMtamAAADYklEQVR4Xu3YL44VQRDH8T0EJBgchgvsEoJBIbgEgjtgwBEEBhycAoUAgUJg0BBuUQKFokNlO0X9qnuq/83rmTfJV7ztmR7zSfVM9oJ+/znadBe4dLStpiZ88u0XLmIvri5x8Xyal9Dpx52z4k4I6YwVJyUs9ePOU3FXhFSr+PHhuxCub6IZCav9uDpFuoY8Ceeru69DuO5pOsJGP65aMbYaZwset09C6qEYG2TZjsfZhE+/34vh1XH18uPuX77n8FJdvUazFx5nE8ok52jajoTRryOhrI6zLx63TMjdevxVRgla3Oivox+NJ5R5LEfgcTlCxaYIzRDVSTvObx1FzhzNcXhcK+HnN5843C5DVOXakRD9Qh2/bpyZnM6ubv+Q4Q0yLyFeVUXLRc5YtAx+KdrSEC9O4ZqKavL8kArPA+kixEv5SjkD4c07H2I4r05XZab+pAGKD248lxHgFYVsHsUhhLJFTj5CJSHeQ46jmMAMCalWUVGlqsYj8FtcjxUQDuJ0EpopUdaKtCYhVSmilhlu9JdxylyiDKF8EWJ4f2kMGfz4Rx2hKlJJ0S6KqGWGG0tLOWUUKwm7KMavUOnXQohJQjWyQdE8jc1Qq5eZJ+lXT4grLYrKLFXq9ekvNYUcz6Ki5Z49+hLCLdT2wVJR3o+chJ71olArlfn69OchVDEeooYQb+hcKjzTjzKEqVYmlLskp1M0T0j/K+YnD7XMcG9dTj/aFqHKw7lISP8U83g8eahlJqcWn+bMicedgBD/l2aaLRLKUpx5QpYLmSeqOjZRy0w+oZrT70cZQkkltczFopyE1SlOUxHHTiriO48ShOqeXvUhpISWuegP/ag3oSwoKkLEiwVFE2/yvIQY3u9pZUISU8h45nlL15NnnqiTlyOkrCLevJjpR4MJ4wtPrUdLNXknVyw6RWmRkBKKeNuEmXKyiKden6dV7E/Y0sufb/Phli758TCGDIp42K7TXISLIWpR+MAWPBUrqgFdoY0RNiY5GQ+ZY4wnV/CBKnWirs/paduEzlKTh8xYUMTF0DycOydM4RVlft2kOBHbDB9Y3Z4J2/FipqKZczoRtdp4z4R98yvGJGdetKWDsKAKRdkgzoOwrEbFWEfOg7C4XoqxRs6DsKbuirEKy4Nw8x2Em+8vPGnigZlBVfAAAAAASUVORK5CYII=",
+          "expireSeconds": 300
+        },
+        "timestamp": 1792320552354,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/page",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/user/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1606,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 1,
+              "tenantId": 1,
+              "username": "admin",
+              "nickname": "系统管理员",
+              "email": "",
+              "phone": "13912345678",
+              "avatar": "",
+              "status": 1,
+              "deptId": null,
+              "deptName": null,
+              "loginTime": "2026-10-18T18:48:30",
+              "createTime": "2026-09-21T00:31:26",
+              "roleIds": null
+            },
+            {
+              "id": 905,
+              "tenantId": 1,
+              "username": "viewer01",
+              "nickname": "吴敏（只读）",
+              "email": "wumin@example.com",
+              "phone": "13900000905",
+              "avatar": null,
+              "status": 1,
+              "deptId": 4,
+              "deptName": null,
+              "loginTime": "2026-09-21T23:01:21",
+              "createTime": "2026-09-18T20:04:51",
+              "roleIds": null
+            },
+            {
+              "id": 904,
+              "tenantId": 1,
+              "username": "ops01",
+              "nickname": "何平（运维）",
+              "email": "heping@example.com",
+              "phone": "13900000904",
+              "avatar": null,
+              "status": 0,
+              "deptId": 4,
+              "deptName": null,
+              "loginTime": null,
+              "createTime": "2026-09-15T20:04:51",
+              "roleIds": null
+            },
+            {
+              "id": 903,
+              "tenantId": 1,
+              "username": "designer01",
+              "nickname": "孙悦（设计）",
+              "email": "sunyue@example.com",
+              "phone": "13900000903",
+              "avatar": null,
+              "status": 1,
+              "deptId": 3,
+              "deptName": null,
+              "loginTime": null,
+              "createTime": "2026-09-12T20:04:51",
+              "roleIds": null
+            },
+            {
+              "id": 902,
+              "tenantId": 1,
+              "username": "analyst02",
+              "nickname": "刘洋（分析师）",
+              "email": "liuyang@example.com",
+              "phone": "13900000902",
+              "avatar": null,
+              "status": 1,
+              "deptId": 2,
+              "deptName": null,
+              "loginTime": "2026-09-23T16:29:04",
+              "createTime": "2026-09-10T20:04:51",
+              "roleIds": null
+            },
+            {
+              "id": 901,
+              "tenantId": 1,
+              "username": "analyst01",
+              "nickname": "陈静（分析师）",
+              "email": "chenjing@example.com",
+              "phone": "13900000901",
+              "avatar": null,
+              "status": 1,
+              "deptId": 2,
+              "deptName": null,
+              "loginTime": "2026-09-23T20:00:42",
+              "createTime": "2026-09-09T20:04:51",
+              "roleIds": null
+            }
+          ],
+          "total": 6,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320552390,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/internal/auth-user",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/user/internal/auth-user",
+      "status": 403,
+      "code": 403,
+      "msg": "Internal API is not reachable through the gateway",
+      "ctype": "application/json",
+      "bytes": 86,
+      "json": {
+        "code": 403,
+        "message": "Internal API is not reachable through the gateway",
+        "data": null
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/internal/auth-user/by-phone",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/user/internal/auth-user/by-phone",
+      "status": 403,
+      "code": 403,
+      "msg": "Internal API is not reachable through the gateway",
+      "ctype": "application/json",
+      "bytes": 86,
+      "json": {
+        "code": 403,
+        "message": "Internal API is not reachable through the gateway",
+        "data": null
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/current",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/user/current",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 304,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "id": 1,
+          "tenantId": 1,
+          "username": "admin",
+          "nickname": "系统管理员",
+          "email": "",
+          "phone": "13912345678",
+          "avatar": "",
+          "status": 1,
+          "deptId": null,
+          "deptName": null,
+          "loginTime": "2026-10-18T18:48:30",
+          "createTime": "2026-09-21T00:31:26",
+          "roleIds": [
+            1
+          ]
+        },
+        "timestamp": 1792320552424,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/role/page",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/role/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 450,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 1,
+              "tenantId": 1,
+              "roleCode": "super_admin",
+              "roleName": "超级管理员",
+              "description": "",
+              "sortOrder": 1,
+              "status": 1
+            },
+            {
+              "id": 2,
+              "tenantId": 1,
+              "roleCode": "admin",
+              "roleName": "系统管理员",
+              "description": "",
+              "sortOrder": 2,
+              "status": 1
+            },
+            {
+              "id": 3,
+              "tenantId": 1,
+              "roleCode": "user",
+              "roleName": "普通用户",
+              "description": "",
+              "sortOrder": 3,
+              "status": 1
+            }
+          ],
+          "total": 3,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320552454,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/role/list",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/role/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 387,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 1,
+            "tenantId": 1,
+            "roleCode": "super_admin",
+            "roleName": "超级管理员",
+            "description": "",
+            "sortOrder": 1,
+            "status": 1
+          },
+          {
+            "id": 2,
+            "tenantId": 1,
+            "roleCode": "admin",
+            "roleName": "系统管理员",
+            "description": "",
+            "sortOrder": 2,
+            "status": 1
+          },
+          {
+            "id": 3,
+            "tenantId": 1,
+            "roleCode": "user",
+            "roleName": "普通用户",
+            "description": "",
+            "sortOrder": 3,
+            "status": 1
+          }
+        ],
+        "timestamp": 1792320552476,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/permission/tree",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/permission/tree",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 9248,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 1,
+            "parentId": 0,
+            "permissionCode": "system",
+            "permissionName": "系统管理",
+            "type": 1,
+            "path": "/system",
+            "icon": "Setting",
+            "sortOrder": 100,
+            "status": 1,
+            "children": [
+              {
+                "id": 2,
+                "parentId": 1,
+                "permissionCode": "system:user:list",
+                "permissionName": "用户管理",
+                "type": 2,
+                "path": "/system/user",
+                "icon": "User",
+                "sortOrder": 1,
+                "status": 1,
+                "children": [
+                  {
+                    "id": 14,
+                    "parentId": 2,
+                    "permissionCode": "system:user:add",
+                    "permissionName": "用户新增",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 1,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 15,
+                    "parentId": 2,
+                    "permissionCode": "system:user:edit",
+                    "permissionName": "用户编辑",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 2,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 16,
+                    "parentId": 2,
+                    "permissionCode": "system:user:delete",
+                    "permissionName": "用户删除",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 3,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 17,
+                    "parentId": 2,
+                    "permissionCode": "system:user:query",
+                    "permissionName": "用户查询",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 4,
+                    "status": 1,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "parentId": 1,
+                "permissionCode": "system:role:list",
+                "permissionName": "角色管理",
+                "type": 2,
+                "path": "/system/role",
+                "icon": "UserFilled",
+                "sortOrder": 2,
+                "status": 1,
+                "children": [
+                  {
+                    "id": 18,
+                    "parentId": 3,
+                    "permissionCode": "system:role:add",
+                    "permissionName": "角色新增",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 1,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 19,
+                    "parentId": 3,
+                    "permissionCode": "system:role:edit",
+                    "permissionName": "角色编辑",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 2,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 20,
+                    "parentId": 3,
+                    "permissionCode": "system:role:delete",
+                    "permissionName": "角色删除",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 3,
+                    "status": 1,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "parentId": 1,
+                "permissionCode": "system:menu:list",
+                "permissionName": "菜单管理",
+                "type": 2,
+                "path": "/system/menu",
+                "icon": "Menu",
+                "sortOrder": 3,
+                "status": 1,
+                "children": [
+                  {
+                    "id": 21,
+                    "parentId": 4,
+                    "permissionCode": "system:menu:add",
+                    "permissionName": "菜单新增",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 1,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 22,
+                    "parentId": 4,
+                    "permissionCode": "system:menu:edit",
+                    "permissionName": "菜单编辑",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 2,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 23,
+                    "parentId": 4,
+                    "permissionCode": "system:menu:delete",
+                    "permissionName": "菜单删除",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 3,
+                    "status": 1,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "parentId": 1,
+                "permissionCode": "system:tenant:list",
+                "permissionName": "租户管理",
+                "type": 2,
+                "path": "/system/tenant",
+                "icon": "OfficeBuilding",
+                "sortOrder": 4,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 38,
+                "parentId": 1,
+                "permissionCode": "platform:read",
+                "permissionName": "平台管理-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 5,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 39,
+                "parentId": 1,
+                "permissionCode": "platform:write",
+                "permissionName": "平台管理-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 6,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 40,
+                "parentId": 1,
+                "permissionCode": "system:dept:list",
+                "permissionName": "部门管理",
+                "type": 2,
+                "path": "/system/dept",
+                "icon": "Grid",
+                "sortOrder": 5,
+                "status": 1,
+                "children": [
+                  {
+                    "id": 41,
+                    "parentId": 40,
+                    "permissionCode": "system:dept:add",
+                    "permissionName": "部门新增",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 1,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 42,
+                    "parentId": 40,
+                    "permissionCode": "system:dept:edit",
+                    "permissionName": "部门编辑",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 2,
+                    "status": 1,
+                    "children": []
+                  },
+                  {
+                    "id": 43,
+                    "parentId": 40,
+                    "permissionCode": "system:dept:delete",
+                    "permissionName": "部门删除",
+                    "type": 3,
+                    "path": "",
+                    "icon": "",
+                    "sortOrder": 3,
+                    "status": 1,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "parentId": 0,
+            "permissionCode": "datasource",
+            "permissionName": "数据源管理",
+            "type": 1,
+            "path": "/datasource",
+            "icon": "Connection",
+            "sortOrder": 50,
+            "status": 1,
+            "children": [
+              {
+                "id": 24,
+                "parentId": 6,
+                "permissionCode": "datasource:read",
+                "permissionName": "数据源-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 25,
+                "parentId": 6,
+                "permissionCode": "datasource:write",
+                "permissionName": "数据源-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 7,
+            "parentId": 0,
+            "permissionCode": "etl",
+            "permissionName": "ETL 管理",
+            "type": 1,
+            "path": "/etl",
+            "icon": "Share",
+            "sortOrder": 40,
+            "status": 1,
+            "children": [
+              {
+                "id": 36,
+                "parentId": 7,
+                "permissionCode": "etl:read",
+                "permissionName": "ETL-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 37,
+                "parentId": 7,
+                "permissionCode": "etl:write",
+                "permissionName": "ETL-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 8,
+            "parentId": 0,
+            "permissionCode": "model",
+            "permissionName": "数据建模",
+            "type": 1,
+            "path": "/model",
+            "icon": "Grid",
+            "sortOrder": 35,
+            "status": 1,
+            "children": [
+              {
+                "id": 26,
+                "parentId": 8,
+                "permissionCode": "model:read",
+                "permissionName": "数据建模-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 27,
+                "parentId": 8,
+                "permissionCode": "model:write",
+                "permissionName": "数据建模-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 9,
+            "parentId": 0,
+            "permissionCode": "analysis",
+            "permissionName": "自助分析",
+            "type": 1,
+            "path": "/analysis",
+            "icon": "DataAnalysis",
+            "sortOrder": 30,
+            "status": 1,
+            "children": [
+              {
+                "id": 28,
+                "parentId": 9,
+                "permissionCode": "analysis:read",
+                "permissionName": "自助分析-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 29,
+                "parentId": 9,
+                "permissionCode": "analysis:write",
+                "permissionName": "自助分析-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 10,
+            "parentId": 0,
+            "permissionCode": "dashboard",
+            "permissionName": "仪表板",
+            "type": 1,
+            "path": "/dashboard",
+            "icon": "Monitor",
+            "sortOrder": 20,
+            "status": 1,
+            "children": [
+              {
+                "id": 32,
+                "parentId": 10,
+                "permissionCode": "dashboard:read",
+                "permissionName": "仪表板-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 33,
+                "parentId": 10,
+                "permissionCode": "dashboard:write",
+                "permissionName": "仪表板-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 11,
+            "parentId": 0,
+            "permissionCode": "screen",
+            "permissionName": "大屏管理",
+            "type": 1,
+            "path": "/screen",
+            "icon": "FullScreen",
+            "sortOrder": 15,
+            "status": 1,
+            "children": [
+              {
+                "id": 30,
+                "parentId": 11,
+                "permissionCode": "screen:read",
+                "permissionName": "大屏-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 31,
+                "parentId": 11,
+                "permissionCode": "screen:write",
+                "permissionName": "大屏-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 12,
+            "parentId": 0,
+            "permissionCode": "alert",
+            "permissionName": "告警中心",
+            "type": 1,
+            "path": "/alert",
+            "icon": "Bell",
+            "sortOrder": 60,
+            "status": 1,
+            "children": [
+              {
+                "id": 34,
+                "parentId": 12,
+                "permissionCode": "alert:read",
+                "permissionName": "告警-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 35,
+                "parentId": 12,
+                "permissionCode": "alert:write",
+                "permissionName": "告警-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 13,
+            "parentId": 0,
+            "permissionCode": "monitor",
+            "permissionName": "系统监控",
+            "type": 1,
+            "path": "/monitor",
+            "icon": "View",
+            "sortOrder": 90,
+            "status": 1,
+            "children": [
+              {
+                "id": 59,
+                "parentId": 13,
+                "permissionCode": "monitor:read",
+                "permissionName": "监控-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 60,
+                "parentId": 13,
+                "permissionCode": "monitor:write",
+                "permissionName": "监控-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 44,
+            "parentId": 0,
+            "permissionCode": "schedule",
+            "permissionName": "定时调度",
+            "type": 1,
+            "path": "/schedule",
+            "icon": "Timer",
+            "sortOrder": 55,
+            "status": 1,
+            "children": [
+              {
+                "id": 49,
+                "parentId": 44,
+                "permissionCode": "schedule:read",
+                "permissionName": "调度-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 50,
+                "parentId": 44,
+                "permissionCode": "schedule:write",
+                "permissionName": "调度-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 45,
+            "parentId": 0,
+            "permissionCode": "ai",
+            "permissionName": "AI 助手",
+            "type": 1,
+            "path": "/ai",
+            "icon": "MagicStick",
+            "sortOrder": 45,
+            "status": 1,
+            "children": [
+              {
+                "id": 51,
+                "parentId": 45,
+                "permissionCode": "ai:read",
+                "permissionName": "AI-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 52,
+                "parentId": 45,
+                "permissionCode": "ai:write",
+                "permissionName": "AI-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 46,
+            "parentId": 0,
+            "permissionCode": "file",
+            "permissionName": "文件管理",
+            "type": 1,
+            "path": "/file",
+            "icon": "Folder",
+            "sortOrder": 25,
+            "status": 1,
+            "children": [
+              {
+                "id": 53,
+                "parentId": 46,
+                "permissionCode": "file:read",
+                "permissionName": "文件-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 54,
+                "parentId": 46,
+                "permissionCode": "file:write",
+                "permissionName": "文件-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 47,
+            "parentId": 0,
+            "permissionCode": "collab",
+            "permissionName": "协同评论",
+            "type": 1,
+            "path": "/collab",
+            "icon": "ChatDotRound",
+            "sortOrder": 18,
+            "status": 1,
+            "children": [
+              {
+                "id": 55,
+                "parentId": 47,
+                "permissionCode": "collab:read",
+                "permissionName": "协同-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 56,
+                "parentId": 47,
+                "permissionCode": "collab:write",
+                "permissionName": "协同-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 48,
+            "parentId": 0,
+            "permissionCode": "openapi",
+            "permissionName": "开放平台",
+            "type": 1,
+            "path": "/openapi",
+            "icon": "Link",
+            "sortOrder": 12,
+            "status": 1,
+            "children": [
+              {
+                "id": 57,
+                "parentId": 48,
+                "permissionCode": "openapi:read",
+                "permissionName": "开放平台-查看",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 1,
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 58,
+                "parentId": 48,
+                "permissionCode": "openapi:write",
+                "permissionName": "开放平台-变更",
+                "type": 3,
+                "path": "",
+                "icon": "",
+                "sortOrder": 2,
+                "status": 1,
+                "children": []
+              }
+            ]
+          }
+        ],
+        "timestamp": 1792320552501,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/dept/tree",
+      "vars": [],
+      "svc": "user-service",
+      "path": "/api/dept/tree",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 648,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 1,
+            "tenantId": 1,
+            "parentId": 0,
+            "deptName": "总公司",
+            "sortOrder": 1,
+            "leader": "",
+            "phone": "",
+            "status": 1,
+            "children": [
+              {
+                "id": 5,
+                "tenantId": 1,
+                "parentId": 1,
+                "deptName": "后勤部",
+                "sortOrder": 0,
+                "leader": "丽丝",
+                "phone": "",
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 2,
+                "tenantId": 1,
+                "parentId": 1,
+                "deptName": "技术部",
+                "sortOrder": 1,
+                "leader": "",
+                "phone": "",
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 3,
+                "tenantId": 1,
+                "parentId": 1,
+                "deptName": "产品部",
+                "sortOrder": 2,
+                "leader": "",
+                "phone": "",
+                "status": 1,
+                "children": []
+              },
+              {
+                "id": 4,
+                "tenantId": 1,
+                "parentId": 1,
+                "deptName": "运营部",
+                "sortOrder": 3,
+                "leader": "",
+                "phone": "",
+                "status": 1,
+                "children": []
+              }
+            ]
+          }
+        ],
+        "timestamp": 1792320552525,
+        "success": true
+      }
+    },
+    {
+      "port": "8083",
+      "raw": "/api/datasource/list",
+      "vars": [],
+      "svc": "datasource-service",
+      "path": "/api/datasource/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 627,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 904,
+              "name": "指标开放接口",
+              "type": "api",
+              "status": 0,
+              "description": "第三方指标 API 数据源，已停用",
+              "createTime": "2026-09-06T20:04:50"
+            },
+            {
+              "id": 903,
+              "name": "行为日志集群",
+              "type": "clickhouse",
+              "status": 1,
+              "description": "埋点与行为明细（示例，未真实连通）",
+              "createTime": "2026-09-01T20:04:50"
+            },
+            {
+              "id": 902,
+              "name": "订单业务库",
+              "type": "mysql",
+              "status": 1,
+              "description": "订单/客户维度来源",
+              "createTime": "2026-08-24T20:04:50"
+            },
+            {
+              "id": 901,
+              "name": "分析库（演示）",
+              "type": "mysql",
+              "status": 1,
+              "description": "平台自带的分析库，承载 OLAP 演示宽表",
+              "createTime": "2026-08-22T20:04:50"
+            }
+          ],
+          "total": 4,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320552566,
+        "success": true
+      }
+    },
+    {
+      "port": "8084",
+      "raw": "/api/etl/task/list",
+      "vars": [],
+      "svc": "etl-service",
+      "path": "/api/etl/task/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 2990,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 902,
+              "name": "用户行为清洗",
+              "description": "剔除心跳事件，落地到行为明细表",
+              "sourceDatasourceId": 901,
+              "targetDatasourceId": 901,
+              "sourceTable": "demo_user_behavior",
+              "targetTable": "demo_user_behavior",
+              "transformConfig": "{\"nodes\":[{\"id\":\"n1\",\"type\":\"input\",\"name\":\"原始埋点\",\"x\":80,\"y\":140,\"config\":{\"datasourceId\":901,\"tableName\":\"demo_user_behavior\"}},{\"id\":\"n2\",\"type\":\"filter\",\"name\":\"过滤心跳事件\",\"x\":320,\"y\":140,\"config\":{\"filters\":[{\"field\":\"event_type\",\"operator\":\"!=\",\"value\":\"heartbeat\"}]}},{\"id\":\"n3\",\"type\":\"output\",\"name\":\"写回 demo_user_behavior\",\"x\":560,\"y\":140,\"config\":{\"datasourceId\":901,\"tableName\":\"demo_user_behavior\",\"mode\":\"append\"}}],\"edges\":[{\"id\":\"e1\",\"source\":\"n1\",\"target\":\"n2\"},{\"id\":\"e2\",\"source\":\"n2\",\"target\":\"n3\"}]}",
+              "scheduleCron": "*/30 * * * *",
+              "status": "RUNNING",
+              "lastRunTime": "2026-09-21T19:39:50",
+              "lastRunStatus": "SUCCESS",
+              "tenantId": "1",
+              "createTime": "2026-09-05T20:04:50",
+              "updateTime": "2026-09-21T19:39:50"
+            },
+            {
+              "id": 901,
+              "name": "销售日汇总入仓",
+              "description": "每日 01:10 从订单库抽取汇总写入分析库",
+              "sourceDatasourceId": 902,
+              "targetDatasourceId": 901,
+              "sourceTable": "demo_orders",
+              "targetTable": "demo_sales_daily",
+              "transformConfig": "{\"nodes\":[{\"id\":\"n1\",\"type\":\"input\",\"name\":\"订单明细(demo_orders)\",\"x\":80,\"y\":120,\"config\":{\"datasourceId\":902,\"tableName\":\"demo_orders\"}},{\"id\":\"n2\",\"type\":\"aggregate\",\"name\":\"按大区/日期汇总\",\"x\":320,\"y\":120,\"config\":{\"groupBy\":[\"DATE(created_at)\",\"region\"],\"agg\":{\"SUM(pay_amount)\":\"amount\",\"COUNT(1)\":\"order_count\"}}},{\"id\":\"n3\",\"type\":\"output\",\"name\":\"写入 demo_sales_daily\",\"x\":580,\"y\":120,\"config\":{\"datasourceId\":901,\"tableName\":\"demo_sales_daily\",\"mode\":\"upsert\"}}],\"edges\":[{\"id\":\"e1\",\"source\":\"n1\",\"target\":\"n2\"},{\"id\":\"e2\",\"source\":\"n2\",\"target\":\"n3\"}]}",
+              "scheduleCron": "10 1 * * *",
+              "status": "RUNNING",
+              "lastRunTime": "2026-09-21T14:04:50",
+              "lastRunStatus": "SUCCESS",
+              "tenantId": "1",
+              "createTime": "2026-08-28T20:04:50",
+              "updateTime": "2026-09-21T14:04:50"
+            },
+            {
+              "id": 903,
+              "name": "门店主数据同步",
+              "description": "从第三方指标接口拉取门店维表（已停用）",
+              "sourceDatasourceId": 904,
+              "targetDatasourceId": 901,
+              "sourceTable": "/stores",
+              "targetTable": "demo_sales_daily",
+              "transformConfig": "{\"nodes\":[{\"id\":\"n1\",\"type\":\"input\",\"name\":\"门店接口\",\"x\":100,\"y\":100,\"config\":{\"datasourceId\":904,\"sql\":\"SELECT * FROM /stores\"}},{\"id\":\"n2\",\"type\":\"output\",\"name\":\"写入维表\",\"x\":360,\"y\":100,\"config\":{\"datasourceId\":901,\"tableName\":\"demo_sales_daily\",\"mode\":\"overwrite\"}}],\"edges\":[{\"id\":\"e1\",\"source\":\"n1\",\"target\":\"n2\"}]}",
+              "scheduleCron": "0 2 * * 1",
+              "status": "STOPPED",
+              "lastRunTime": "2026-09-12T20:04:50",
+              "lastRunStatus": "ERROR",
+              "tenantId": "1",
+              "createTime": "2026-08-22T20:04:50",
+              "updateTime": "2026-09-12T20:04:50"
+            }
+          ],
+          "total": 3,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320553615,
+        "success": true
+      }
+    },
+    {
+      "port": "8084",
+      "raw": "/api/etl/operator/list",
+      "vars": [],
+      "svc": "etl-service",
+      "path": "/api/etl/operator/list",
+      "status": 404,
+      "msg": "undefined",
+      "ctype": "application/json",
+      "bytes": 106,
+      "json": {
+        "timestamp": "2026-10-18T10:49:13.721+00:00",
+        "status": 404,
+        "error": "Not Found",
+        "path": "/etl/operator/list"
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/metric/list",
+      "vars": [],
+      "svc": "model-service",
+      "path": "/api/model/metric/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1442,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 905,
+              "name": "pay_amount",
+              "displayName": "实付金额",
+              "expression": null,
+              "aggregationType": "SUM",
+              "datasourceId": 902,
+              "tableName": "demo_orders",
+              "description": "已扣优惠",
+              "tenantId": "1",
+              "createTime": "2026-09-11T20:04:50",
+              "updateTime": "2026-09-11T20:04:50"
+            },
+            {
+              "id": 904,
+              "name": "duration_ms",
+              "displayName": "平均停留时长",
+              "expression": null,
+              "aggregationType": "AVG",
+              "datasourceId": 901,
+              "tableName": "demo_user_behavior",
+              "description": "单次会话平均停留(ms)",
+              "tenantId": "1",
+              "createTime": "2026-09-03T20:04:50",
+              "updateTime": "2026-09-03T20:04:50"
+            },
+            {
+              "id": 903,
+              "name": "avg_ticket",
+              "displayName": "客单价",
+              "expression": "SUM(amount) / NULLIF(SUM(order_count), 0)",
+              "aggregationType": "CUSTOM",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "description": "销售额 / 订单量",
+              "tenantId": "1",
+              "createTime": "2026-08-27T20:04:50",
+              "updateTime": "2026-08-27T20:04:50"
+            },
+            {
+              "id": 901,
+              "name": "amount",
+              "displayName": "销售额",
+              "expression": null,
+              "aggregationType": "SUM",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "description": "销售总额（元）",
+              "tenantId": "1",
+              "createTime": "2026-08-26T20:04:50",
+              "updateTime": "2026-08-26T20:04:50"
+            },
+            {
+              "id": 902,
+              "name": "order_count",
+              "displayName": "订单量",
+              "expression": null,
+              "aggregationType": "SUM",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "description": "订单笔数",
+              "tenantId": "1",
+              "createTime": "2026-08-26T20:04:50",
+              "updateTime": "2026-08-26T20:04:50"
+            }
+          ],
+          "total": 5,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320553792,
+        "success": true
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/dimension/list",
+      "vars": [],
+      "svc": "model-service",
+      "path": "/api/model/dimension/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1936,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 906,
+              "name": "region",
+              "displayName": "大区",
+              "dataType": "VARCHAR",
+              "datasourceId": 902,
+              "tableName": "demo_orders",
+              "columnName": "region",
+              "description": null,
+              "tenantId": "1",
+              "createTime": "2026-09-11T20:04:50",
+              "updateTime": "2026-09-11T20:04:50"
+            },
+            {
+              "id": 907,
+              "name": "status",
+              "displayName": "订单状态",
+              "dataType": "VARCHAR",
+              "datasourceId": 902,
+              "tableName": "demo_orders",
+              "columnName": "status",
+              "description": "PAID/SHIPPED/REFUNDING/CANCELLED",
+              "tenantId": "1",
+              "createTime": "2026-09-11T20:04:50",
+              "updateTime": "2026-09-11T20:04:50"
+            },
+            {
+              "id": 904,
+              "name": "event_time",
+              "displayName": "事件时间",
+              "dataType": "DATETIME",
+              "datasourceId": 901,
+              "tableName": "demo_user_behavior",
+              "columnName": "event_time",
+              "description": null,
+              "tenantId": "1",
+              "createTime": "2026-09-03T20:04:50",
+              "updateTime": "2026-09-03T20:04:50"
+            },
+            {
+              "id": 905,
+              "name": "event_type",
+              "displayName": "事件类型",
+              "dataType": "VARCHAR",
+              "datasourceId": 901,
+              "tableName": "demo_user_behavior",
+              "columnName": "event_type",
+              "description": "view/click/login/export",
+              "tenantId": "1",
+              "createTime": "2026-09-03T20:04:50",
+              "updateTime": "2026-09-03T20:04:50"
+            },
+            {
+              "id": 901,
+              "name": "stat_date",
+              "displayName": "统计日期",
+              "dataType": "DATE",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "columnName": "stat_date",
+              "description": "天粒度，近 30 天",
+              "tenantId": "1",
+              "createTime": "2026-08-26T20:04:50",
+              "updateTime": "2026-08-26T20:04:50"
+            },
+            {
+              "id": 902,
+              "name": "region",
+              "displayName": "大区",
+              "dataType": "VARCHAR",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "columnName": "region",
+              "description": "五级大区",
+              "tenantId": "1",
+              "createTime": "2026-08-26T20:04:50",
+              "updateTime": "2026-08-26T20:04:50"
+            },
+            {
+              "id": 903,
+              "name": "category",
+              "displayName": "商品类目",
+              "dataType": "VARCHAR",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "columnName": "category",
+              "description": "家电/服装/食品",
+              "tenantId": "1",
+              "createTime": "2026-08-26T20:04:50",
+              "updateTime": "2026-08-26T20:04:50"
+            }
+          ],
+          "total": 7,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320553856,
+        "success": true
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/dataset/list",
+      "vars": [],
+      "svc": "model-service",
+      "path": "/api/model/dataset/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 2303,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 903,
+              "name": "订单履约分析",
+              "datasourceId": 902,
+              "tableName": "demo_orders",
+              "sqlQuery": null,
+              "dimensions": "[{\"field\":\"region\",\"displayName\":\"大区\",\"type\":\"category\"},{\"field\":\"status\",\"displayName\":\"订单状态\",\"type\":\"category\"},{\"field\":\"created_at\",\"displayName\":\"下单时间\",\"type\":\"time\",\"format\":\"yyyy-MM-dd HH:mm:ss\"}]",
+              "metrics": "[{\"field\":\"pay_amount\",\"displayName\":\"实付金额\",\"aggregation\":\"sum\",\"format\":\"#,##0.00\"},{\"field\":\"order_id\",\"displayName\":\"订单数\",\"aggregation\":\"count\"}]",
+              "filters": "[]",
+              "tenantId": "1",
+              "createTime": "2026-09-11T20:04:50",
+              "updateTime": "2026-09-11T20:04:50"
+            },
+            {
+              "id": 902,
+              "name": "用户行为概览",
+              "datasourceId": 901,
+              "tableName": null,
+              "sqlQuery": "SELECT event_time, user_id, event_type, page, duration_ms FROM demo_user_behavior",
+              "dimensions": "[{\"field\":\"event_time\",\"displayName\":\"事件时间\",\"type\":\"time\",\"format\":\"yyyy-MM-dd HH:mm:ss\"},{\"field\":\"user_id\",\"displayName\":\"用户\",\"type\":\"category\"},{\"field\":\"event_type\",\"displayName\":\"事件类型\",\"type\":\"category\"},{\"field\":\"page\",\"displayName\":\"页面\",\"type\":\"category\"}]",
+              "metrics": "[{\"field\":\"duration_ms\",\"displayName\":\"停留时长\",\"aggregation\":\"avg\"},{\"field\":\"user_id\",\"displayName\":\"去重用户数\",\"aggregation\":\"count\"}]",
+              "filters": "[{\"field\":\"event_type\",\"operator\":\"!=\",\"value\":\"heartbeat\"}]",
+              "tenantId": "1",
+              "createTime": "2026-09-03T20:04:50",
+              "updateTime": "2026-09-21T17:04:50"
+            },
+            {
+              "id": 901,
+              "name": "日销售分析",
+              "datasourceId": 901,
+              "tableName": "demo_sales_daily",
+              "sqlQuery": null,
+              "dimensions": "[{\"field\":\"stat_date\",\"displayName\":\"统计日期\",\"type\":\"time\",\"format\":\"yyyy-MM-dd\"},{\"field\":\"region\",\"displayName\":\"大区\",\"type\":\"category\"},{\"field\":\"category\",\"displayName\":\"商品类目\",\"type\":\"category\"}]",
+              "metrics": "[{\"field\":\"amount\",\"displayName\":\"销售额\",\"aggregation\":\"sum\",\"format\":\"#,##0.00\"},{\"field\":\"order_count\",\"displayName\":\"订单量\",\"aggregation\":\"sum\"},{\"field\":\"amount\",\"displayName\":\"客单价\",\"aggregation\":\"avg\"}]",
+              "filters": "[]",
+              "tenantId": "1",
+              "createTime": "2026-08-26T20:04:50",
+              "updateTime": "2026-09-21T19:04:50"
+            }
+          ],
+          "total": 3,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320553895,
+        "success": true
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/report/list",
+      "vars": [],
+      "svc": "analysis-service",
+      "path": "/api/analysis/report/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1180,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 901,
+              "name": "区域销售结构分析",
+              "description": "按大区拆解销售额与订单量，定位增长主力区域。",
+              "datasourceId": 901,
+              "datasetId": 901,
+              "config": "{\"dimensions\":[{\"field\":\"region\"}],\"metrics\":[{\"field\":\"amount\",\"aggFunction\":\"SUM\",\"alias\":\"amount\"}],\"limit\":50}",
+              "isPublished": 1,
+              "tenantId": "1",
+              "createTime": "2026-09-21T17:18:33",
+              "updateTime": "2026-09-21T17:18:33"
+            },
+            {
+              "id": 902,
+              "name": "用户行为漏斗概览",
+              "description": "事件类型分布与平均停留时长。",
+              "datasourceId": 901,
+              "datasetId": 902,
+              "config": "{\"dimensions\":[{\"field\":\"event_type\"}],\"metrics\":[{\"field\":\"duration_ms\",\"aggFunction\":\"AVG\",\"alias\":\"avg_duration\"}]}",
+              "isPublished": 1,
+              "tenantId": "1",
+              "createTime": "2026-09-20T21:18:33",
+              "updateTime": "2026-09-20T21:18:33"
+            },
+            {
+              "id": 903,
+              "name": "订单履约草稿",
+              "description": "草稿状态，用于验证发布/取消发布接口。",
+              "datasourceId": 902,
+              "datasetId": 903,
+              "config": "{\"dimensions\":[{\"field\":\"status\"}],\"metrics\":[{\"field\":\"pay_amount\",\"aggFunction\":\"SUM\",\"alias\":\"pay_amount\"}]}",
+              "isPublished": 0,
+              "tenantId": "1",
+              "createTime": "2026-09-19T21:18:33",
+              "updateTime": "2026-09-19T21:18:33"
+            }
+          ],
+          "total": 3,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320554023,
+        "success": true
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/query/history",
+      "vars": [],
+      "svc": "analysis-service",
+      "path": "/api/analysis/query/history",
+      "status": 500,
+      "code": 500,
+      "msg": "系统内部错误",
+      "ctype": "application/json",
+      "bytes": 85,
+      "json": {
+        "code": 500,
+        "message": "系统内部错误",
+        "data": null,
+        "timestamp": 1792320554198,
+        "success": false
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/perm-rule/list",
+      "vars": [],
+      "svc": "analysis-service",
+      "path": "/api/analysis/perm-rule/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 141,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [],
+          "total": 0,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 0
+        },
+        "timestamp": 1792320554230,
+        "success": true
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/perm-rule/explain",
+      "vars": [],
+      "svc": "analysis-service",
+      "path": "/api/analysis/perm-rule/explain",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 177,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "denyAll": false,
+          "rowPredicate": "",
+          "restrictedColumns": [],
+          "appliedRuleNames": [],
+          "enabledRuleCount": 0
+        },
+        "timestamp": 1792320554248,
+        "success": true
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/history",
+      "vars": [],
+      "svc": "analysis-service",
+      "path": "/api/analysis/history",
+      "status": 500,
+      "code": 500,
+      "msg": "系统内部错误",
+      "ctype": "application/json",
+      "bytes": 85,
+      "json": {
+        "code": 500,
+        "message": "系统内部错误",
+        "data": null,
+        "timestamp": 1792320554283,
+        "success": false
+      }
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/templates",
+      "vars": [],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/templates",
+      "status": 200,
+      "msg": "undefined",
+      "ctype": "application/json",
+      "bytes": 180,
+      "json": [
+        {
+          "id": 904,
+          "name": "通用经营看板模板",
+          "description": "平台内置模板，可从列表「从模板新建」使用",
+          "coverUrl": null,
+          "status": 1,
+          "viewCount": 3021,
+          "likeCount": 168,
+          "isTemplate": true,
+          "createTime": "2026-07-23T20:04:50"
+        }
+      ]
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/page",
+      "vars": [],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/page",
+      "status": 200,
+      "msg": "undefined",
+      "ctype": "application/json",
+      "bytes": 735,
+      "json": {
+        "records": [
+          {
+            "id": 903,
+            "name": "市场活动复盘",
+            "description": "渠道投放与转化漏斗（草稿）",
+            "coverUrl": null,
+            "status": 0,
+            "viewCount": 1,
+            "likeCount": 0,
+            "isTemplate": false,
+            "createTime": "2026-09-17T20:04:50"
+          },
+          {
+            "id": 902,
+            "name": "供应链监控",
+            "description": "库存周转与履约时效",
+            "coverUrl": null,
+            "status": 1,
+            "viewCount": 431,
+            "likeCount": 12,
+            "isTemplate": false,
+            "createTime": "2026-09-07T20:04:50"
+          },
+          {
+            "id": 901,
+            "name": "经营总览",
+            "description": "集团层面的日/周/月经营指标看板",
+            "coverUrl": null,
+            "status": 1,
+            "viewCount": 1286,
+            "likeCount": 42,
+            "isTemplate": false,
+            "createTime": "2026-09-01T20:04:50"
+          },
+          {
+            "id": 904,
+            "name": "通用经营看板模板",
+            "description": "平台内置模板，可从列表「从模板新建」使用",
+            "coverUrl": null,
+            "status": 1,
+            "viewCount": 3021,
+            "likeCount": 168,
+            "isTemplate": true,
+            "createTime": "2026-07-23T20:04:50"
+          }
+        ],
+        "total": 4,
+        "size": 10,
+        "current": 1,
+        "pages": 1
+      }
+    },
+    {
+      "port": "8088",
+      "raw": "/api/screen/list",
+      "vars": [],
+      "svc": "screen-service",
+      "path": "/api/screen/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 2923,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "list": [
+            {
+              "id": 6,
+              "tenantId": 1,
+              "name": "回归-拖拽缩放测试",
+              "description": "",
+              "cover": "",
+              "width": 1920,
+              "height": 1080,
+              "status": "published",
+              "config": {
+                "grayMode": true,
+                "gridSize": 10,
+                "gridSnap": true,
+                "adaptationMode": "scale",
+                "backgroundColor": "#ffffff"
+              },
+              "components": null,
+              "layers": [],
+              "variants": null,
+              "variantSizes": {
+                "mobile": {
+                  "width": 375,
+                  "height": 667
+                }
+              },
+              "componentCount": 1,
+              "adaptMode": "scale",
+              "viewCount": 40,
+              "shareToken": "smoke0921bbbb",
+              "createdBy": null,
+              "createdAt": "2026-09-20T21:51:23",
+              "updatedAt": "2026-10-17T01:56:43"
+            },
+            {
+              "id": 1,
+              "tenantId": 1,
+              "name": "冒烟-三端变体",
+              "description": "smoke",
+              "cover": "",
+              "width": 1920,
+              "height": 1080,
+              "status": "draft",
+              "config": {
+                "adaptationMode": "scale",
+                "backgroundColor": "#0b1e3f"
+              },
+              "components": null,
+              "layers": null,
+              "variants": null,
+              "variantSizes": null,
+              "componentCount": 1,
+              "adaptMode": "scale",
+              "viewCount": 9,
+              "shareToken": null,
+              "createdBy": null,
+              "createdAt": "2026-09-19T23:37:51",
+              "updatedAt": "2026-09-23T02:19:56"
+            },
+            {
+              "id": 902,
+              "tenantId": 1,
+              "name": "三端适配演示大屏",
+              "description": "PC 1920×1080 / Mobile 750×1334 / Tablet 1024×768 变体齐备",
+              "cover": null,
+              "width": 1920,
+              "height": 1080,
+              "status": "draft",
+              "config": {
+                "gridSize": 10,
+                "gridSnap": true,
+                "adaptationMode": "scale",
+                "backgroundColor": "#ffffff"
+              },
+              "components": null,
+              "layers": [
+                {
+                  "id": "ly_a",
+                  "name": "标题",
+                  "locked": false,
+                  "visible": true,
+                  "componentIds": [
+                    "comp_title",
+                    "comp_chart"
+                  ]
+                }
+              ],
+              "variants": null,
+              "variantSizes": {
+                "mobile": {
+                  "width": null,
+                  "height": null
+                },
+                "tablet": {
+                  "width": null,
+                  "height": null
+                }
+              },
+              "componentCount": 2,
+              "adaptMode": "scale",
+              "viewCount": 8,
+              "shareToken": null,
+              "createdBy": null,
+              "createdAt": "2026-09-13T20:04:51",
+              "updatedAt": "2026-09-21T22:53:53"
+            },
+            {
+              "id": 903,
+              "tenantId": 1,
+              "name": "地图与飞线演示",
+              "description": "已归档，验证 archived 状态过滤",
+              "cover": null,
+              "width": 1920,
+              "height": 1080,
+              "status": "archived",
+              "config": {
+                "adaptationMode": "fixed-width",
+                "backgroundColor": "#ffffff"
+              },
+              "components": null,
+              "layers": [
+                {
+                  "id": "ly_map",
+                  "name": "地图",
+                  "locked": false,
+                  "visible": true,
+                  "componentIds": [
+                    "comp_map"
+                  ]
+                }
+              ],
+              "variants": null,
+              "variantSizes": null,
+              "componentCount": 1,
+              "adaptMode": "fixed-width",
+              "viewCount": 3,
+              "shareToken": null,
+              "createdBy": null,
+              "createdAt": "2026-09-06T20:04:51",
+              "updatedAt": "2026-09-15T20:04:51"
+            },
+            {
+              "id": 901,
+              "tenantId": 1,
+              "name": "销售实时监控大屏",
+              "description": "已发布，可作为分享链接与嵌入示例",
+              "cover": null,
+              "width": 1920,
+              "height": 1080,
+              "status": "published",
+              "config": {
+                "gridSize": 10,
+                "gridSnap": true,
+                "adaptationMode": "scale",
+                "backgroundColor": "#ffffff"
+              },
+              "components": null,
+              "layers": [
+                {
+                  "id": "ly_title",
+                  "name": "标题组",
+                  "locked": false,
+                  "visible": true,
+                  "componentIds": [
+                    "comp_title",
+                    "comp_kpi_1",
+                    "comp_kpi_2"
+                  ]
+                },
+                {
+                  "id": "ly_charts",
+                  "name": "图表组",
+                  "locked": false,
+                  "visible": true,
+                  "componentIds": [
+                    "comp_bar_region",
+                    "comp_line_trend",
+                    "comp_pie_category"
+                  ]
+                }
+              ],
+              "variants": null,
+              "variantSizes": null,
+              "componentCount": 6,
+              "adaptMode": "scale",
+              "viewCount": 148,
+              "shareToken": "smoke0921aaaa",
+              "createdBy": null,
+              "createdAt": "2026-08-26T20:04:51",
+              "updatedAt": "2026-10-18T18:26:21"
+            }
+          ],
+          "total": 5,
+          "pageNum": 1,
+          "pageSize": 20,
+          "pages": 1
+        },
+        "timestamp": 1792320554396,
+        "success": true
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/subscriptions/my",
+      "vars": [],
+      "svc": "collab-service",
+      "path": "/api/collab/subscriptions/my",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 511,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 903,
+            "tenantId": 1,
+            "userId": 1,
+            "targetType": "dataset",
+            "targetId": 901,
+            "notifyTypes": "[\"COMMENT\",\"CHANGE\"]",
+            "createTime": "2026-09-19T20:04:51"
+          },
+          {
+            "id": 902,
+            "tenantId": 1,
+            "userId": 1,
+            "targetType": "dashboard",
+            "targetId": 901,
+            "notifyTypes": "[\"ALL\"]",
+            "createTime": "2026-09-16T20:04:51"
+          },
+          {
+            "id": 901,
+            "tenantId": 1,
+            "userId": 1,
+            "targetType": "screen",
+            "targetId": 901,
+            "notifyTypes": "[\"COMMENT\",\"PUBLISH\"]",
+            "createTime": "2026-09-16T20:04:51"
+          }
+        ],
+        "timestamp": 1792320554463,
+        "success": true
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/subscriptions/check",
+      "vars": [],
+      "svc": "collab-service",
+      "path": "/api/collab/subscriptions/check",
+      "status": 400,
+      "code": 400,
+      "msg": "缺少必要参数: targetType",
+      "ctype": "application/json",
+      "bytes": 97,
+      "json": {
+        "code": 400,
+        "message": "缺少必要参数: targetType",
+        "data": null,
+        "timestamp": 1792320554486,
+        "success": false
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/subscription/check",
+      "vars": [],
+      "svc": "collab-service",
+      "path": "/api/collab/subscription/check",
+      "status": 400,
+      "code": 400,
+      "msg": "缺少必要参数: userId",
+      "ctype": "application/json",
+      "bytes": 93,
+      "json": {
+        "code": 400,
+        "message": "缺少必要参数: userId",
+        "data": null,
+        "timestamp": 1792320554504,
+        "success": false
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/comment/list",
+      "vars": [],
+      "svc": "collab-service",
+      "path": "/api/collab/comment/list",
+      "status": 400,
+      "code": 400,
+      "msg": "缺少必要参数: targetType",
+      "ctype": "application/json",
+      "bytes": 97,
+      "json": {
+        "code": 400,
+        "message": "缺少必要参数: targetType",
+        "data": null,
+        "timestamp": 1792320554521,
+        "success": false
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/approval/list",
+      "vars": [],
+      "svc": "collab-service",
+      "path": "/api/collab/approval/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 987,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 904,
+              "tenantId": 1,
+              "targetType": "DASHBOARD",
+              "targetId": 901,
+              "applicantId": 905,
+              "approverId": null,
+              "status": 0,
+              "statusLabel": "待审批",
+              "comment": null,
+              "createTime": "2026-09-21T19:54:51",
+              "approveTime": null
+            },
+            {
+              "id": 903,
+              "tenantId": 1,
+              "targetType": "SCREEN",
+              "targetId": 902,
+              "applicantId": 903,
+              "approverId": null,
+              "status": 0,
+              "statusLabel": "待审批",
+              "comment": null,
+              "createTime": "2026-09-21T19:24:51",
+              "approveTime": null
+            },
+            {
+              "id": 902,
+              "tenantId": 1,
+              "targetType": "DASHBOARD",
+              "targetId": 902,
+              "applicantId": 902,
+              "approverId": 1,
+              "status": 2,
+              "statusLabel": "已驳回",
+              "comment": "供应链口径需与财务确认，暂不通过",
+              "createTime": "2026-09-18T20:04:51",
+              "approveTime": "2026-09-18T22:04:51"
+            },
+            {
+              "id": 901,
+              "tenantId": 1,
+              "targetType": "SCREEN",
+              "targetId": 901,
+              "applicantId": 901,
+              "approverId": 1,
+              "status": 1,
+              "statusLabel": "已通过",
+              "comment": "内容核对无误，允许对外分享",
+              "createTime": "2026-09-16T20:04:51",
+              "approveTime": "2026-09-16T20:44:51"
+            }
+          ],
+          "total": 4,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320554554,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/rule/page",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/rule/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 3328,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 911,
+              "name": "演示-订单总量超阈值",
+              "description": "真取数试跑：立即触发（AA 验收）",
+              "type": "THRESHOLD",
+              "datasourceId": 901,
+              "metricExpression": "SELECT COUNT(*) FROM demo_orders",
+              "condition": "GT",
+              "threshold": 100,
+              "duration": 0,
+              "severity": "WARNING",
+              "notifyChannels": [
+                "WEBHOOK",
+                "EMAIL"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": true,
+              "tenantId": 1,
+              "createTime": "2026-09-22T00:38:12",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 912,
+              "name": "演示-埋点行数边界+持续时长",
+              "description": "真取数试跑：COUNT=500 命中 LTE 500，需持续 120s（AA 验收）",
+              "type": "THRESHOLD",
+              "datasourceId": 901,
+              "metricExpression": "SELECT COUNT(*) FROM demo_user_behavior",
+              "condition": "LTE",
+              "threshold": 500,
+              "duration": 120,
+              "severity": "INFO",
+              "notifyChannels": [
+                "WEBHOOK"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": true,
+              "tenantId": 1,
+              "createTime": "2026-09-22T00:38:12",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 913,
+              "name": "演示-销售额未达高位",
+              "description": "真取数试跑：恒不触发，用于验证越界键被清除（AA 验收）",
+              "type": "THRESHOLD",
+              "datasourceId": 901,
+              "metricExpression": "SELECT ROUND(SUM(amount),2) FROM demo_sales_daily",
+              "condition": "GT",
+              "threshold": 99999999,
+              "duration": 0,
+              "severity": "CRITICAL",
+              "notifyChannels": [
+                "WEBHOOK"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": true,
+              "tenantId": 1,
+              "createTime": "2026-09-22T00:38:12",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 905,
+              "name": "磁盘水位告警",
+              "description": "数据盘使用率超 90%",
+              "type": "THRESHOLD",
+              "datasourceId": 903,
+              "metricExpression": "disk_used_percent",
+              "condition": "GT",
+              "threshold": 90,
+              "duration": 600,
+              "severity": "INFO",
+              "notifyChannels": [
+                "SMS"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": false,
+              "tenantId": 1,
+              "createTime": "2026-09-16T20:04:50",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 904,
+              "name": "ETL 任��失败",
+              "description": "关键入仓任务连续失败",
+              "type": "COMPOSITE",
+              "datasourceId": 901,
+              "metricExpression": "etl_failed_count",
+              "condition": "GTE",
+              "threshold": 2,
+              "duration": 600,
+              "severity": "WARNING",
+              "notifyChannels": [
+                "EMAIL"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": false,
+              "tenantId": 1,
+              "createTime": "2026-09-14T20:04:50",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 903,
+              "name": "销售额环比下滑",
+              "description": "日销售额较昨日下降超 30%",
+              "type": "DERIVATIVE",
+              "datasourceId": 901,
+              "metricExpression": "sum(amount)",
+              "condition": "LT",
+              "threshold": -0.3,
+              "duration": 0,
+              "severity": "WARNING",
+              "notifyChannels": [
+                "DINGTALK"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": false,
+              "tenantId": 1,
+              "createTime": "2026-09-12T20:04:50",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 901,
+              "name": "CPU 使用率过高",
+              "description": "服务节点 CPU 连续超阈值",
+              "type": "THRESHOLD",
+              "datasourceId": 903,
+              "metricExpression": "cpu_usage_percent",
+              "condition": "GT",
+              "threshold": 85,
+              "duration": 300,
+              "severity": "CRITICAL",
+              "notifyChannels": [
+                "EMAIL",
+                "DINGTALK"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": false,
+              "tenantId": 1,
+              "createTime": "2026-09-09T20:04:50",
+              "updateTime": "2026-09-22T00:38:12"
+            },
+            {
+              "id": 902,
+              "name": "接口 5xx 比率飙升",
+              "description": "网关 5 分钟内 5xx 占比",
+              "type": "THRESHOLD",
+              "datasourceId": 903,
+              "metricExpression": "http_5xx_ratio",
+              "condition": "GTE",
+              "threshold": 0.05,
+              "duration": 300,
+              "severity": "CRITICAL",
+              "notifyChannels": [
+                "EMAIL",
+                "SMS"
+              ],
+              "notifyGroups": [],
+              "notifyTargetsEmpty": false,
+              "enabled": false,
+              "tenantId": 1,
+              "createTime": "2026-09-09T20:04:50",
+              "updateTime": "2026-09-22T00:38:12"
+            }
+          ],
+          "total": 8,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320554586,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/notify-group/page",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/notify-group/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 141,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [],
+          "total": 0,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 0
+        },
+        "timestamp": 1792320554616,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/notify-group/options",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/notify-group/options",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 78,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [],
+        "timestamp": 1792320554644,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/event/stats",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/event/stats",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 214,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "totalRules": 8,
+          "enabledRules": 0,
+          "pendingEvents": 2163,
+          "acknowledgedEvents": 230,
+          "resolvedEvents": 3,
+          "totalEvents": 2396,
+          "criticalEvents": 775
+        },
+        "timestamp": 1792320554698,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/event/page",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/event/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 2924,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 3297,
+              "ruleId": 912,
+              "ruleName": "演示-埋点行数边界+持续时长",
+              "triggerValue": 92.0434,
+              "severity": "INFO",
+              "status": "PENDING",
+              "message": "Alert: 演示-埋点行数边界+持续时长 - Value 92.04342825165891 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:46:08"
+            },
+            {
+              "id": 3296,
+              "ruleId": 913,
+              "ruleName": "演示-销售额未达高位",
+              "triggerValue": 96.7023,
+              "severity": "CRITICAL",
+              "status": "PENDING",
+              "message": "Alert: 演示-销售额未达高位 - Value 96.70231216288727 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:43:08"
+            },
+            {
+              "id": 3295,
+              "ruleId": 913,
+              "ruleName": "演示-销售额未达高位",
+              "triggerValue": 93.1334,
+              "severity": "CRITICAL",
+              "status": "PENDING",
+              "message": "Alert: 演示-销售额未达高位 - Value 93.13336304312743 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:41:08"
+            },
+            {
+              "id": 3294,
+              "ruleId": 912,
+              "ruleName": "演示-埋点行数边界+持续时长",
+              "triggerValue": 86.5336,
+              "severity": "INFO",
+              "status": "PENDING",
+              "message": "Alert: 演示-埋点行数边界+持续时长 - Value 86.53363199508958 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:39:08"
+            },
+            {
+              "id": 3293,
+              "ruleId": 911,
+              "ruleName": "演示-订单总量超阈值",
+              "triggerValue": 94.0871,
+              "severity": "WARNING",
+              "status": "PENDING",
+              "message": "Alert: 演示-订单总量超阈值 - Value 94.08711163190291 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:37:08"
+            },
+            {
+              "id": 3292,
+              "ruleId": 911,
+              "ruleName": "演示-订单总量超阈值",
+              "triggerValue": 90.5672,
+              "severity": "WARNING",
+              "status": "PENDING",
+              "message": "Alert: 演示-订单总量超阈值 - Value 90.56723498500902 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:33:08"
+            },
+            {
+              "id": 3291,
+              "ruleId": 912,
+              "ruleName": "演示-埋点行数边界+持续时长",
+              "triggerValue": 88.5718,
+              "severity": "INFO",
+              "status": "PENDING",
+              "message": "Alert: 演示-埋点行数边界+持续时长 - Value 88.57182769775925 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:32:08"
+            },
+            {
+              "id": 3290,
+              "ruleId": 913,
+              "ruleName": "演示-销售额未达高位",
+              "triggerValue": 84.3678,
+              "severity": "CRITICAL",
+              "status": "PENDING",
+              "message": "Alert: 演示-销售额未达高位 - Value 84.36776890452151 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:31:08"
+            },
+            {
+              "id": 3289,
+              "ruleId": 913,
+              "ruleName": "演示-销售额未达高位",
+              "triggerValue": 99.9916,
+              "severity": "CRITICAL",
+              "status": "PENDING",
+              "message": "Alert: 演示-销售额未达高位 - Value 99.99156032326667 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:29:08"
+            },
+            {
+              "id": 3288,
+              "ruleId": 911,
+              "ruleName": "演示-订单总量超阈值",
+              "triggerValue": 98.323,
+              "severity": "WARNING",
+              "status": "PENDING",
+              "message": "Alert: 演示-订单总量超阈值 - Value 98.32299064616807 exceeded threshold 80.0",
+              "notifiedAt": null,
+              "resolvedAt": null,
+              "tenantId": 1,
+              "createTime": "2026-10-18T18:28:08"
+            }
+          ],
+          "total": 2396,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 240
+        },
+        "timestamp": 1792320554737,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/contact/page",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/contact/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 141,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [],
+          "total": 0,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 0
+        },
+        "timestamp": 1792320554764,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/contact/options",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/contact/options",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 78,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [],
+        "timestamp": 1792320554783,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/channel/schema",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/channel/schema",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 4281,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "type": "DINGTALK",
+            "deliverable": true,
+            "targetKind": "mobile",
+            "fields": [
+              {
+                "key": "webhook",
+                "kind": "password",
+                "required": true,
+                "secret": true,
+                "url": true,
+                "labelKey": "channel.field.dingtalkWebhook",
+                "placeholder": "https://oapi.dingtalk.com/robot/send?access_token=...",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "atAll",
+                "kind": "switch",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.atAll",
+                "placeholder": null,
+                "defaultValue": null,
+                "options": []
+              }
+            ]
+          },
+          {
+            "type": "EMAIL",
+            "deliverable": true,
+            "targetKind": "email",
+            "fields": [
+              {
+                "key": "smtp",
+                "kind": "text",
+                "required": true,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.smtp",
+                "placeholder": "smtp.example.com",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "port",
+                "kind": "number",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.port",
+                "placeholder": null,
+                "defaultValue": "465",
+                "options": []
+              },
+              {
+                "key": "security",
+                "kind": "select",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.security",
+                "placeholder": null,
+                "defaultValue": "ssl",
+                "options": [
+                  "ssl",
+                  "starttls",
+                  "none"
+                ]
+              },
+              {
+                "key": "username",
+                "kind": "text",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.username",
+                "placeholder": null,
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "password",
+                "kind": "password",
+                "required": false,
+                "secret": true,
+                "url": false,
+                "labelKey": "channel.field.password",
+                "placeholder": null,
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "from",
+                "kind": "text",
+                "required": true,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.from",
+                "placeholder": "alert@example.com",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "subject",
+                "kind": "text",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.subject",
+                "placeholder": "【数据告警】",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "timeout",
+                "kind": "number",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.timeout",
+                "placeholder": null,
+                "defaultValue": "10000",
+                "options": []
+              },
+              {
+                "key": "trustHosts",
+                "kind": "text",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.trustHosts",
+                "placeholder": "*",
+                "defaultValue": null,
+                "options": []
+              }
+            ]
+          },
+          {
+            "type": "FEISHU",
+            "deliverable": true,
+            "targetKind": "none",
+            "fields": [
+              {
+                "key": "webhook",
+                "kind": "password",
+                "required": true,
+                "secret": true,
+                "url": true,
+                "labelKey": "channel.field.feishuWebhook",
+                "placeholder": "https://open.feishu.cn/open-apis/bot/v2/hook/...",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "secret",
+                "kind": "password",
+                "required": false,
+                "secret": true,
+                "url": false,
+                "labelKey": "channel.field.feishuSignSecret",
+                "placeholder": null,
+                "defaultValue": null,
+                "options": []
+              }
+            ]
+          },
+          {
+            "type": "SMS",
+            "deliverable": false,
+            "targetKind": "mobile",
+            "fields": [
+              {
+                "key": "provider",
+                "kind": "select",
+                "required": true,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.provider",
+                "placeholder": null,
+                "defaultValue": "aliyun",
+                "options": [
+                  "aliyun",
+                  "tencent",
+                  "huawei"
+                ]
+              },
+              {
+                "key": "accessKeyId",
+                "kind": "text",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.accessKeyId",
+                "placeholder": null,
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "accessKeySecret",
+                "kind": "password",
+                "required": false,
+                "secret": true,
+                "url": false,
+                "labelKey": "channel.field.accessKeySecret",
+                "placeholder": null,
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "signName",
+                "kind": "text",
+                "required": true,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.signName",
+                "placeholder": "数据可视化",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "templateCode",
+                "kind": "text",
+                "required": true,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.templateCode",
+                "placeholder": "SMS_123456789",
+                "defaultValue": null,
+                "options": []
+              }
+            ]
+          },
+          {
+            "type": "WEBHOOK",
+            "deliverable": true,
+            "targetKind": "none",
+            "fields": [
+              {
+                "key": "url",
+                "kind": "text",
+                "required": true,
+                "secret": false,
+                "url": true,
+                "labelKey": "channel.field.url",
+                "placeholder": "http://192.168.1.10:18099/hook",
+                "defaultValue": null,
+                "options": []
+              },
+              {
+                "key": "headers",
+                "kind": "json",
+                "required": false,
+                "secret": false,
+                "url": false,
+                "labelKey": "channel.field.headers",
+                "placeholder": "{\"X-Token\":\"...\"}",
+                "defaultValue": null,
+                "options": []
+              }
+            ]
+          },
+          {
+            "type": "WECHAT",
+            "deliverable": true,
+            "targetKind": "mobile",
+            "fields": [
+              {
+                "key": "webhook",
+                "kind": "password",
+                "required": true,
+                "secret": true,
+                "url": true,
+                "labelKey": "channel.field.wechatWebhook",
+                "placeholder": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...",
+                "defaultValue": null,
+                "options": []
+              }
+            ]
+          }
+        ],
+        "timestamp": 1792320554796,
+        "success": true
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/channel/page",
+      "vars": [],
+      "svc": "alert-service",
+      "path": "/api/alert/channel/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1246,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 902,
+              "name": "钉钉值班群",
+              "type": "DINGTALK",
+              "enabled": false,
+              "config": {
+                "webhook": "***",
+                "atAll": false,
+                "mobiles": [
+                  "13800000901"
+                ]
+              },
+              "createTime": "2026-09-06T20:04:50",
+              "updateTime": "2026-09-22T00:38:12",
+              "deliverable": true,
+              "shadowedByOtherRow": null,
+              "shadowId": null
+            },
+            {
+              "id": 901,
+              "name": "运维邮箱组",
+              "type": "EMAIL",
+              "enabled": true,
+              "config": {
+                "smtp": "smtp.example.com",
+                "port": 465,
+                "from": "alert@example.com",
+                "to": [
+                  "ops@example.com",
+                  "data@example.com"
+                ],
+                "ssl": true
+              },
+              "createTime": "2026-09-06T20:04:50",
+              "updateTime": "2026-09-06T20:04:50",
+              "deliverable": true,
+              "shadowedByOtherRow": null,
+              "shadowId": null
+            },
+            {
+              "id": 903,
+              "name": "短信通道",
+              "type": "SMS",
+              "enabled": true,
+              "config": {
+                "provider": "aliyun",
+                "signName": "DataViz",
+                "templateCode": "SMS_DEMO",
+                "receivers": [
+                  "13800000901"
+                ]
+              },
+              "createTime": "2026-09-11T20:04:50",
+              "updateTime": "2026-09-11T20:04:50",
+              "deliverable": false,
+              "shadowedByOtherRow": null,
+              "shadowId": null
+            },
+            {
+              "id": 911,
+              "name": "本地收件口（测试）",
+              "type": "WEBHOOK",
+              "enabled": true,
+              "config": {
+                "url": "http://127.0.0.1:18099/hook"
+              },
+              "createTime": "2026-09-22T00:38:12",
+              "updateTime": "2026-09-22T00:38:12",
+              "deliverable": true,
+              "shadowedByOtherRow": null,
+              "shadowId": null
+            }
+          ],
+          "total": 4,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320554835,
+        "success": true
+      }
+    },
+    {
+      "port": "8091",
+      "raw": "/api/ai/status",
+      "vars": [],
+      "svc": "ai-service",
+      "path": "/api/ai/status",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 179,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "llmConfigured": false,
+          "note": "未配置大模型服务：需要设置 LLM_API_URL 与 LLM_API_KEY（api-key 仍是脚手架占位值）",
+          "model": null
+        },
+        "timestamp": 1792320555551,
+        "success": true
+      }
+    },
+    {
+      "port": "8091",
+      "raw": "/api/ai/insight/list",
+      "vars": [],
+      "svc": "ai-service",
+      "path": "/api/ai/insight/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 771,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 901,
+            "datasourceId": 901,
+            "datasetId": 901,
+            "insightType": "ANOMALY",
+            "content": "华东区 09-19 销售额较 7 日均值高出 42%，建议核对大额订单来源。",
+            "config": {
+              "windowDays": 7,
+              "threshold": 0.3
+            },
+            "tenantId": 1,
+            "createTime": "2026-09-21T15:18:33",
+            "llmUsed": null,
+            "llmNote": null
+          },
+          {
+            "id": 902,
+            "datasourceId": 901,
+            "datasetId": 902,
+            "insightType": "TREND",
+            "content": "页面停留时长近 3 日持续下降，累计降幅 11%。",
+            "config": {
+              "metric": "duration_ms",
+              "direction": "down"
+            },
+            "tenantId": 1,
+            "createTime": "2026-09-20T21:18:33",
+            "llmUsed": null,
+            "llmNote": null
+          },
+          {
+            "id": 903,
+            "datasourceId": 902,
+            "datasetId": 903,
+            "insightType": "SUMMARY",
+            "content": "待支付订单占比 18%，是履约时效的主要卡点。",
+            "config": {
+              "dimension": "status"
+            },
+            "tenantId": 1,
+            "createTime": "2026-09-19T21:18:33",
+            "llmUsed": null,
+            "llmNote": null
+          }
+        ],
+        "timestamp": 1792320556323,
+        "success": true
+      }
+    },
+    {
+      "port": "8091",
+      "raw": "/api/ai/chat/conversations",
+      "vars": [],
+      "svc": "ai-service",
+      "path": "/api/ai/chat/conversations",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 455,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 901,
+            "userId": 1,
+            "title": "销售大区 TOP5 怎么问",
+            "tenantId": 1,
+            "createTime": "2026-09-21T18:18:33",
+            "updateTime": "2026-09-21T18:18:33"
+          },
+          {
+            "id": 902,
+            "userId": 2,
+            "title": "用户行为事件分布分析",
+            "tenantId": 1,
+            "createTime": "2026-09-20T21:18:33",
+            "updateTime": "2026-09-20T21:18:33"
+          },
+          {
+            "id": 903,
+            "userId": 1,
+            "title": "订单退款率趋势",
+            "tenantId": 1,
+            "createTime": "2026-09-19T21:18:33",
+            "updateTime": "2026-09-19T21:18:33"
+          }
+        ],
+        "timestamp": 1792320556380,
+        "success": true
+      }
+    },
+    {
+      "port": "8092",
+      "raw": "/api/openapi/key/clients",
+      "vars": [],
+      "svc": "openapi-service",
+      "path": "/api/openapi/key/clients",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 532,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 901,
+            "appName": "经营看板嵌入应用",
+            "appKey": "dvapp0001",
+            "status": "ACTIVE",
+            "rateLimit": 600,
+            "allowedIps": "127.0.0.1",
+            "expireTime": "2026-12-20T21:18:33",
+            "tenantId": 1,
+            "createTime": "2026-09-16T21:18:33",
+            "updateTime": "2026-09-16T21:18:33"
+          },
+          {
+            "id": 902,
+            "appName": "第三方 BI 对接",
+            "appKey": "dvapp0003",
+            "status": "DISABLED",
+            "rateLimit": 60,
+            "allowedIps": null,
+            "expireTime": "2026-09-20T21:18:33",
+            "tenantId": 1,
+            "createTime": "2026-08-22T21:18:33",
+            "updateTime": "2026-09-20T21:18:33"
+          }
+        ],
+        "timestamp": 1792320557368,
+        "success": true
+      }
+    },
+    {
+      "port": "8092",
+      "raw": "/api/openapi/app/list",
+      "vars": [],
+      "svc": "openapi-service",
+      "path": "/api/openapi/app/list",
+      "status": 200,
+      "msg": "undefined",
+      "ctype": "application/json",
+      "bytes": 466,
+      "json": [
+        {
+          "id": 902,
+          "tenantId": 1,
+          "appName": "数据导出批处理",
+          "appKey": "dvapp0002",
+          "appSecret": "dev-secret-export-0002",
+          "permissions": "dataset:read,export:write",
+          "rateLimit": 120,
+          "ipWhitelist": null,
+          "status": 1,
+          "createTime": "2026-09-18T21:18:33"
+        },
+        {
+          "id": 901,
+          "tenantId": 1,
+          "appName": "经营看板嵌入应用",
+          "appKey": "dvapp0001",
+          "appSecret": "dev-secret-screen-embed-0001",
+          "permissions": "screen:read,dashboard:read",
+          "rateLimit": 600,
+          "ipWhitelist": "127.0.0.1",
+          "status": 1,
+          "createTime": "2026-09-16T21:18:33"
+        }
+      ]
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/tenant/page",
+      "vars": [],
+      "svc": "admin-service",
+      "path": "/api/admin/tenant/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1327,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 1,
+              "name": "默认租户",
+              "code": "default",
+              "status": "ACTIVE",
+              "contactName": "",
+              "contactPhone": "",
+              "expireTime": null,
+              "maxUsers": 1000,
+              "config": null,
+              "createTime": "2026-09-17T23:03:13",
+              "updateTime": "2026-09-21T20:21:58"
+            },
+            {
+              "id": 903,
+              "name": "海纳能源",
+              "code": "haina-energy",
+              "status": "TRIAL",
+              "contactName": "赵强",
+              "contactPhone": "13800000903",
+              "expireTime": "2026-11-05T20:02:57",
+              "maxUsers": 100,
+              "config": "{\"theme\":\"dark\",\"modules\":[\"screen\",\"etl\"],\"region\":\"cn-north\"}",
+              "createTime": "2026-09-01T20:02:57",
+              "updateTime": "2026-09-21T20:21:58"
+            },
+            {
+              "id": 901,
+              "name": "星云零售集团",
+              "code": "nebula-retail",
+              "status": "ACTIVE",
+              "contactName": "周敏",
+              "contactPhone": "13800000901",
+              "expireTime": "2027-03-31T23:59:59",
+              "maxUsers": 200,
+              "config": "{\"theme\":\"dark\",\"modules\":[\"screen\",\"alert\"],\"region\":\"cn-east-1\"}",
+              "createTime": "2026-05-24T20:02:57",
+              "updateTime": "2026-09-21T20:21:58"
+            },
+            {
+              "id": 902,
+              "name": "长江智慧交通",
+              "code": "yangtse-traffic",
+              "status": "SUSPENDED",
+              "contactName": "李雷",
+              "contactPhone": "13800000902",
+              "expireTime": "2026-09-11T20:02:57",
+              "maxUsers": 50,
+              "config": "{\"theme\":\"light\",\"modules\":[\"dashboard\"],\"region\":\"cn-central\"}",
+              "createTime": "2026-03-05T20:02:57",
+              "updateTime": "2026-09-21T20:21:58"
+            }
+          ],
+          "total": 4,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320557502,
+        "success": true
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/license/validate",
+      "vars": [],
+      "svc": "admin-service",
+      "path": "/api/admin/license/validate",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 296,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "activated": false,
+          "valid": false,
+          "type": null,
+          "issuedTo": null,
+          "issuedAt": null,
+          "expiresAt": null,
+          "maxUsers": null,
+          "maxNodes": null,
+          "daysLeft": null,
+          "message": "尚未激活许可证",
+          "fingerprint": null,
+          "activateTime": null,
+          "activatedBy": null
+        },
+        "timestamp": 1792320557527,
+        "success": true
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/license/info",
+      "vars": [],
+      "svc": "admin-service",
+      "path": "/api/admin/license/info",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 296,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "activated": false,
+          "valid": false,
+          "type": null,
+          "issuedTo": null,
+          "issuedAt": null,
+          "expiresAt": null,
+          "maxUsers": null,
+          "maxNodes": null,
+          "daysLeft": null,
+          "message": "尚未激活许可证",
+          "fingerprint": null,
+          "activateTime": null,
+          "activatedBy": null
+        },
+        "timestamp": 1792320557554,
+        "success": true
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/config/page",
+      "vars": [],
+      "svc": "admin-service",
+      "path": "/api/admin/config/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1589,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 1,
+              "configKey": "screen.mourning.enabled",
+              "configValue": "false",
+              "configType": "SYSTEM",
+              "remark": "全局哀悼模式：true 时管理端与设计端/分享页整体灰度",
+              "tenantId": 1,
+              "createTime": "2026-09-21T16:47:12",
+              "updateTime": "2026-09-23T20:01:32"
+            },
+            {
+              "id": 904,
+              "configKey": "screen.canvas-bg-color",
+              "configValue": "#ffffff",
+              "configType": "SYSTEM",
+              "remark": "设计器画布锁定底色（白底，不可在属性面板修改）",
+              "tenantId": 1,
+              "createTime": "2026-09-18T20:02:57",
+              "updateTime": "2026-09-18T20:04:50"
+            },
+            {
+              "id": 905,
+              "configKey": "alert.default-silence-minutes",
+              "configValue": "15",
+              "configType": "CUSTOM",
+              "remark": "告警默认静默分钟数",
+              "tenantId": 1,
+              "createTime": "2026-09-09T20:02:57",
+              "updateTime": "2026-09-09T20:04:50"
+            },
+            {
+              "id": 906,
+              "configKey": "datasource.query-timeout-seconds",
+              "configValue": "30",
+              "configType": "SYSTEM",
+              "remark": "数据源查询超时（秒）",
+              "tenantId": 1,
+              "createTime": "2026-09-09T20:02:57",
+              "updateTime": "2026-09-09T20:04:50"
+            },
+            {
+              "id": 903,
+              "configKey": "screen.default-adapt-mode",
+              "configValue": "scale",
+              "configType": "SYSTEM",
+              "remark": "新建大屏默认适配方式：scale / fixed-width / responsive",
+              "tenantId": 1,
+              "createTime": "2026-08-27T20:02:57",
+              "updateTime": "2026-08-27T20:04:50"
+            },
+            {
+              "id": 901,
+              "configKey": "system.name",
+              "configValue": "DataViz 数据可视化平台",
+              "configType": "SYSTEM",
+              "remark": "平台名称，登录页与侧边栏展示",
+              "tenantId": 1,
+              "createTime": "2026-08-22T20:02:57",
+              "updateTime": "2026-08-22T20:04:50"
+            },
+            {
+              "id": 902,
+              "configKey": "system.page-size",
+              "configValue": "20",
+              "configType": "CUSTOM",
+              "remark": "列表默认分页条数",
+              "tenantId": 1,
+              "createTime": "2026-08-22T20:02:57",
+              "updateTime": "2026-09-16T20:04:50"
+            }
+          ],
+          "total": 7,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320557601,
+        "success": true
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/audit/page",
+      "vars": [],
+      "svc": "admin-service",
+      "path": "/api/admin/audit/page",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 3298,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 9001,
+              "userId": 1,
+              "username": "admin",
+              "module": "auth",
+              "action": "login",
+              "method": "POST",
+              "requestUrl": "/api/auth/login",
+              "requestParams": "{\"username\":\"admin\",\"captchaKey\":\"a1b2c3\"}",
+              "responseCode": 200,
+              "ip": "10.20.30.41",
+              "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/139",
+              "executionTime": 126,
+              "tenantId": 1,
+              "createTime": "2026-09-21T19:58:50"
+            },
+            {
+              "id": 9002,
+              "userId": 1,
+              "username": "admin",
+              "module": "auth",
+              "action": "logout",
+              "method": "POST",
+              "requestUrl": "/api/auth/logout",
+              "requestParams": "{}",
+              "responseCode": 200,
+              "ip": "10.20.30.41",
+              "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/139",
+              "executionTime": 18,
+              "tenantId": 1,
+              "createTime": "2026-09-21T17:04:50"
+            },
+            {
+              "id": 9003,
+              "userId": 1,
+              "username": "admin",
+              "module": "auth",
+              "action": "login",
+              "method": "POST",
+              "requestUrl": "/api/auth/login",
+              "requestParams": "{\"username\":\"admin\"}",
+              "responseCode": 401,
+              "ip": "10.20.30.77",
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) Safari/605",
+              "executionTime": 44,
+              "tenantId": 1,
+              "createTime": "2026-09-21T15:04:50"
+            },
+            {
+              "id": 9007,
+              "userId": 1,
+              "username": "admin",
+              "module": "screen",
+              "action": "delete",
+              "method": "DELETE",
+              "requestUrl": "/api/screen/903",
+              "requestParams": "{\"id\":903}",
+              "responseCode": 409,
+              "ip": "10.20.30.41",
+              "userAgent": "Chrome/139",
+              "executionTime": 21,
+              "tenantId": 1,
+              "createTime": "2026-09-20T22:04:50"
+            },
+            {
+              "id": 9006,
+              "userId": 1,
+              "username": "admin",
+              "module": "screen",
+              "action": "publish",
+              "method": "POST",
+              "requestUrl": "/api/screen/901/publish",
+              "requestParams": "{\"id\":901}",
+              "responseCode": 200,
+              "ip": "10.20.30.41",
+              "userAgent": "Chrome/139",
+              "executionTime": 35,
+              "tenantId": 1,
+              "createTime": "2026-09-20T21:04:50"
+            },
+            {
+              "id": 9005,
+              "userId": 1,
+              "username": "admin",
+              "module": "screen",
+              "action": "update",
+              "method": "PUT",
+              "requestUrl": "/api/screen/901",
+              "requestParams": "{\"id\":901,\"name\":\"销售实时监控大屏\"}",
+              "responseCode": 200,
+              "ip": "10.20.30.41",
+              "userAgent": "Chrome/139",
+              "executionTime": 88,
+              "tenantId": 1,
+              "createTime": "2026-09-20T20:04:50"
+            },
+            {
+              "id": 9004,
+              "userId": 1,
+              "username": "admin",
+              "module": "screen",
+              "action": "create",
+              "method": "POST",
+              "requestUrl": "/api/screen",
+              "requestParams": "{\"name\":\"销售实时监控大屏\",\"adaptMode\":\"scale\"}",
+              "responseCode": 200,
+              "ip": "10.20.30.41",
+              "userAgent": "Chrome/139",
+              "executionTime": 63,
+              "tenantId": 1,
+              "createTime": "2026-09-20T20:04:50"
+            },
+            {
+              "id": 9010,
+              "userId": 1,
+              "username": "admin",
+              "module": "datasource",
+              "action": "delete",
+              "method": "DELETE",
+              "requestUrl": "/api/datasource/4",
+              "requestParams": "{\"id\":4}",
+              "responseCode": 404,
+              "ip": "10.20.30.42",
+              "userAgent": "Chrome/139",
+              "executionTime": 12,
+              "tenantId": 1,
+              "createTime": "2026-09-19T20:04:50"
+            },
+            {
+              "id": 9009,
+              "userId": 1,
+              "username": "admin",
+              "module": "datasource",
+              "action": "test-connection",
+              "method": "POST",
+              "requestUrl": "/api/datasource/1/test-connection",
+              "requestParams": "{\"id\":1}",
+              "responseCode": 200,
+              "ip": "10.20.30.42",
+              "userAgent": "Chrome/139",
+              "executionTime": 1830,
+              "tenantId": 1,
+              "createTime": "2026-09-19T20:04:50"
+            },
+            {
+              "id": 9008,
+              "userId": 1,
+              "username": "admin",
+              "module": "datasource",
+              "action": "create",
+              "method": "POST",
+              "requestUrl": "/api/datasource",
+              "requestParams": "{\"name\":\"分析库(演示)\",\"type\":\"mysql\"}",
+              "responseCode": 200,
+              "ip": "10.20.30.42",
+              "userAgent": "Chrome/139",
+              "executionTime": 152,
+              "tenantId": 1,
+              "createTime": "2026-09-19T20:04:50"
+            }
+          ],
+          "total": 24,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 3
+        },
+        "timestamp": 1792320557690,
+        "success": true
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/audit/export",
+      "vars": [],
+      "svc": "admin-service",
+      "path": "/api/admin/audit/export",
+      "skipped": "export/stream"
+    },
+    {
+      "port": "8094",
+      "raw": "/api/file/list",
+      "vars": [],
+      "svc": "file-service",
+      "path": "/api/file/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1179,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 905,
+              "fileName": "EP001.md",
+              "filePath": "2026/10/18/0eee3c30381543bf8621c3dd7b95dc3c.md",
+              "fileSize": 4908,
+              "fileType": "text/markdown",
+              "bucket": "dataviz",
+              "createBy": null,
+              "createTime": "2026-10-18T18:28:29"
+            },
+            {
+              "id": 904,
+              "fileName": "zy_config_1791370368759.json",
+              "filePath": "2026/10/18/2e90577ad5104d08a4f4cc2a0b20e24d.json",
+              "fileSize": 28237,
+              "fileType": "application/json",
+              "bucket": "dataviz",
+              "createBy": null,
+              "createTime": "2026-10-18T18:28:00"
+            },
+            {
+              "id": 903,
+              "fileName": "sales-daily-export.csv",
+              "filePath": "export/2026/09/903-sales-daily-export.csv",
+              "fileSize": 20480,
+              "fileType": "text/csv",
+              "bucket": "dataviz",
+              "createBy": 1,
+              "createTime": "2026-09-21T14:04:51"
+            },
+            {
+              "id": 901,
+              "fileName": "cover-sales.png",
+              "filePath": "screen/2026/09/901-cover-sales.png",
+              "fileSize": 68412,
+              "fileType": "image/png",
+              "bucket": "dataviz",
+              "createBy": 1,
+              "createTime": "2026-09-20T20:04:51"
+            },
+            {
+              "id": 902,
+              "fileName": "bg-tech-grid.png",
+              "filePath": "screen/2026/09/902-bg-tech-grid.png",
+              "fileSize": 142308,
+              "fileType": "image/png",
+              "bucket": "dataviz",
+              "createBy": 1,
+              "createTime": "2026-09-18T20:04:51"
+            }
+          ],
+          "total": 5,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320557737,
+        "success": true
+      }
+    },
+    {
+      "port": "8095",
+      "raw": "/api/schedule/job/list",
+      "vars": [],
+      "svc": "schedule-service",
+      "path": "/api/schedule/job/list",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1256,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "records": [
+            {
+              "id": 901,
+              "jobName": "销售数据同步",
+              "jobGroup": "DATA_SYNC",
+              "cronExpression": "0 0/30 * * * ?",
+              "jobClass": "com.dataviz.schedule.job.EtlTriggerJob",
+              "jobParams": "{\"taskId\":901}",
+              "status": "ERROR",
+              "description": "每 30 分钟触发一次销售演示数据同步任务。",
+              "misfirePolicy": "DO_NOTHING",
+              "handlerRegistered": false,
+              "handlerLabel": null,
+              "createTime": "2026-09-15T21:18:33",
+              "updateTime": "2026-09-21T20:48:33"
+            },
+            {
+              "id": 902,
+              "jobName": "告警规则巡检",
+              "jobGroup": "MONITOR",
+              "cronExpression": "0 0/5 * * * ?",
+              "jobClass": "com.dataviz.schedule.job.AlertScanJob",
+              "jobParams": "{\"batchSize\":50}",
+              "status": "ERROR",
+              "description": "每 5 分钟扫描一次启用中的告警规则。",
+              "misfirePolicy": "FIRE_ONCE_NOW",
+              "handlerRegistered": false,
+              "handlerLabel": null,
+              "createTime": "2026-09-15T21:18:33",
+              "updateTime": "2026-09-21T21:13:33"
+            },
+            {
+              "id": 903,
+              "jobName": "审计日志归档",
+              "jobGroup": "MAINTENANCE",
+              "cronExpression": "0 0 3 * * ?",
+              "jobClass": "com.dataviz.schedule.job.AuditArchiveJob",
+              "jobParams": "{\"keepDays\":90}",
+              "status": "STOPPED",
+              "description": "每日 03:00 归档 90 天前的审计日志。",
+              "misfirePolicy": "DO_NOTHING",
+              "handlerRegistered": false,
+              "handlerLabel": null,
+              "createTime": "2026-09-11T21:18:33",
+              "updateTime": "2026-09-20T21:18:33"
+            }
+          ],
+          "total": 3,
+          "pageNum": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        },
+        "timestamp": 1792320558500,
+        "success": true
+      }
+    },
+    {
+      "port": "8095",
+      "raw": "/api/schedule/job/handlers",
+      "vars": [],
+      "svc": "schedule-service",
+      "path": "/api/schedule/job/handlers",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 205,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "handlerKey": "jobLogCleanup",
+            "label": "清理任务执行日志",
+            "description": "删除早于保留期的 schedule_job_log 记录。参数示例 {\"keepDays\":90}，留空按 90 天。"
+          }
+        ],
+        "timestamp": 1792320558555,
+        "success": true
+      }
+    },
+    {
+      "port": "8095",
+      "raw": "/api/schedule/dashboard/stats",
+      "vars": [],
+      "svc": "schedule-service",
+      "path": "/api/schedule/dashboard/stats",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 189,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "totalJobs": 3,
+          "runningJobs": 0,
+          "pausedJobs": 0,
+          "errorJobs": 2,
+          "todayExecutions": 0,
+          "todaySuccess": 0,
+          "todayFailed": 0
+        },
+        "timestamp": 1792320558678,
+        "success": true
+      }
+    },
+    {
+      "port": "8095",
+      "raw": "/api/schedule/dashboard/runningJobs",
+      "vars": [],
+      "svc": "schedule-service",
+      "path": "/api/schedule/dashboard/runningJobs",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 78,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [],
+        "timestamp": 1792320558719,
+        "success": true
+      }
+    },
+    {
+      "port": "8096",
+      "raw": "/api/monitor/services",
+      "vars": [],
+      "svc": "monitor-service",
+      "path": "/api/monitor/services",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 1540,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": [
+          {
+            "id": 903,
+            "serviceName": "screen-service",
+            "instanceId": "screen-8088-01",
+            "host": "localhost",
+            "port": 8088,
+            "status": "DOWN",
+            "metadata": {
+              "zone": "cn-east-1a",
+              "version": "1.0.0"
+            },
+            "lastHeartbeat": "2026-09-21T20:04:36",
+            "createTime": "2026-08-22T20:04:51"
+          },
+          {
+            "id": 906,
+            "serviceName": "file-service",
+            "instanceId": "file-8094-01",
+            "host": "localhost",
+            "port": 8094,
+            "status": "DOWN",
+            "metadata": {
+              "storage": "local",
+              "basePath": "./uploads"
+            },
+            "lastHeartbeat": "2026-09-21T20:04:33",
+            "createTime": "2026-09-01T20:04:51"
+          },
+          {
+            "id": 901,
+            "serviceName": "gateway-service",
+            "instanceId": "gw-8080-01",
+            "host": "localhost",
+            "port": 8080,
+            "status": "DOWN",
+            "metadata": {
+              "java": "17",
+              "zone": "cn-east-1a",
+              "version": "1.0.0"
+            },
+            "lastHeartbeat": "2026-09-21T20:04:31",
+            "createTime": "2026-08-22T20:04:51"
+          },
+          {
+            "id": 902,
+            "serviceName": "user-service",
+            "instanceId": "user-8082-01",
+            "host": "localhost",
+            "port": 8082,
+            "status": "DOWN",
+            "metadata": {
+              "zone": "cn-east-1a",
+              "version": "1.0.0"
+            },
+            "lastHeartbeat": "2026-09-21T20:04:26",
+            "createTime": "2026-08-22T20:04:51"
+          },
+          {
+            "id": 904,
+            "serviceName": "analysis-service",
+            "instanceId": "analysis-8086-01",
+            "host": "localhost",
+            "port": 8086,
+            "status": "DOWN",
+            "metadata": {
+              "zone": "cn-east-1b"
+            },
+            "lastHeartbeat": "2026-09-21T20:04:11",
+            "createTime": "2026-08-22T20:04:51"
+          },
+          {
+            "id": 905,
+            "serviceName": "alert-service",
+            "instanceId": "alert-8090-01",
+            "host": "localhost",
+            "port": 8090,
+            "status": "DOWN",
+            "metadata": {
+              "zone": "cn-east-1b",
+              "reason": "heartbeat timeout > 60s"
+            },
+            "lastHeartbeat": "2026-09-21T19:56:51",
+            "createTime": "2026-08-22T20:04:51"
+          }
+        ],
+        "timestamp": 1792320559368,
+        "success": true
+      }
+    },
+    {
+      "port": "8096",
+      "raw": "/api/monitor/metrics",
+      "vars": [],
+      "svc": "monitor-service",
+      "path": "/api/monitor/metrics",
+      "status": 400,
+      "code": 400,
+      "msg": "缺少必要参数: serviceName",
+      "ctype": "application/json",
+      "bytes": 98,
+      "json": {
+        "code": 400,
+        "message": "缺少必要参数: serviceName",
+        "data": null,
+        "timestamp": 1792320559403,
+        "success": false
+      }
+    },
+    {
+      "port": "8096",
+      "raw": "/api/monitor/metrics/history",
+      "vars": [],
+      "svc": "monitor-service",
+      "path": "/api/monitor/metrics/history",
+      "status": 400,
+      "code": 400,
+      "msg": "缺少必要参数: serviceName",
+      "ctype": "application/json",
+      "bytes": 98,
+      "json": {
+        "code": 400,
+        "message": "缺少必要参数: serviceName",
+        "data": null,
+        "timestamp": 1792320559427,
+        "success": false
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "user-service",
+      "path": "/api/user/1",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 304,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "id": 1,
+          "tenantId": 1,
+          "username": "admin",
+          "nickname": "系统管理员",
+          "email": "",
+          "phone": "13912345678",
+          "avatar": "",
+          "status": 1,
+          "deptId": null,
+          "deptName": null,
+          "loginTime": "2026-10-18T18:48:30",
+          "createTime": "2026-09-21T00:31:26",
+          "roleIds": [
+            1
+          ]
+        },
+        "timestamp": 1792320559454,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/role/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "user-service",
+      "path": "/api/role/1",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 183,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "id": 1,
+          "tenantId": 1,
+          "roleCode": "super_admin",
+          "roleName": "超级管理员",
+          "description": "",
+          "sortOrder": 1,
+          "status": 1
+        },
+        "timestamp": 1792320559493,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/dept/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "user-service",
+      "path": "/api/dept/1",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "ctype": "application/json",
+      "bytes": 191,
+      "json": {
+        "code": 0,
+        "message": "操作成功",
+        "data": {
+          "id": 1,
+          "tenantId": 1,
+          "parentId": 0,
+          "deptName": "总公司",
+          "sortOrder": 1,
+          "leader": "",
+          "phone": "",
+          "status": 1,
+          "children": null
+        },
+        "timestamp": 1792320559519,
+        "success": true
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/role/{id}/permissions",
+      "vars": [
+        "id"
+      ],
+      "svc": "user-service",
+      "path": "/api/role/1/permissions",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/{id}/permissions",
+      "vars": [
+        "id"
+      ],
+      "svc": "user-service",
+      "path": "/api/user/1/permissions",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/internal/auth-user/{userId}",
+      "vars": [
+        "userId"
+      ],
+      "svc": "user-service",
+      "path": "/api/user/internal/auth-user/1",
+      "status": 403,
+      "code": 403,
+      "msg": "Internal API is not reachable through the gateway",
+      "ctype": "application/json",
+      "bytes": 86,
+      "json": {
+        "code": 403,
+        "message": "Internal API is not reachable through the gateway",
+        "data": null
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/internal/auth-user/{userId}/role-codes",
+      "vars": [
+        "userId"
+      ],
+      "svc": "user-service",
+      "path": "/api/user/internal/auth-user/1/role-codes",
+      "status": 403,
+      "code": 403,
+      "msg": "Internal API is not reachable through the gateway",
+      "ctype": "application/json",
+      "bytes": 86,
+      "json": {
+        "code": 403,
+        "message": "Internal API is not reachable through the gateway",
+        "data": null
+      }
+    },
+    {
+      "port": "8082",
+      "raw": "/api/user/internal/auth-user/{userId}/permission-codes",
+      "vars": [
+        "userId"
+      ],
+      "svc": "user-service",
+      "path": "/api/user/internal/auth-user/1/permission-codes",
+      "status": 403,
+      "code": 403,
+      "msg": "Internal API is not reachable through the gateway",
+      "ctype": "application/json",
+      "bytes": 86,
+      "json": {
+        "code": 403,
+        "message": "Internal API is not reachable through the gateway",
+        "data": null
+      }
+    },
+    {
+      "port": "8083",
+      "raw": "/api/datasource/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "datasource-service",
+      "path": "/api/datasource/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8083",
+      "raw": "/api/datasource/{id}/tables",
+      "vars": [
+        "id"
+      ],
+      "svc": "datasource-service",
+      "path": "/api/datasource/1/tables",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8084",
+      "raw": "/api/etl/task/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "etl-service",
+      "path": "/api/etl/task/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8084",
+      "raw": "/api/etl/task/{id}/metrics",
+      "vars": [
+        "id"
+      ],
+      "svc": "etl-service",
+      "path": "/api/etl/task/1/metrics",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8084",
+      "raw": "/api/etl/task/{id}/logs",
+      "vars": [
+        "id"
+      ],
+      "svc": "etl-service",
+      "path": "/api/etl/task/1/logs",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8084",
+      "raw": "/api/etl/operator/{type}/schema",
+      "vars": [
+        "type"
+      ],
+      "svc": "etl-service",
+      "path": "/api/etl/operator/1/schema",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/metric/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "model-service",
+      "path": "/api/model/metric/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/dimension/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "model-service",
+      "path": "/api/model/dimension/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/dataset/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "model-service",
+      "path": "/api/model/dataset/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8085",
+      "raw": "/api/model/internal/dataset/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "model-service",
+      "path": "/api/model/internal/dataset/1",
+      "status": 403,
+      "code": 403,
+      "msg": "Internal API is not reachable through the gateway",
+      "ctype": "application/json",
+      "bytes": 86,
+      "json": {
+        "code": 403,
+        "message": "Internal API is not reachable through the gateway",
+        "data": null
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/report/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "analysis-service",
+      "path": "/api/analysis/report/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/perm-rule/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "analysis-service",
+      "path": "/api/analysis/perm-rule/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8086",
+      "raw": "/api/analysis/report/{id}/data",
+      "vars": [
+        "id"
+      ],
+      "svc": "analysis-service",
+      "path": "/api/analysis/report/1/data",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/widget/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/widget/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/widget/list/{dashboardId}",
+      "vars": [
+        "dashboardId"
+      ],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/widget/list/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/share/link/{dashboardId}",
+      "vars": [
+        "dashboardId"
+      ],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/share/link/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8087",
+      "raw": "/api/dashboard/share/embed/{dashboardId}",
+      "vars": [
+        "dashboardId"
+      ],
+      "svc": "dashboard-service",
+      "path": "/api/dashboard/share/embed/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8088",
+      "raw": "/api/screen/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "screen-service",
+      "path": "/api/screen/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8088",
+      "raw": "/api/screen/share/{token}",
+      "vars": [
+        "token"
+      ],
+      "svc": "screen-service",
+      "path": "/api/screen/share/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8088",
+      "raw": "/api/screen/component/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "screen-service",
+      "path": "/api/screen/component/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8088",
+      "raw": "/api/screen/component/list/{screenId}",
+      "vars": [
+        "screenId"
+      ],
+      "svc": "screen-service",
+      "path": "/api/screen/component/list/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/comments/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/comments/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/comment/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/comment/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/subscription/list/{userId}",
+      "vars": [
+        "userId"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/subscription/list/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/comments/replies/{parentId}",
+      "vars": [
+        "parentId"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/comments/replies/0",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/comment/replies/{parentId}",
+      "vars": [
+        "parentId"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/comment/replies/0",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/approval/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/approval/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/rule/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "alert-service",
+      "path": "/api/alert/rule/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/notify-group/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "alert-service",
+      "path": "/api/alert/notify-group/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/contact/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "alert-service",
+      "path": "/api/alert/contact/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8090",
+      "raw": "/api/alert/channel/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "alert-service",
+      "path": "/api/alert/channel/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8091",
+      "raw": "/api/ai/insight/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "ai-service",
+      "path": "/api/ai/insight/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8091",
+      "raw": "/api/ai/chat/history/{conversationId}",
+      "vars": [
+        "conversationId"
+      ],
+      "svc": "ai-service",
+      "path": "/api/ai/chat/history/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8092",
+      "raw": "/api/openapi/webhook/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "openapi-service",
+      "path": "/api/openapi/webhook/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8092",
+      "raw": "/api/openapi/webhook/list/{appId}",
+      "vars": [
+        "appId"
+      ],
+      "svc": "openapi-service",
+      "path": "/api/openapi/webhook/list/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8092",
+      "raw": "/api/openapi/app/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "openapi-service",
+      "path": "/api/openapi/app/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/tenant/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "admin-service",
+      "path": "/api/admin/tenant/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/config/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "admin-service",
+      "path": "/api/admin/config/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/config/public/{configKey}",
+      "vars": [
+        "configKey"
+      ],
+      "svc": "admin-service",
+      "path": "/api/admin/config/public/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/config/key/{configKey}",
+      "vars": [
+        "configKey"
+      ],
+      "svc": "admin-service",
+      "path": "/api/admin/config/key/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8093",
+      "raw": "/api/admin/audit/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "admin-service",
+      "path": "/api/admin/audit/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8094",
+      "raw": "/api/file/view/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "file-service",
+      "path": "/api/file/view/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8094",
+      "raw": "/api/file/info/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "file-service",
+      "path": "/api/file/info/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8094",
+      "raw": "/api/file/download/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "file-service",
+      "path": "/api/file/download/1",
+      "skipped": "export/stream"
+    },
+    {
+      "port": "8095",
+      "raw": "/api/schedule/job/{id}",
+      "vars": [
+        "id"
+      ],
+      "svc": "schedule-service",
+      "path": "/api/schedule/job/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8095",
+      "raw": "/api/schedule/job/{id}/logs",
+      "vars": [
+        "id"
+      ],
+      "svc": "schedule-service",
+      "path": "/api/schedule/job/1/logs",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8096",
+      "raw": "/api/monitor/services/{serviceName}/instances",
+      "vars": [
+        "serviceName"
+      ],
+      "svc": "monitor-service",
+      "path": "/api/monitor/services/1/instances",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8096",
+      "raw": "/api/monitor/health/{serviceName}",
+      "vars": [
+        "serviceName"
+      ],
+      "svc": "monitor-service",
+      "path": "/api/monitor/health/1",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8083",
+      "raw": "/api/datasource/{id}/tables/{tableName}/columns",
+      "vars": [
+        "id",
+        "tableName"
+      ],
+      "svc": "datasource-service",
+      "path": "/api/datasource/1/tables/1/columns",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    },
+    {
+      "port": "8089",
+      "raw": "/api/collab/comments/target/{targetType}/{targetId}",
+      "vars": [
+        "targetType",
+        "targetId"
+      ],
+      "svc": "collab-service",
+      "path": "/api/collab/comments/target/1/901",
+      "status": 429,
+      "code": 429,
+      "msg": "IP rate limit exceeded. Try again later.",
+      "ctype": "application/json",
+      "bytes": 77,
+      "json": {
+        "code": 429,
+        "message": "IP rate limit exceeded. Try again later.",
+        "data": null
+      }
+    }
+  ]
+}

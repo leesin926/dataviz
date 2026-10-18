@@ -7,7 +7,6 @@ import type { ChartData } from '../renderer/BaseRenderer'
  */
 export function buildMapOption(config: ChartConfig, data: ChartData): EChartsOption {
   const mapName = (config.options?.mapName as string) || 'china'
-  const measure = data.measures[0] || 'value'
   const mapData = data.dimensions.map((dim, i) => ({
     name: dim,
     value: data.series[0]?.data[i] as number,

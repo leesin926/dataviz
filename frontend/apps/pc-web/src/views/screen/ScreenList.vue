@@ -60,6 +60,10 @@
             <el-button link><el-icon><More /></el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="collab">{{ t('collab.drawerShort') }}</el-dropdown-item>
+                <el-dropdown-item v-permission="'collab:write'" command="apply">
+                  {{ t('collab.apply') }}
+                </el-dropdown-item>
                 <el-dropdown-item command="clone">{{ t('common.clone') }}</el-dropdown-item>
                 <el-dropdown-item command="delete" divided>{{ t('common.delete') }}</el-dropdown-item>
               </el-dropdown-menu>
@@ -95,6 +99,8 @@
         <el-button type="primary" @click="copy(embedCode)">{{ t('screen.copyEmbed') }}</el-button>
       </template>
     </el-dialog>
+
+    <CollabDrawer v-model="collabVisible" target-type="SCREEN" :target-id="collabId" :target-name="collabName" />
   </div>
 </template>
 
@@ -107,6 +113,7 @@
   import type { Screen } from '@dataviz/shared-types'
   import { rowsOf, totalOf } from '@dataviz/shared-types'
   import {
+    applyApproval,
     cloneScreen,
     deleteScreen,
     publishScreen,
@@ -114,6 +121,7 @@
     listScreens,
     unpublishScreen,
   } from '@dataviz/api-client'
+  import CollabDrawer from '@/components/CollabDrawer.vue'
 
   const router = useRouter()
   const { t } = useI18n()
@@ -261,6 +269,34 @@
   function onCommand(cmd: string, s: Screen) {
     if (cmd === 'clone') handleClone(s)
     else if (cmd === 'delete') handleDelete(s)
+    else if (cmd === 'collab') openCollab(s)
+    else if (cmd === 'apply') handleApply(s)
+  }
+
+  const collabVisible = ref(false)
+  const collabId = ref<string | number>('')
+  const collabName = ref('')
+
+  function openCollab(s: Screen) {
+    collabId.value = s.id
+    collabName.value = s.name ?? ''
+    collabVisible.value = true
+  }
+
+  /** 审批通过不会上线，驳回也锁不住发布按钮 —— 这句必须出现在申请之前，见 collab.applyConfirm */
+  async function handleApply(s: Screen) {
+    const confirmed = await ElMessageBox.confirm(
+      t('collab.applyConfirm', { name: s.name }),
+      t('collab.apply'),
+      { type: 'info', confirmButtonText: t('common.confirm'), cancelButtonText: t('common.cancel') },
+    ).catch(() => false)
+    if (!confirmed) return
+    try {
+      await applyApproval({ targetType: 'SCREEN', targetId: s.id })
+      ElMessage.success(t('collab.applied'))
+    } catch (e) {
+      ElMessage.error((e as Error).message)
+    }
   }
 
   onMounted(loadData)

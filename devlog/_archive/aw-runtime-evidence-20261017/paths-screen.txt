@@ -1,0 +1,12 @@
+GET /api/screen/{id} PUT /api/screen/{id} DELETE /api/screen/{id}
+PUT /api/screen/{id}/variant
+PUT /api/screen/component POST /api/screen/component
+POST /api/screen
+POST /api/screen/{id}/unpublish
+POST /api/screen/{id}/share
+POST /api/screen/{id}/publish
+POST /api/screen/{id}/clone
+GET /api/screen/share/{token}
+GET /api/screen/list
+GET /api/screen/component/{id} DELETE /api/screen/component/{id}
+GET /api/screen/component/list/{screenId}

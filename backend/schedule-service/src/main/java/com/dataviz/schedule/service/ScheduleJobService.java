@@ -3,13 +3,21 @@ package com.dataviz.schedule.service;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.schedule.dto.ScheduleJobCreateDTO;
 import com.dataviz.schedule.dto.ScheduleJobUpdateDTO;
+import com.dataviz.schedule.vo.JobHandlerVO;
 import com.dataviz.schedule.vo.ScheduleJobLogVO;
 import com.dataviz.schedule.vo.ScheduleJobVO;
+
+import java.util.List;
 
 /**
  * 调度任务服务接口
  */
 public interface ScheduleJobService {
+
+    /**
+     * 可被调度的处理器清单
+     */
+    List<JobHandlerVO> listHandlers();
 
     /**
      * 创建任务

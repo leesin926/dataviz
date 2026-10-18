@@ -19,7 +19,7 @@ export function buildLineOption(config: ChartConfig, data: ChartData): EChartsOp
     series: data.series.map((s) => ({
       name: s.name,
       type: 'line' as const,
-      data: s.data,
+      data: s.data as (number | string | null)[],
       smooth,
       showSymbol,
       areaStyle: showArea ? { opacity: 0.3 } : undefined,

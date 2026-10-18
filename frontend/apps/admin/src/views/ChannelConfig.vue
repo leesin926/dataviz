@@ -275,7 +275,6 @@
   const keyword = ref('')
   const typeFilter = ref('')
   const togglingId = ref<string | number>('')
-  const testingId = ref<string | number>('')
 
   const dialogVisible = ref(false)
   const editingId = ref<string | number>('')
@@ -333,7 +332,7 @@
   )
 
   function sourceLabel(source?: string): string {
-    const key = `channel.testSourceKind.${String(source ?? '').toLowerCase().replace(/_([a-z])/g, (m, c) => c.toLowerCase())}`
+    const key = `channel.testSourceKind.${String(source ?? '').toLowerCase().replace(/_([a-z])/g, (_m, c) => c.toLowerCase())}`
     return te(key) ? t(key) : String(source ?? '')
   }
 

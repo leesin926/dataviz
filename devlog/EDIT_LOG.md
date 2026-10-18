@@ -1647,3 +1647,553 @@ API-49 的根缺陷有两句：**列表页读的 `status/level/condition/notify/
 本文件；docs/10（**D75** 十条 + **AQ1~AQ6** 阶段行 + 阶段 AQ 门禁读数表 + 关键文件一条 + 变更记录一行；就地更正四处：**AO3b** 行（API-49 → 已闭合，但只到契约与代码面）、**D73⑨** 末段补一句"已由 AQ 闭合"、已知风险两行划线 + 新增"老收件人键与静默回退"一行）；docs/12（头注新增阶段 AQ 一条 bullet ⇒ 缺陷编号**累计仍 49 条**，本轮闭合既有缺陷而非新立 + 新章 **19.26**（19.26.1~19.26.9：起点核查 / DDL 三条判据与生命周期表 / 端点与两个实现形状 / `Source` 四态与 SPI / 管理端界面判据 / API-49 闭合逐条证据表 / D1~D10 / 门禁表 / 未做清单））。
 
 **收官时按当前文件状态重跑读数，抓出并就地改掉三处过期或过度声明**（这一条本身值得记，它是"台账数字会随后续轮次腐坏"的实例）：① "后端 26 个新文件" ⇒ **22 个新文件 + 11 个既有文件被改**（按 `git status` 的 untracked/modified 分档重数，docs/10 变更记录③ 与报告 19.26.3 两处同改）；② 报告 19.24.2 那张渠道表里 EMAIL 的字段数与"合计 25 个声明" ⇒ 本轮 `to`/`receivers`/两个 `mobiles` 从契约退场后实为 **21 个**（9+5+2+2+1+2；secret 6 / url 4 未变），AO/AP/AQ 三个轮次的 23/25/21 各自只在当轮成立 ⇒ 表里**保留三个读数并注明**而不是覆盖成一个；③ 19.25.4 那句"`fields()` 现在是 10 项"里的"现在"是 AP 轮的现在 ⇒ 加 ⏩ 标注指向 19.26.4。另把 `NotifyChannelController` 那句会误导的 javadoc 改成实话（第六节末段）。`devlog/aq-javac.sh` 这份临时装配脚本**随本条台账落盘即删**，不进产物。**git 未提交**（未被要求）。
+
+## 阶段 AR：alert-service AQ 新增功能自动化单元测试（2026-10-10，任务 #141）
+
+### 一、用户输入
+"对现有功能进行自动化测试" ⇒ 范围收敛为阶段 AQ 新增/改动的 `alert-service` 代码：通知对象（联系人、通知组、规则挂载）与派发链路取值对象。
+
+### 二、改动清单
+
+#### 1. 依赖
+- `backend/alert-service/pom.xml`
+  - 加入 `spring-boot-starter-test`（test scope）。
+  - `spring-boot-starter-mail` 已在 AP 轮加入，本轮复用。
+
+#### 2. 测试辅助（新增 1 文件）
+- `backend/alert-service/src/test/java/com/dataviz/alert/test/MybatisPlusTableInfoHelper.java`
+  - 在纯 JUnit 环境下初始化 MyBatis-Plus `TableInfoHelper` lambda 缓存，否则 `LambdaUpdateWrapper`/`LambdaQueryWrapper` 会抛 `can not find lambda cache for this entity`。
+
+#### 3. 测试类（新增 5 文件，39 条用例）
+- `backend/alert-service/src/test/java/com/dataviz/alert/engine/notifier/NotifyTargetsTest.java`（4 条）
+- `backend/alert-service/src/test/java/com/dataviz/alert/service/impl/AlertNotifyTargetServiceImplTest.java`（12 条）
+- `backend/alert-service/src/test/java/com/dataviz/alert/service/impl/AlertContactServiceImplTest.java`（9 条）
+- `backend/alert-service/src/test/java/com/dataviz/alert/service/impl/AlertNotifyGroupServiceImplTest.java`（7 条）
+- `backend/alert-service/src/test/java/com/dataviz/alert/service/impl/AlertRuleServiceImplTest.java`（7 条）
+
+### 三、运行结果
+
+```bash
+mvn -o test -pl alert-service -am
+# Tests run: 39, Failures: 0, Errors: 0, Skipped: 0
+# BUILD SUCCESS
+```
+
+首次运行前 `spring-boot-starter-mail` 与 `spring-boot-starter-test` 离线缺失，已用一次在线命令拉取；后续全部离线通过。
+
+### 四、关键修法
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| `can not find lambda cache for this entity` | 无 Spring 上下文，MP lambda 缓存空 | `MybatisPlusTableInfoHelper.initFor(...)` |
+| `deleteById(any())` 歧义 | `BaseMapper` 重载 | `any(Long.class)` |
+| `NotifyTargets` 单例断言失败 | `of()` 永远 new | 改判 `source()` 与空集合 |
+| options 顺序不对 | stub 未按服务层排序 | stub 按 SQL ORDER BY 顺序构造 |
+| 禁用行被解析 | mock 透传禁用行 | stub 返回空列表模拟 DB 过滤 |
+
+### 五、证据边界
+
+- 本批是**纯单元测试**，Mock 外部依赖，不启动容器、不写库、不打端口。
+- **不能替代 AQ 运行时判据 D1~D10**；D1~D10 仍需用户重启 8090 并登录后验收。
+- git 未提交。
+
+### 六、三份台账同步
+
+- `docs/10-移动端大屏重构进度表.md`：变更记录新增阶段 AR 一行。
+- `docs/12-接口测试报告.md`：新增 §19.27。
+- 本文件新增本节。
+
+---
+
+## 2026-10-16 · 阶段 AS：R2 后端壳实现 + R1 注解收口 + R4 清理（任务 **#142~#149**，决策 **D76** / 报告 **19.28**，推进 **API-21 / API-23 / API-29** 的代码半区，新登记 **API-50~API-57**）
+
+**用户驱动指令原话**："开始完成所有的功能点，完成之后在调整，测试"。这句话**有意越过** docs/10 §6.8 冻结的排期主张（"R0 严格先于 R1 / 在打出第一个真实 403 之前不再往未验证的机制上堆码"）。换来的口径写在每一行里：**只有 `mvn test` 退出码与单元测试证据的，一律只写成"代码面已证"**；运行时判据 **J1~J7**（报告 19.28.9）全部留给用户，本文件不替它们宣布通过。
+
+### 〇、本轮真实数量（`git status --porcelain -uall` 实测）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 已跟踪文件被改 | **73** | 代码/配置 **70** + 台账本体 **3**（本文件、docs/10、docs/12） |
+| 已暂存 `git mv`（归档不删） | **3** | `PermissionFilter.java` / `ScreenWebSocketEndpoint.java` / `ScreenDataPusher.java` |
+| 新文件 | **68** | 后端主源码 **34** + 后端测试源码 **21** + 前端新文件 **3** + SQL 补丁 **3** + 归档与审计脚本 **7** |
+
+后端主源码 34 按模块：admin 7 / analysis 10 / collab 6 / common-core 2 / datasource 1 / etl 3 / openapi 2 / screen 3。测试源码 21 按模块：admin 2 / alert 6 / analysis 2 / datasource 1 / etl 8 / screen 2。
+
+⚠️ **一条数量口径的自我更正**：任务 #149 标题与报告 19.28.12 里"48 个新文件"是 `git status --porcelain`（**按目录折叠**）的 entries 读数，逐文件展开是 **68**。数量必须带口径写，否则下一轮重数会把它读成"文件变了"。
+
+### 一、AS1（#142）R2-④：openapi 的 HMAC 验签 + Redis 限流
+
+- [2026-10-16] `backend/openapi-service/src/main/java/com/dataviz/openapi/support/OpenApiSignature.java` — **新建**：`X-App-Key` / `X-Timestamp` / `X-Nonce` / `X-Signature` 四头；规范串 = 方法 + 带 query 的路径 + 时间戳 + nonce；`SKEW_SECONDS = 300`（±5 分钟）；HMAC-SHA256，签名比对走定长比较。
+- [2026-10-16] `backend/openapi-service/src/main/java/com/dataviz/openapi/support/CachedBodyHttpServletRequest.java` — **新建**：验签要读 body，而读一次之后 Spring 的 `@RequestBody` 就没东西可读；这个包装类把 body 缓存成可重读流。是"验签"与"转发 body"两件事共存必须付的代价。
+- [2026-10-16] `backend/openapi-service/src/main/java/com/dataviz/openapi/filter/OpenApiAuthFilter.java` — 改写（+206 行）：验签失败按 4xx 拒；配额限流走 `CacheHelper` 的 Redis 固定窗口，超配额回 **429 + "超过应用配额 N 次/分钟"**。
+- [2026-10-16] `OpenApiController.routeRequest()` — **原样保留 TODO 桩**（仍回 "Internal service integration pending"）。⇒ 本轮**没有**新开 SSRF 面，因为根本还没往外发请求；把占位改成"转发成功"正是 §6.8 明令不做的动作。**零测试**：openapi-service 本轮没建 `src/test`（验签逻辑的可测半区在 `OpenApiSignature`，但桩端点本身没什么可断言）。
+
+### 二、AS2（#143）R2-③：导出全量，绕开单次查询 5000 行天花板
+
+- [2026-10-16] `backend/analysis-service/src/main/java/com/dataviz/analysis/controller/ExportController.java` — 近重写（diff 452 行）：`PAGE_ROWS = 5000` **逐页取** + **流式写**；Excel 用 `SXSSFWorkbook(ROW_WINDOW = 200)`（窗口外行落磁盘临时表，`finish()` 里 `dispose` 才带走它们），CSV 用 `CSVWriter` 配 `OutputStreamWriter`；导出先到 `File.createTempFile("analysis-export-", ...)` 再整体回写，异常路径 `quietDelete` 兜住临时文件。
+- 同文件 — `MAX_EXPORT_ROWS = 100000` 是**硬上限**，取到它就 `truncated=true`；响应头两条一起给：**`X-Export-Rows`** 与 **`X-Export-Truncated`**（AK2 那条"截断必须对调用方可见"的口径延续）。`Content-Disposition` 同时给 `filename` 和 `filename*=UTF-8''`（RFC 5987），中文文件名两端都能显示。
+- 同文件 — **`applyStableOrder()` 是本轮最值得记的一条判据**：`LIMIT/OFFSET` 在没有全序时是未定义行为，同一个 offset 两次请求可能落到不同行，拼出的文件**既重复又缺失而行数上看不出来**。所以调用方没给排序时用结果列本身补一份全序（含聚合别名，MySQL 的 `ORDER BY` 认别名）；**补不出全序**（例如中文列名过不了标识符白名单）时**只取满一页就停并让 `X-Export-Truncated` 说实话**，而不是硬分页产出一个看起来成功的文件。探针页（`limit=1, offset=0`）只拿列名定序，真正的行从 offset 0 重取、不复用它。
+- [2026-10-16] `backend/analysis-service/src/main/java/com/dataviz/analysis/dto/ExportDTO.java` — 加 `Boolean allRows`。
+- [2026-10-16] `frontend/packages/api-client/src/modules/analysis.ts` — 加 `ExportedFile` 型 + `exportQueryResult(...)`（从响应头读回 rows/truncated，而不是只回一个 blob）；数据权限规则的 6 个函数同批加（见第四节）。
+- [2026-10-16] `frontend/packages/shared-types/src/query.ts` — `truncated?: boolean` 等字段 + 数据权限三型（见第四节）。
+- [2026-10-16] `frontend/apps/pc-web/src/views/analysis/AnalysisView.vue` — 导出对话框加"全量"开关，并把 `truncated` 显示成一句人话（+77 行）。
+- ⚠️ 未取证：真实大表导出的行数与"不 OOM"必须登录后点一次才算（J2）。
+
+### 三、AS3（#144）R2-⑤：License 真校验 / 大屏 WS 推送 / collab 审批服务层
+
+**License（admin-service 8093）**
+- [2026-10-16] `backend/admin-service/src/main/java/com/dataviz/admin/support/LicenseCodec.java` — **新建**：签名校验 + 到期判定，替掉原先"恒 valid"的假实现；**签发也在这一类里**（`issue(secret, edition, issuedTo, issuedAt, expiresAt, maxUsers, maxNodes)` + `fingerprint()`），主源码里**没有**独立的 `LicenseKeyGenerator` 类。
+- [2026-10-16] `backend/admin-service/src/test/java/com/dataviz/admin/support/LicenseKeyGeneratorTest.java` — **新建**：`printSampleKeys()` 打印"一张有效 + 一张已过期"的演示密钥，带 `@Disabled`（mvn test 里跑它没意义，还会往构建日志印密钥），**只在 IDEA 手工跑**；没有 `LICENSE_SECRET` 时退回 `demo-signing-secret` 并在输出里说明取的是哪一把。**放在测试类路径 ⇒ 打进不了 jar**，这是"代码里没有默认密钥"那条判据的另一半：签发器也不能进产物。**这条测试类的 `@Disabled` 当初用了却没 import，把整个后端测试门禁染红了几轮**，见第九节。
+- [2026-10-16] `backend/admin-service/src/main/java/com/dataviz/admin/entity/SysLicense.java` / `mapper/LicenseMapper.java` / `service/LicenseService.java` / `service/impl/LicenseServiceImpl.java` / `vo/LicenseVO.java` / `dto/LicenseActivateDTO.java` — **新建**六件，构成 `sys_license` 这张表的完整读写面。
+- [2026-10-16] `backend/admin-service/src/main/java/com/dataviz/admin/controller/LicenseController.java` — 三条端点改成 `R<LicenseVO>`；**未激活时 `data.activated=false` 而不是 `data=null`**（调用方少一个 `?? null` 分支，也就少一处"空指针还是空状态"的分歧）。
+- [2026-10-16] `backend/admin-service/src/main/resources/application.yml` — 加 `platform.license.secret: ${LICENSE_SECRET:}`，注释写明**没有代码内默认值**：留空则激活直接失败并说明原因，"回退到内置默认密钥"等于给所有部署发一把万能钥匙。
+- [2026-10-16] `backend/common/common-mybatis/src/main/java/com/dataviz/common/mybatis/config/MybatisPlusConfig.java` — `IGNORE_TENANT_TABLES` 加 `"sys_license"`，注释说明"许可证是整个部署的属性，不属于某个租户"。**这条改动使本轮重启面外溢到依赖 `common-mybatis` 的进程**（第九节）。
+- [2026-10-16] `deploy/sql/patch/2026-10-16-sys-license.sql` — **新建，已暂存、未执行**。
+
+**大屏分享页变更推送（screen-service 8088）**
+- [2026-10-16] `backend/screen-service/src/main/java/com/dataviz/screen/websocket/ScreenChangeBroadcaster.java` / `ScreenSharePushHandler.java` / `ScreenSharePushConfig.java` — **新建**三件：按 `shareToken` 分频道（`/api/screen/ws/share/**`），大屏更新/发布/下架/删除时推一帧 `{screenId, reason, time}`。
+- [2026-10-16] `backend/screen-service/src/main/java/com/dataviz/screen/service/impl/ScreenServiceImpl.java` — 注入 `ScreenChangeBroadcaster`，写路径接上广播。
+- [2026-10-16] `backend/gateway-service/src/main/java/com/dataviz/gateway/filter/AuthGlobalFilter.java` — 免登 `WHITE_LIST` 加 `"/api/screen/ws/share/**"`（分享页访客没有 JWT）。⚠️ **两份白名单并存**：`common-security/SecurityConfig.EXCLUDE_PATHS` 是另一处独立清单，本轮只读确认、未合并。
+- [2026-10-16] `backend/_archive/screen-ws-cleanup-20261016/` — 旧的 `ScreenWebSocketEndpoint.java` + `ScreenDataPusher.java` **`git mv` 归档**（含 `target/classes` 副本 + `README.md` 说明去处），未删除。
+- [2026-10-16] `backend/screen-service/src/test/java/com/dataviz/screen/websocket/{ScreenChangeBroadcasterTest,ScreenSharePushHandlerTest}.java` — **新建**，共 11 条用例。
+- [2026-10-16] `frontend/packages/api-client/src/screenPush.ts` — **新建**：`subscribeScreenChanges(shareToken, {onChanged, onReconnect})`，指数退避重连（`FIRST_DELAY_MS=1000` → `MAX_DELAY_MS=30000`）；**`file://` 等非法协议直接按"没有推送"降级**（Electron/uni 打包态下构造 `ws://` 只会让重连计时器空转）；模块**不猜怎么合并变更**，回调只说"这张屏变了"，由调用方去重拉。`index.ts` 加 `export * from './screenPush'`。
+- [2026-10-16] `frontend/apps/pc-web/src/views/screen/ScreenShare.vue` — 首帧拿到 `shareToken` 才订阅（令牌就是这条通道的凭证）；推送回来后重拉失败 ⇒ 显示"链接不可用"而不是停在旧画面；`onBeforeUnmount` 退订。
+
+**collab 审批服务层（collab-service 8089）**
+- [2026-10-16] `backend/collab-service/src/main/java/com/dataviz/collab/service/ApprovalService.java` / `impl/ApprovalServiceImpl.java` / `enums/ApprovalStatus.java` / `dto/ApprovalCreateDTO.java` / `dto/ApprovalDecisionDTO.java` / `vo/ApprovalVO.java` — **新建**六件：把原先"`ApprovalController` 直穿 mapper、没有状态机"改成"待审 → 通过/驳回"的**单向流转，驳回后不可再决策**。
+- [2026-10-16] `backend/collab-service/src/main/java/com/dataviz/collab/controller/ApprovalController.java` — 改走服务层（diff 104 行）。
+
+### 四、AS4（#145）R2-②：行/列数据权限的规则来源与应用（API-21）
+
+**起点**：`PermissionFilter` 读 `perm:row:` / `perm:col:` 两个 Redis 键，而**全后端零写入方** ⇒ "配了数据权限"从来没真的配过任何东西。这条不是"实现得弱"，是**规则来源这一环根本不存在**。
+- [2026-10-16] `backend/_archive/analysis-permission-filter-20261016/PermissionFilter.java` — 旧文件 **`git mv` 归档**（不删）。
+- [2026-10-16] `backend/analysis-service/src/main/java/com/dataviz/analysis/entity/DataPermRule.java` / `mapper/DataPermRuleMapper.java` / `service/DataPermRuleService.java` / `service/impl/DataPermRuleServiceImpl.java` / `controller/DataPermRuleController.java` / `vo/DataPermRuleVO.java` / `vo/DataPermExplainVO.java` / `dto/DataPermRuleDTO.java` — **新建**八件：6 条端点，类级 `analysis:read` + 写侧方法级 `analysis:write`（D56 两档，**零新权限码**）。
+- [2026-10-16] `backend/analysis-service/src/main/java/com/dataviz/analysis/engine/DataPermission.java` / `DataPermissionResolver.java` — **新建**：三条语义落进 DDL 注释 —— **规则之间 OR（授权叠加取并集）、规则内条件 AND、有启用规则而当前用户一条都不命中 ⇒ deny-all**；四个占位符 `:userId` `:tenantId` `:username` `:deptId`。**fail-open 改成 fail-closed**：命中规则里若某条件在当前账号上求不出值，该条件一律不放开，全部求不出同样 deny-all（而不是退回"没限制"）；超管跳过，与 RBAC 拦截器短路口径一致。
+- [2026-10-16] `backend/analysis-service/src/main/java/com/dataviz/analysis/engine/SqlBuilder.java` — 加 `permissionPredicate(conditions)`（拼 `WHERE` 的唯一入口，且**在 `LIMIT` 之前** —— §6.8 给 R2-② 定的判据形态）与 `requireIdentifier(raw, label)`；`buildSql(...)` 多收谓词参数的重载。
+- [2026-10-16] `backend/analysis-service/src/main/java/com/dataviz/analysis/engine/QueryEngine.java` — 改动最大的既有文件（+150）：`execute()` 多收 `userId`；`rejectRestrictedReferences()` 把受限列的**引用**挡在编译期（不是把结果抹掉了事，那样 `GROUP BY 受限列` 会静默变成一堆空值）；`maskRestrictedColumns()` 兜结果侧；`resolveRowLimit()`；**缓存键 `cacheKey(sql, permission, tenantId, userId)` 纳入权限指纹** —— 这条是本轮最容易被漏掉的一处：不加则 A 用户的缓存会把 B 用户的全表结果发出去。
+- [2026-10-16] `backend/common/common-core/src/main/java/com/dataviz/common/core/sql/SqlIdentifiers.java` — **新建**：标识符白名单（AS5 抽出，`DatabaseOutputOperator` 与 datasource 写侧共用）。⚠️ **与 `SqlBuilder` 自带的那套并存、未合并**，登记为待收口项。
+- [2026-10-16] `backend/analysis-service/src/test/java/com/dataviz/analysis/engine/DataPermissionResolverTest.java` / `service/impl/DataPermRuleServiceImplTest.java` — **新建**，共 32 条。
+- [2026-10-16] `frontend/apps/admin/src/views/PermRuleConfig.vue` — **新建**：规则列表 + 表单（作用域类型 `USER`/`ROLE`、条件行、受限列多选）。
+- [2026-10-16] `frontend/apps/admin/src/router/index.ts` — 加 perm-rules 路由（`analysis:read`）；`frontend/apps/admin/src/locales/{zh-CN,en-US}.json` — 各 +78 行文案。
+- [2026-10-16] `frontend/packages/shared-types/src/query.ts` — `DataPermCondition` / `DataPermRule` / `DataPermRulePayload` / `DataPermExplain` 四型 + `truncated?`；`api-client/modules/analysis.ts` — `pagePermRules` / `getPermRule` / `createPermRule` / `updatePermRule` / `deletePermRule` / `explainPermRules` 六个函数。`DataPermExplainVO` + `explainPermRules()` 是给界面说清"当前账号实际被哪些规则拦住了"的口子（denyAll / rowPredicate / restrictedColumns / appliedRuleNames / enabledRuleCount）——**没有它，配错规则的人只能靠猜**。
+- [2026-10-16] `deploy/sql/patch/2026-10-16-data-permission-rule.sql` — **新建，已暂存、未执行**。
+
+### 五、AS5（#146）R2-①：ETL 真执行链
+
+- [2026-10-16] `backend/datasource-service/src/main/java/com/dataviz/datasource/dto/WriteBatchDTO.java` — **新建**；`controller/InternalDatasourceController.java` — 加写端点（+26）：非只读，走 `/**/internal/**` + `X-Internal-Token` + 网关 `DENY_LIST`；`service/DatasourceService.java` + `impl/DatasourceServiceImpl.java` — 批量写实现（+133），**列名/表名过 `SqlIdentifiers`，值只走绑定参数**。口令始终留在 datasource-service，etl 侧一个业务库凭据都不握。
+- [2026-10-16] `backend/common/common-core/src/main/java/com/dataviz/common/core/client/DatasourceWriteClient.java` — **新建**：与既有只读客户端同层，etl 通过它读写目标库。
+- [2026-10-16] `backend/etl-service/src/main/resources/application.yml` — 加 `datasource-service.base-url` + 两条读超时（query 35s / write 60s）与 `internal.api.token`，注释写明"与各服务配成同一个值，否则内部端点回 403"。
+- [2026-10-16] `backend/etl-service/src/main/java/com/dataviz/etl/engine/{DagExecutor,DagRunSummary,DagExecutionException,OperatorFactory}.java` + `operator/NodeContext.java` + `operator/impl/{DatabaseInput,DatabaseOutput,Filter,Aggregate}Operator.java` + `service/EtlExecutionService.java` + `impl/EtlExecutionServiceImpl.java` — 真执行链。`DagRunSummary` / `DagExecutionException` 与 `OperatorFactory` 别名解析是**新建/重改**：`input` / `database_input` 这类同义写法必须都解析得到，否则前端画布存下来的 DAG 跑不起来（`OperatorFactoryAliasTest` 专门锁这条）。
+- [2026-10-16] `backend/etl-service/src/main/java/com/dataviz/etl/engine/operator/impl/DatabaseOutputOperator.java` — **新建**：**`append` 是唯一实现的写模式**，`overwrite` / `upsert` **明确拒绝并在报错里说理由**（overwrite 要先 TRUNCATE/DELETE、upsert 要先定主键，都是不可回滚动作，不该由一个"还没实现"的分支静默变成 DELETE）。
+- [2026-10-16] `backend/etl-service/src/main/java/com/dataviz/etl/engine/DagExecutor.java` — **修掉一个真 bug**：原先把 `CancellationException` 当失败记账，会把"用户主动停"写成"任务挂了"（取消 ≠ 失败）。
+- [2026-10-16] `backend/etl-service/src/main/java/com/dataviz/etl/service/impl/EtlTaskServiceImpl.java` — `startTask` 加 RUNNING 守卫（同一任务在跑时不重复起）。
+- [2026-10-16] `backend/etl-service/src/main/java/com/dataviz/etl/controller/EtlOperatorController.java` — 路径修正为 `/api/etl/operator`（此前控制器声明的路径与前端调用不一致）。
+- [2026-10-16] `backend/etl-service/src/test/java/...` — **新建 8 个测试类、65 条用例**（本批最大）：`DagExecutorAccountingTest`、`OperatorFactoryAliasTest`、`NodeContextConfigTest`、四个算子各自的行为测试、`EtlExecutionServiceImplTest`。
+- ⚠️ 三条**当下就存在的边界**（登记，不是"做一半"）：① 读侧只有 `limit` 配置、**没有分页** ⇒ 单节点读大表被 datasource 的 5000 行天花板静默截断（**API-56**）；② `etl_task_instance` **至今没有任何写入方**，且状态码取值与 `etl_task_log` 冲突（**API-55**）；③ ETL 前端日志把非失败状态的说明文也叫"错误"。
+- [2026-10-16] `frontend/packages/api-client/src/modules/etl.ts` — 上面③的前端半区：`l.errorMessage` 只在 `status` 为 `FAILED`/`ERROR` 时叫"错误"，否则叫"提示"。**"一次成功但没搬完"的搬运被叫成故障，而"没搬完"恰恰是看历史的人最需要知道的那件事。**
+
+### 六、AS6（#147）R1：剩余 handler 的三档处置 + 码表补丁
+
+**先更正台账数字**：§6.8 与本文件此前写的"剩余 **97** 个 handler"、任务标题里的"**82** 个"都**不是实测值**。本轮按"方法上的 `@(Get|Post|Put|Delete|Request)Mapping`，类级 `@RequestMapping` 不计"重跑（脚本 `backend/_archive/r1-handler-audit-20261016/count-handlers.cjs`，已归档不删）：handler 总数 **279**、有 `@RequiresPermission` **253**、无 **26**、零注解 controller **7**。开工前的 247/142/105 是 2026-09-22 口径。
+（**247 → 279 的 +32 未逐条核对**，归因假设 = 09-22 之后新增的四个控制器 `NotifyChannel` 9 + `AlertContact` 8 + `AlertNotifyGroup` 8 + `DataPermRule` 6 = 31 再加 1 条；**定级为推断，不是实测**。）
+
+- [2026-10-16] `backend/schedule-service/.../ScheduleJobController.java` — 类级 `schedule:read` + 6 个写方法 `schedule:write`；`ScheduleDashboardController.java` — 纯只读，只挂类级。
+- [2026-10-16] `backend/ai-service/.../{Chat,Insight,Nl2Sql,Recommend}Controller.java` — `ai:read` / `ai:write`，`Recommend` 只读。
+- [2026-10-16] `backend/monitor-service/.../{Health,Monitor,ServiceRegistry}Controller.java` — `MonitorController` 类级 `monitor:read`，`HealthController./update` 与方法级写档。**临时口径写明**：这 5 + 1 条真实调用方是**无用户会话的服务进程**，正解是移进 `/internal/` + `X-Internal-Token`；实测**零调用方** ⇒ 现在封掉不产生故障，但"移路径"是决策，不由本轮擅自做。
+- [2026-10-16] `backend/collab-service/.../{Collab,Comment,Subscription}Controller.java` — 补的是 **D56 决议里欠的 `collab:read` / `collab:write`**，代价写进 javadoc（同一资源两套 URL ⇒ **API-50**；`SubscriptionController` 的 `/list/{userId}`、`/check?userId=` 被操作主体取自调用方参数 ⇒ **API-51**，属 **API-34 家族**，本轮只登记）。
+- [2026-10-16] `backend/openapi-service/.../{ApiKey,App,Webhook}Controller.java` — `openapi:read` / `openapi:write`。
+- [2026-10-16] `backend/file-service/src/main/java/com/dataviz/file/controller/FileController.java` — 注解**只挂方法、不挂类级**（+14）。理由必须记下来：`/view/{id}` 是免登直读地址（网关 `WHITE_LIST` 与 `SecurityConfig.EXCLUDE_PATHS` 都列了它），**类级读码会把这个方法一并拦住 ⇒ 大屏背景图当场变 403**。代价是本类新增端点不会"默认受保护"，得逐条想清楚它是公开面还是登录面。`download` 的 javadoc 记下 **API-52**（`api-client/modules/file.ts:9` 注释描述的"非 `image/*` 走 `/download` 免登直读"实际不存在，两份白名单都只列 `view`）。
+- [2026-10-16] `backend/openapi-service/.../{Callback,OpenApi}Controller.java` — `CallbackController` 3 条**刻意不套**（外部回调，本轮再暴露顺序缺陷 **API-53**：先过 HMAC 验签、再撞 JWT 拦截器 ⇒ 签名完全正确的第三方回调拿到 401；修法是回调进免登白名单，但那等于为一个桩功能扩大公开面）；`OpenApiController` 1 条不套（appKey/appSecret 自证），其 `getClientIp()` 信任 `X-Forwarded-For` 最左值并写进 `open_api_log.ip` ⇒ **API-54**，本轮没动（网关侧已按 D58 修，服务侧改法要连头部约定一起定）。
+- [2026-10-16] `auth` 的 `AuthController` **9** 条 + `TokenController` **3** 条（"谁都能操作自己"，套 RBAC 会把自己锁死；见 **API-34** / #91）、3 个 `Internal*Controller` 共 **9** 条（`user` 6 / `datasource` 2 / `model` 1，内部面已有 X-Internal-Token + 网关 DENY_LIST）、`FileController.view` **1** 条、`CallbackController` **3** 条、`OpenApiController` **1** 条 ⇒ **12 + 9 + 5 = 26**，逐条在类 javadoc 写明理由。
+- [2026-10-16] `deploy/sql/patch/2026-10-16-r1-permission-codes.sql` — **新建，已暂存、未执行**。形态五条要点：① 5 个父目录行（`schedule` 55 / `ai` 45 / `file` 25 / `collab` 18 / `openapi` 12）+ 12 条按钮行**一律 `INSERT IGNORE ... SELECT p.id FROM sys_permission p WHERE p.permission_code='xxx'` 反查父 id，绝不硬编码**（2026-09-23-api30 那批探针行会让硬编码 id 撞唯一键，而 `INSERT IGNORE` **静默跳过**，症状是"跑了没报错但码表少了半壁"）；② `monitor` 两个码解析到既有目录；③ role 1 授权覆盖全部 17 个码，末尾校验 SELECT 期望 **17**；④ **role 2/3 的授权草稿整段注释掉** —— 它才是"谁能干什么"的那一刀，四个待决策项写在注释里（普通用户要不要 `collab:write`；**`file:write` 不给会让背景图上传立刻 403**；`openapi:write` 建议只给 role 2；`ai:write` 有 token 现金成本、`monitor:write` 封的是机器端点）；⑤ 首行 `SET NAMES utf8mb4`。**直接改库不踢 Redis 会话快照**（D55 边界①）⇒ 执行后**必须重新登录**。
+
+### 七、AS7（#148）R4：i18n 补齐 + `<html lang>` 随 locale + API-29 收口
+
+**先更正一条**：§6.8 R4 写的"ETL / alert / monitor 三块文案中英补齐"**在本轮开工前就已完成**（实测 admin 446/446、pc-web 441/441，双向 diff 为 0，这三块视图里没有中文残留）。本轮**不记成新工作**，只记"旧账已平"。真修的是三条"切了英文但没说给机器/组件库听"的缺口：
+
+- [2026-10-16] `frontend/apps/{admin,pc-web,pc-desktop}/src/locales/index.ts` — 新增 `applyHtmlLang()` 并在 `switchLocale()` 末尾调用；**`createI18n` 之后再补一次** `applyHtmlLang(i18n.global.locale.value)`。原因：`document.documentElement.lang` 一直停在 `index.html` 写死的 `zh-CN`，而**上次存了 `en-US` 的用户不经过切换按钮直接进来**，界面是英文而 lang 不会变 —— 读屏软件按它选发音（英文界面用中文音库念），浏览器按它决定是否弹"翻译此页"。
+- [2026-10-16] `frontend/apps/pc-desktop/src/App.vue` — 裸 `<router-view/>` 改成 `<el-config-provider :locale="epLocale">` + `computed(() => locale.value === 'en-US' ? en : zhCn)`。根因：`main.ts` 里 `app.use(ElementPlus, { locale: zhCn })` 的 locale **只在安装时生效**，所以登录页有中英切换按钮、切完组件内置文案（分页、表格空态、日期选择、弹框按钮）仍是中文。另两端早就是这个形状，本轮对齐。
+- [2026-10-16] `frontend/apps/pc-desktop/src/locales/en-US.json` — `appName: "DataViz 桌面端"` → `"DataViz Desktop"`：en-US 词典里**最后一个中文取值**（该键当前无代码引用，但它是新门禁的唯一红点）。
+- [2026-10-16] `frontend/scripts/i18n-parity.mjs` — **新建常驻门禁** + [同批] `frontend/package.json` 加 `"i18n:parity"`。三项判据：zh↔en 双向缺键、en-US 残留 CJK 取值、代码里**静态**用到的键必须有定义；模板字符串/变量传的键**单独报数量、不判失败**（静态扫描猜不出取值，判失败只会逼人把脚本改成永远绿）。ROOT 用 `fileURLToPath(new URL('..', import.meta.url))` —— 最初写的 `import.meta.dirname` 要 Node ≥20.11，而 package engines 写的是 ≥18。
+- [2026-10-16] `frontend/packages/permission/tsconfig.json` — **API-29 的剩余缺陷真身在这里**：重复目录（`composable/` vs `composables/`、`directive/` vs `directive.ts`）**本轮之前就已清掉**，但 §6.8 给的完成判据是"该包 `tsc` 不再靠 `grep -v TS6059` 兜底"，而这条**当时并未达成**（仍 11 条 TS6059）。根因不是目录，是 `"rootDir": "./src"` 与根 tsconfig 的 `paths: {"@dataviz/*": ["packages/*/src"]}` 冲突 —— 跨包类型自然落在 rootDir 之外。该包只有 `tsc --noEmit` 一个脚本、**从不产出** ⇒ rootDir 是多余约束，删掉该行后 `pnpm --filter @dataviz/permission typecheck` **EXIT=0**（实测）。
+- 如实登记三处**本轮没做**的：① `packages/permission/src/core/RouteGuard.ts` 那个类**外部零调用方**（真实守卫是 `guard.ts` 的 `createPermissionGuard`，`admin`/`pc-web` 用的都是它），javadoc 写明"保留用于自定义 token 来源"，不删；② `packages/pc-desktop/` 是**空目录**（git 也不跟踪），删除动作留给用户；③ `packages/screen-engine/src/ws/ScreenWebSocket.ts` 零业务引用（只被 `screen-engine/src/index.ts` barrel 再导出，没有任何 app 侧 import），只登记。
+
+### 八、AS8（#149）门禁读数
+
+| 门禁 | 命令 | 读数 |
+|---|---|---|
+| 后端全量编译 + 单元测试 | `mvn -o -f pom.xml test` | **EXIT=0 / BUILD SUCCESS**，**Tests run: 171, Failures: 0, Errors: 0, Skipped: 1**（唯一 skip = `LicenseKeyGeneratorTest`） |
+| └ 分模块 | 同上按 `[INFO] Building` 分段 | datasource 11 / etl 65 / analysis 32 / screen 11 / alert 39 / admin 13 = **171** |
+| i18n 词典对齐 | `pnpm i18n:parity` | admin **446/446**、pc-web **441/441**、pc-desktop **22/22**；双向缺键 0、en-US 中文取值 0；动态用键 admin 1 / pc-web 3 只报告 |
+| permission 包类型检查 | `pnpm --filter @dataviz/permission typecheck` | **EXIT=0**，不再 `grep -v TS6059` |
+| 三端打包 | `pnpm --filter <app> exec vite build` | admin EXIT=0（6.33s）/ pc-web EXIT=0（11.59s）/ pc-desktop EXIT=0（5.88s） |
+| 数据库 | 三份 SQL | **全部已暂存、未执行**，本文件落盘时仍未跑 |
+| 重启面 | 端口按各服务 `application.yml` 实测 | 直接改 Java 的 **12 个进程**（8080/8083/8084/8086/8088/8089/8091/8092/8093/8094/8095/8096）+ 因 `common-core`/`common-mybatis` 被改而需 Rebuild 的 8081/8082/8085/8087/8090。**本轮零重启，服务启停始终由用户操作。** |
+
+**本文件落盘后的收官复跑（2026-10-16 17:2x）**：`pnpm i18n:parity` ⇒ **exit=0**，逐行打印 `admin 446/446（动态用键 1 处未校验）`、`pc-web 441/441（3 处）`、`pc-desktop 22/22（0 处）` + `i18n parity OK`；`pnpm --filter @dataviz/permission typecheck` ⇒ **exit=0**。mvn 那份读数**没有重跑**（约 5 分钟，且重跑不会让证据更新），改用**新鲜度反证**：`find backend -name '*.java' -newer /tmp/as8-backend-test.log` ⇒ **0 个**，`find frontend -name '*.ts' -newer 同一份日志`（排除 `node_modules` / `dist`）⇒ **0 个** ⇒ 17:19 那份 `Tests run: 171 / BUILD SUCCESS` 仍然描述当前文件状态。三份台账的 markdown 表格完整性校验 ⇒ **bad rows 0**。
+
+**本轮拿到的一条门禁更正（影响此前所有"构建通过"的读法）**：`pnpm --filter <app> build` 实际是 `vue-tsc --noEmit && vite build`，本轮实测**三端全红，且三个原因各不相同** —— admin 的 `vue-tsc@1.8.27` 在 TypeScript 5.9 下**启动即崩**（一条类型错误都没报就 exit=1）；pc-web 跑起来了，报 **21 个文件**的类型错误，**全在本轮没碰过的既有代码**上（`packages/chart-engine` 12 个文件、`packages/etl-designer/src/graph/GraphManager.ts`、`packages/screen-engine/src/components/ScreenClock.vue`，以及 pc-web 自己的 `stores/{permission,user}.ts`、`views/dashboard/DashboardEditor.vue`、`views/screen/editor/{PropertyPanel.vue,editorState.ts}`）；pc-desktop 只报 `packages/query-engine/src/components/QueryResult.ts` —— **它根本不是 TS**，文件里是 `<template>` + `<style>`，即一个 SFC 存成了 `.ts` 后缀（同目录 `QueryHistory.ts` 同病，`index.ts` 还把两者 barrel 再导出）⇒ 登记 **API-57**，刻意不改名（任何 app 都没 import 这个 barrel ⇒ 运行时不可达）。
+⇒ **前端门禁从此写死为 `vite build` / `i18n:parity` / 包级 `typecheck` 三条，"构建通过"绝不能读作"类型检查通过"**。这条不是新发现（19.26 就记了 vue-tsc 崩），本轮新增的是后半截：**"全仓不可用"只在 admin 成立**，pc-web/pc-desktop 的 vue-tsc 是真跑并报红。
+
+### 九、刻意没做 / 未取证（登记，不擅自扩范围）
+
+① **零运行时取证**：没有真实 HTTP 调用、没有登录态、没有进程重启 —— AS1~AS7 的"已完成"一律只指**代码 + 编译 + 单元测试**层面；§6.8 那条主张被用户指令有意越过，代价就是 **J1~J7 全部悬空**（报告 19.28.9）。② **三份 SQL 不执行**，批准一份不等于批准下一份。③ **`routeRequest()` 保持 TODO 桩**、**`overwrite`/`upsert` 保持拒绝**：把占位改成假成功不是"完成功能点"。④ **八条新缺陷全部只登记不修**（API-50~API-57），每条在 19.28.10 写了"为什么不顺手修"。⑤ **两份免登白名单、两份标识符白名单并存未合并** —— 合并要同时动网关与 `common-security`、analysis 与 etl 两侧调用点。⑥ **R0 与登录半区本轮没有推进**：#61/#70/#76/#79/#85/#89/#90/#91/#95/#100/#120 仍开。⑦ **`git` 未提交**（未被要求）。⑧ 服务侧的 `getClientIp()`（API-54）没动，历史脏数据留在 `open_api_log.ip` 里。
+
+### 十、三份台账同步
+
+本文件（本节）；docs/10（**D76** 十四条 ①~⑭ + **横切阶段 AS** 一节含 AS1~AS8 八行 + 阶段 AS 门禁读数表 + 关键文件一条 + **十条**已知风险 + **两条**变更记录 + §6.8 内一个 ⏩ 覆写块：R1/R2/R4 ✅ 代码完成、R0/R3/R5 ⬜ 未变、四个作废数字列出）；docs/12（**§19.28**，19.28.1~19.28.12：门禁读数与"三端全红各有各的原因" / AS1 验签 / AS2 导出 / AS3 License+WS+审批 / AS4 行列权限 / AS5 ETL / AS6 三档处置含数量更正与码表形态 / AS7 i18n 三条真缺口 / J1~J7 判据与实测重启面 / API-50~API-57 / 陷阱表 / 证据边界）。
+
+**收官时按当前文件状态重跑，抓出并就地改掉五处过期、口径错误、或根本不存在（phantom）的声明**（这五条本身值得记，它们是"台账数字会随后续轮次腐坏"的又一实例）：① §6.8 的"剩余 97 个 handler"与任务标题的"82 个" ⇒ 实测 **26** 个未覆盖（总数 279，脚本口径写在 javadoc 与归档 README）；② 报告 19.26 那句"`vue-tsc --noEmit` 全仓不可用" ⇒ **只对 admin 成立**；③ 19.26 的 locale 读数（admin 372、pc-web 436）⇒ 本轮加键后 **446 / 441**，旧数作废；④ "48 个新文件"⇒ 那是目录折叠 entries 的读数，逐文件是 **68**（见第〇节）；⑤ **三份台账都把 `support/LicenseKeyGenerator.java` 写成了主源码新文件，而该文件不存在** —— 签发方法是 `LicenseCodec.issue()`，铸造**驱动**只在测试类 `LicenseKeyGeneratorTest`（`@Disabled`，因而打不进 jar）。docs/10 的 AS3 行与关键文件行、报告 19.28.4 已就地更正。第〇节那个"后端主源码 34"是逐条数出来的，**不含**这个 phantom。
+
+**本轮踩到、下次还会踩的四条**（全表见报告 19.28.11）：`@Disabled` 用了没 import ⇒ 而该模块此前**只跑过 `compile`、测试源码从没被 `test` 编过**，所以整个后端测试门禁在本批之后一直红，直到 AS6 收官跑全量才暴露（"**模块编译通过" ≠ "测试源码编译通过"**）；`mvn ... | tail` ⇒ 管道退出码取最后一个命令 ⇒ 出现过"日志里有 ERROR 但 exit=0"的假绿，改回整份重定向到日志再 `grep -a`；`node -e '...'` 在 Git Bash 被引号嵌套吃掉、python 本机不可用 ⇒ 一律写成 `.cjs` 文件再 `node file.cjs`；Java 8 源里 `@DisplayName` 内未转义的内层英文引号直接把字符串截断 ⇒ 中文语境用「」。
+
+**归档动作（全部 `git mv` / `mv`，零删除）**：`backend/_archive/analysis-permission-filter-20261016/`、`backend/_archive/screen-ws-cleanup-20261016/`（含 `target/classes` 副本）、`backend/_archive/r1-handler-audit-20261016/`（计数脚本 + README）、`frontend/_archive/i18n-audit-20261016/`（三份 `.tmp-i18n-*.cjs` 审计脚本）、`devlog/_archive/ledger-table-check-20261016/check-tables.cjs`（本文件用的 markdown 表格完整性校验器；三份台账每次落盘后跑一次，本轮读数为 `bad rows 0`）。
+
+---
+
+## 2026-10-16 · 阶段 AT + AU：四个"后端有实现、前端零入口"的服务接上界面，桌面端从 3 个文件写到能力面板（任务 **#150~#156**，决策 **D77 / D78** / 报告 **19.29**，新登记 **API-58~API-81**，结案 **API-57**）
+
+**用户驱动指令原话**："根据文档中的功能点先全部完成，完成后统一测试"。范围取自台账两处明文缺口：docs/10 **§6.4**（collab 8089 / schedule 8095 / monitor 8096 / openapi 8092"后端有实现、前端零入口"）与 **§6.5 / R3①**（pc-desktop"只有 `App.vue` / `Home.vue` / `LoginView.vue`，Electron 能力一项没做"）。纪律与 AS 同一条且代价也同一条：**本轮零 HTTP 调用、零登录、零重启**，所以"完成"一律只指**代码 + 编译 + 单元测试 + 静态门禁**，运行时判据 **U1~U15**（报告 19.29.8）整组交回用户。
+
+### 〇、本轮真实数量（`git status --porcelain -uall` 实测，**批次用 mtime 划**）
+
+⚠️ **口径先说**：AT/AU 与 AS 落在同一自然日、且两批都**未提交** ⇒ `git status` 分不出批次。这里用 **文件 mtime ≥ 2026-10-16 17:40** 划批（AS 那章落盘 17:42，其代码文件都在 17:0x 之前）。**这条口径有两个已知漏洞，都记下来**：① `git mv` 的产物 mtime 跟着**内容**走 ⇒ `query-engine/src/components/QueryResult.vue` 显示 09-17，落不进桶里，靠 19.29.7 的明文补回来；② 台账文件是"最后写的"，不能用来判批次。
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 改动文件（含重命名） | **101** | 新建 **37** + 修改 **63** + 重命名 **1**（`QueryResult.ts` → `.vue`） |
+| └ 后端 | **27** | 主源码 18 / 测试源码 7 / `pom.xml` 2；按服务：schedule 16（新建 8）+ collab 7（新建 3）+ monitor 2 + openapi 2 —— **后四个是本轮写入而不是"新读端点"**（第三节 AT4 的后端半边；这一条在收官前一度只记成"读了它们"） |
+| └ 前端 | **71** | pc-desktop **22** + pc-web **12** + chart-engine **12** + admin **7** + shared-types **6** + api-client **5** + etl-designer **2** + query-engine / screen-engine / shared-utils / 根 `tsconfig.json` / `pnpm-lock.yaml` 各 **1** |
+| └ 台账 | **3** | 本文件、docs/10、docs/12 |
+
+**零新增依赖**（除 `collab-service` 的 `spring-boot-starter-test`，scope test）；`pnpm-lock.yaml` 那一条是 `electron-builder` 声明后的解析变动，本轮**没装新包、没跑打包**。
+
+### 一、AT1（#150）schedule-service：四条静默失效一起修
+
+改的是 `ScheduleJobServiceImpl` / `ScheduleServiceImpl` / `ScheduleService` / `ScheduleJobService` / `JobExecutionServiceImpl` / `ScheduleJobController` / `ScheduleJobVO` / `pom.xml`，新建 `job/JobRegistry`、`job/ScheduledJob`、`job/JobLogCleanupJob`、`vo/JobHandlerVO` + 4 个测试类 **31 条**。四条写路径与症状逐条在报告 19.29.2 表里；本文件只留最值钱的三条判据：
+- **`ScheduleService.resumeJob()` 读的 `pausedTasks` 全后端零写入方** ⇒ "恢复"一直是空操作（库里写 RUNNING、一个触发器都没有）。修法是**从库里重建**，不是补那个内存 Map。
+- **启动装载器看到的必然是全租户**：没有会话 ⇒ 拦截器 `ignoreTable` 首句放行。这是调度器需要的形状、不是漏洞，写在注释里防下一个人"补条件"。
+- **`ERROR` 状态在本项目第一次被真正写入**（处理器找不到时）；播种三行的 `job_class` 指向不存在的处理器，所以重启后它们**应当**显示"异常"（U3，API-66 的可见后果）。
+
+### 二、AT2 / AT3（#151 / #152）类型层与请求层：每域文件头写死"哪些能力是假的"
+
+`shared-types/src/{collab,schedule,monitor,openapi}.ts` **352 行**、`api-client/src/modules/{collab,schedule,monitor,openapi}.ts`（117/107/70/114）+ `index.ts` 转出。**裸数据与 R 信封分开 unwrap**（**API-60**：同一服务两种响应形状，`unwrap.ts` 按模块选，不搞统一猜测）。四条文件头各自记明：@提醒零解析零推送（API-74）、monitor 注册端点零调用方（API-65）、openapi 两套凭据面口径不同（API-61/62）、`notifyTypes` 零读取方。**"先写清这个面有几分真，页面才画不出假能力"** —— 这是 AT 批与"把功能点填满"最实质的区别。
+
+### 三、AT4（#153）管理端四页 1874 行：入口开了，能不能点取决于那份没跑的补丁
+
+新建 `ScheduleJobs.vue` 592 / `ServiceMonitor.vue` 426 / `OpenPlatform.vue` 624 / `ApprovalCenter.vue` 232 + `router/index.ts` 四条路由 + admin 两份 locale（词典 **641/641**）。⚠️ **四页的权限码在尚未执行的 `2026-10-16-r1-permission-codes.sql` 里** ⇒ 补丁没跑之前**只有 super_admin 进得来**（U8）。`ServiceMonitor.vue` 的空列表文案写的是"没有任何服务向 8096 注册"而**不是**"所有服务都挂了"——这一句是 API-65 的界面出口。
+**AT4 的后端半边（接页面时读到就修的三处，登记 API-79/80/81）**：① `MetricServiceImpl.listLatestMetrics()` 名为"最新"实为**整张历史表倒序**（只 `ORDER BY timestamp DESC`、没按 `(instance_id, metric_name)` 收敛）⇒ 监控页同一指标重复渲染；修法是 `LinkedHashMap` 保序去重 + 抽 `toVO()`。② `ServiceRegistryServiceImpl` 三处 `BeanUtils.copyProperties` 把 `metadata` **静默丢掉**（实体 JSON 字符串 / VO `Map`，类型不匹配**不报错只是不填**，与 **API-59** 同一条框架行为的第二次兑现）⇒ 显式反序列化，解析失败**记 warn 退空 Map 而不抛**（一行坏元数据不该让整屏 500）。③ `WebhookServiceImpl.update()` 拿 `dto.getAppId()` **当主键**定位行 ⇒ "改这个应用的回调地址"实际改的是 id 恰好等于该 appId 的那一行；修法是 DTO 加 `id`、缺失时抛 `BizException("修改回调地址必须带 id")`，同批把该文件那处裸 `RuntimeException` 换成 `BizException`（**API-64** 的 5 处减到 4 处）。⚠️ **证据层只能到"代码 + 全量 `mvn test` 通过"**：**monitor 与 openapi 都没有测试源集** ⇒ 没有一条断言直接盯这三处，判据并到 U7/U8，运行时零取证。
+
+### 四、AT5（#154）pc-web 协作：抽屉 + 两个后端写路径修复
+
+新建 `components/CollabDrawer.vue` 438 + `views/collab/MyCollab.vue` 322；形态判据沿用 D69 ① 那四条可反证的理由。文案是这一批唯一的行为约束出口：订阅那行**只承诺**"我出现在别人的关注清单里"，前端**根本不填 `notifyTypes`**，`MyCollab` 取不到值显示「未设置」（[[feedback-ui-absorbs-cost]] 的正面执行）。
+**收尾时发现抽屉能提交的三个动作里有两个会把数据写坏** ⇒ 本批改了后端半边（`CommentServiceImpl`、`SubscriptionServiceImpl`、`CollabController` javadoc、`collab-service/pom.xml`）+ 新建 3 个测试源文件、**13 条测试**：评论作者从会话写（绕开 `Long` vs `String` 的填充静默跳过，**API-59**）、顶层判定同时认 `NULL` 与 `0`（**API-58** 已修）、订阅 `user_id` 从会话取（**API-78** 已修，不修则 NOT NULL 直接 INSERT 失败 ⇒ "订阅"这个动作一次都完不成）。⚠️ **`common-mybatis` 那半个根因刻意没动**（API-59/API-75 原样登记）：改它会把本轮重启面从**四个进程**放大到**十几个服务**，那是用户拍板的成本，不是我该顺手改的。**8089 因此进入重启面。**
+
+### 五、AU（#156）pc-desktop：`file://` 是整块的根约束，docs/04 §七 九项功能点交八项
+
+22 个文件（新建 12）：`electron/{main 438, preload 64, cache 105, updater 118, window-state 55}.js` + `assets/tray.png`、`src/desktop/{apiBase 57, electronApi 185}.ts`、`src/views/ScreenView.vue` 184、`desktop/{CapabilityPane 437, FileImport 384, ScreenPane 277, UpdatePane 261}.vue`、`tsconfig.json`/`vite.config.ts`/`package.json`/`main.ts`/`router`/两份 locale/`Home.vue`/`LoginView.vue`。
+- **`file://` 派生三条必须一起认**：① 相对 `/api` 解析成 `file:///api` ⇒ 需要运行时可改的绝对服务地址（构建期 > 本机存储 > 相对回退，`validateBase()` 只收 `http(s)://` 或 `/` 开头）；② `location.origin === "null"` ⇒ 拼不出 WS 地址 ⇒ 首屏一次 HTTP 定初值，**空订阅器必须写成 `() => () => {}`**；③ history 深链必 404 ⇒ `createWebHashHistory`。
+- **`sandbox` 是被功能逼着关的**：本地文件拖拽要 `webUtils.getPathForFile()`，它在沙箱 preload 里不可用；`contextIsolation:true` / `nodeIntegration:false` 照抄，`preload.js` 21 通道与 main 一一对应。
+- **三件刻意不做假**：自动更新**只检查不安装**（每条响应带 `note`）；投屏=在选定显示器开一个窗口，并写明"屏幕镜像是操作系统能力"；摄像头调用后 3 秒释放。
+- ⬜ **M01-02-01 离线编辑未交付**：设计器在 pc-web（≈2050 行、仅一条 `@/locales` 依赖）⇒ **甲**抽 `@dataviz/screen-designer` + 本地草稿 / **乙**桌面端维持只读；裸 JSON 编辑器属假成功。**留给用户拍板**（API-72 同时记 `electron-builder` 一次没跑）。
+
+### 六、AT6（#155）门禁读数、类型门禁清零与缺陷登记
+
+**九处类型真修的判据是"分类本身"**：甲类"写了等于没写"5+1 组（X6 v3 的 `getData()` 不收 key、`Snapline` 是插件不是选项、`selecting` 是死选项、`setTheme` 不同步 `themeManager`、`exportImage` 的任意字符串、描边串里拼属性），乙类纯噪声。**最后 3 条 TS2742/TS7056 的根因在根 `frontend/tsconfig.json` 的 `declaration`+`declarationMap`**，不在业务代码 —— 删那两行后 pc-web `vue-tsc --noEmit` **EXIT=0**；**刻意不给 `usePermissionStore` 补手写返回类型**（那等于把谎言写进签名）。旁证：同仓 `uni-screen-engine/tsconfig.json:5` 早写死 `declaration: false` 在绕它。
+⚠️ `selecting` 那一条我第一次写成 `as never` —— **用断言把死键藏起来比不修更坏，已回退**（API-69：框选多选从未生效）。
+
+| 门禁 | 读数（全部本轮重跑，不沿用 AS） |
+|---|---|
+| `mvn -o -f pom.xml test` | **EXIT=0**，**Tests run: 215**，Failures/Errors 0，Skipped 1（`LicenseKeyGeneratorTest`）= datasource 11 + etl 65 + analysis 32 + screen 11 + **collab 13** + alert 39 + admin 13 + **schedule 31**（171→202→215 是三个批次，不是三个说法） |
+| pc-web / pc-desktop `vue-tsc --noEmit` | **EXIT=0 / 输出为空**（AS 那条"21 个既有文件红"作废） |
+| admin 类型门禁 | ⚠️ `vue-tsc@1.8.27` × TS 5.9.3 **启动即崩** ⇒ 退化 `tsc --noEmit` 22 条全是 `.vue` 解析失败、非 `.vue` 引用 0 条；**22 个 SFC 的类型面没有任何机器证据**（API-73，工具不兼容不是代码缺陷） |
+| 打包 | `vite build`：admin 0（7.85s）/ pc-web 0（13.71s）/ pc-desktop 0（10.38s）；uni 三端 `build:h5` 全 0、`build:mp-weixin` 0 ⇒ **七条构建全绿** |
+| i18n | `pnpm i18n:parity` OK：admin **641/641**、pc-web **501/501**、pc-desktop **204/204**（AS 的 446/441/22 因 AT4/AT5/AU 加键作废） |
+| R1 强制面 | handlers **280** / covered **254** / uncovered 26 / 零注解 controller 7（比 AS6 各 +1 = AT1 的 `GET /schedule/job/handlers`）⇒ **功能开发会自己扩大受保护面，这张表每轮都要重跑** |
+| 重启面 | **8095 / 8096 / 8092 / 8089 四个进程**；`common-*` 本轮一行未动（那三个未提交改动是 AS/AK 批的，旧账仍挂着）；桌面端需用户 `pnpm dev:electron` |
+| 数据库 | **三份补丁已落盘、全部未执行** + 第四份（`schedule_job` 播种对齐）**尚未写** |
+
+**新登记 API-58~API-81（24 条，五条已修 + 一条绕过）**：collab 面 58/59/63/68/74/78，openapi 凭据面 61/62，monitor 面 65/67/**79/80**，openapi 服务层 **81**，schedule 面 66，异常口径 64，前端死代码与工具 69/70/71/73/76/77，跨服务同族 60/75，AU 未闭合 72。**边登记边修的是 58（顶层口径）、78（订阅主体）、79（现值去重）、80（metadata 静默丢失）、81（webhook 用错主键定位行）**；**绕过一条**（59 在 collab 服务内收口，公共面原样留着）。其余 18 条**只登记**，每条在报告 19.29.9 写了"证据到哪一层"与"为什么不顺手修"。
+
+### 七、刻意没做 / 未取证
+
+① **零运行时取证**：U1~U15 全部悬空，AQ D1~D10、AP E1~E9、AS J1~J7、R0 鉴权半区照旧未闭。② 三份 SQL 不执行、第四份不写（批准一批不等于批准下一批）。③ **ownership 校验与回复级联没加**（API-63）—— 每条都要先定产品语义；DTO 枚举校验（API-68）同。④ `common-mybatis` 的 `Long createBy` 家族（API-75）没动，理由见第四节。⑤ **两套并存的 collab 同义端点没合并**（API-50）—— 删一套是破坏性变更。⑥ 空目录 `frontend/packages/pc-desktop/{electron,src}` 只登记（API-77），删除动作留给用户。⑦ `git` **未提交**（未被要求）。
+
+### 八、三份台账同步
+
+本文件（本节）；docs/10（**D77**/**D78** 两条决策 + 横切阶段 AT 八行、AU 七行 + AT/AU 门禁读数表 + §6.4 / §6.5 两处就地作废标记，收官把 202→**215**、三进程→**四进程**、"四份补丁"→**三份已落盘 + 一份未写**、U1~U12→**U1~U15**、桌面端判据 U1~U9→**U14~U15**）；docs/12（**§19.29**，19.29.1~19.29.11：门禁读数 / AT1 四条静默失效 / AT2-AT3 类型与请求层 / AT4 四页 + 后端半边三处 / AT5 协作 + 后端半边末段 / AU 的 `file://` 三约束 / AT6 类型门禁九修与根因 / U1~U15 / API-58~81 / 陷阱 / 证据边界）。
+
+**就地更正清单（本轮抓出的过期或写错的声明，全部改在原文而不是加补丁）**：`collab-service` 的测试数是新增（171→202→215 三个批次口径不同）；`CollabController` javadoc 那句"api-client 目前 collab 一条都没引"**已经不成立**（`modules/collab.ts` 9 个符号被 `CollabDrawer.vue` 用着），注释已改成带日期的更正；monitor 的 yml 键**没有任何 `@Value` 读它**（API-67）；docs/10 §6.5 的桌面端判据原写 U1~U9 ⇒ 实为 **U14~U15**。**还有一条是我自己的编号接错**：U11 起初引用 API-61（那是 openapi 明文密钥那条），实际应指订阅主体 ⇒ 新增 **API-78** 就地纠正 —— 这类交叉引用错表格检查器看不出来，只能靠对读。**最后两条是"台账自己漏了"而不是"代码写错了"**：① 本轮真改过的四个 monitor/openapi 源文件，在 19.29.1~19.29.7 里**一个字都没有**（原话只说"新读端点"）—— 是收官时拿 `git diff --stat` 对回来才发现的，补成 §19.29.4 末段 + API-79/80/81，顺带把本文件第六节的"21 条"改成 24 条；② **我自己把 API-78 那一行删掉了**（Edit 用整行做 `old_string`、`new_string` 只给新增的三行），`grep -n "API-78"` 命中三处正文却零处表格 ⇒ **删行的症状不是报错，是数字对不上**。教训写死：**往表格里加行，`old_string` 只取"上一行的行尾片段"或"分隔行"，永远不要把同行内容当锚点**；台账落盘后除了跑表格检查器，还要跑一次编号连续性核对（本轮 §19.29.9 现读 API-58~81 无缺号）。
+
+**本轮踩到、下次还会踩的**（全表见报告 19.29.10）：`strictInsertFill` 类型不符时**静默跳过**（不报错不告警）；`eq()` 的值在 `formatParam` 里**延迟写入** ⇒ 读 `paramNameValuePairs` 前必须先调 `getSqlSegment()`，否则拿到 `{}`；裸 `Configuration()` 没有 `mapUnderscoreToCamelCase` ⇒ 单测里**别断言列名**、只断言参数与形状；`Wrapper` 上没有 `getParamNameValuePairs()`，要转 `AbstractWrapper`；纯 Mockito 用 LambdaWrapper 必须先 `TableInfoHelper.initTableInfo`。
+---
+
+## 2026-10-17 · 阶段 AV：移动端整块退场（任务 **#157~#159**，决策 **D79** / 报告 **19.30**，新登记缺陷 **0 条**）
+
+**用户驱动指令原话**："废弃移动端，只保留桌面端和web端"。四个口径逐条拍板（全选推荐项）：**范围 = 三个 uni 端全废**、**处置 = 归档到 `_archive` 不删**、**大屏"三端变体"配置 = 原样保留**、**登录侧 `terminal` 三值 = 留着不动**。本批纪律延续 AT/AU：**零 HTTP 调用、零登录、零重启、零 SQL 执行、零 git 提交、零删除动作**。
+
+### 〇、本轮真实数量（`git status --porcelain -uall` 实测）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 重命名（`git mv`） | **62** | `apps/{mobile-app,tablet-app,mini-program}` 各 **13** + `packages/uni-screen-engine` **23** ⇒ 全部落在 `frontend/_archive/uni-apps-20261017/` |
+| 修改 | **6** | `frontend/package.json`（删三条 dev 脚本）、`frontend/pnpm-workspace.yaml`（删三条 vue overrides）、`frontend/packages/shared-types/src/screen.ts`、`frontend/packages/api-client/src/modules/sms.ts`（两处注释指向归档）、`.gitignore`（uni 段只改标题）、`frontend/pnpm-lock.yaml`（**被那次中断的 install 重写**，不是我改的） |
+| 台账 | **3** | 本文件、docs/10、docs/12 |
+
+⚠️ **口径提醒**：`git status` 里另有 **4 条 `R`** 属于 AS/AT 两批（`PermissionFilter.java`、`ScreenDataPusher.java`、`ScreenWebSocketEndpoint.java` 三个归档 + `QueryResult.ts → .vue` 改名）。全仓 `R` 是 **66**，**本轮的只有 62** —— 报数必须说"本轮"，否则与 AT 章那个"重命名 1"对不上。
+
+### 一、AV1（#157）归档：搬之前先证明"没有未提交的东西会被搬走"
+
+`git mv` 四个目录到 `frontend/_archive/uni-apps-20261017/`，**搬前逐个 `git status --porcelain -uall <目录>` 确认干净**。这条不是形式主义：`git mv` 会连带把未提交内容一起搬走，事后从 `git status` 上**看不出丢了什么**，只看出一堆重命名。**为什么 `uni-screen-engine` 跟着走**：全仓 grep 它只命中那三个 app ⇒ **除三端外零调用方**，留着它就是一个"没有消费者的引擎"。它一走，**移动端原生渲染能力在仓库里就不存在了** —— 这句是本批最重要的一条口径，写进 D79 ② 与 §6.5 标题。**glob 一个字没改**：`pnpm-workspace.yaml` 是 `apps/*` + `packages/*`，`_archive/` 天然不匹配 ⇒ "归档即摘除"，`pnpm ls -r --depth -1` 由 **15 → 12** 个项目。**没删**（用户选的处置方式），也**没提交**。
+
+### 二、AV2（#158）六处引用：两处改代码、一处改配置、一处只改标题、一处刻意不动
+
+- **删脚本**：根 `package.json` 的 `dev:mobile` / `dev:miniapp` / `dev:tablet`。顺带如实说一句：同文件里 `dev:portal` 指向**不存在的 `@dataviz/portal`**，那是**旧账不是本批**，没动（改它要连"portal 到底要不要"一起答）。
+- **删 overrides**：`pnpm-workspace.yaml` 三条 `"@dataviz/<uni 端>>vue": 3.4.21` 连它们那两行解释一起删，注释里写明"恢复时连同 overrides 一起搬回来"。⚠️ **为什么当初要锁 3.4.21**：uni H5 运行时由 `uni-h5-vite` 把裸 "vue" 别名到 `@dcloudio/uni-h5-vue`（内含 `injectHook` 等私有导出），未被别名覆盖的解析必须与 fork 同版。**Web 端从来不吃这条** ⇒ 删它不影响三个现存端。
+- **两处注释指向归档**：`shared-types/src/screen.ts` 渲染器注册表那句（"uni 渲染器随三个 uni 端归档，见 `frontend/_archive/uni-apps-20261017/`"）、`api-client/src/modules/sms.ts` 的 `SmsTerminal` 文档块（"后三个值对应的 uni 端已归档，但**不删**：白名单是后端语义，删一边就发码失败"）。
+- **`.gitignore` 只改标题**：`unpackage/` `.hbuilderx/` `.uni/` 三条**规则留着**，标题改成"三端已归档到 `frontend/_archive/uni-apps-20261017/`，规则留着免得归档里的构建产物变成未跟踪噪声"。**删规则反而会让归档目录脏起来** —— 这是"归档不删"这个选择必须配套做的一件事。
+- **后端一行没动**：`SmsTerminalConstant.PATTERN` 与三个 terminal 值原样保留（D79 ④）。理由写在上面那条注释里，也写在报告 19.30.2 的"两处刻意不动"里。
+
+### 三、AV2 的门禁重跑：七条构建变三条，i18n 数字"没变"这件事本身就是证据
+
+| 门禁 | 本轮读数 |
+|---|---|
+| 打包 | `vite build` **三条** EXIT=0：admin **0（7.37s）** / pc-web **0（15.63s）** / pc-desktop **0（11.13s）**（AT6 是七条：多三条 `build:h5` + 一条 `build:mp-weixin`，那四条从此不可执行） |
+| 应用类型门禁 | **本轮真重跑**：pc-web / pc-desktop `vue-tsc --noEmit` 各 **EXIT=0 / 输出 0 字节**，命令是各自 app 目录下的 `./node_modules/.bin/vue-tsc`（实装 `2.2.12` × TS 5.9.3，能跑的组合）；admin 仍 **⚠️ 无机器证据**（本地 `./node_modules/.bin/vue-tsc` = `1.8.27` × TS 5.9.3 **启动即崩**，本轮复核过，**API-73 未闭**是读数不是推断）。⚠️ **取数方式陷阱**：根 `frontend/node_modules/.bin/vue-tsc` 被 `shamefullyHoist` 顶成了 admin 那份 1.8.27，站在 pc-web 里用它 = 拿旧版查新 app，得到 **EXIT=1 的假红**（本轮先踩过一次，见第六节） |
+| i18n | `pnpm i18n:parity` **OK**：admin **641/641**、pc-web **501/501**、pc-desktop **204/204** —— 与 AT6 **完全相同**，因为**这脚本本来就只遍历这三个 app** ⇒ 反过来记一条判据口径：**移动端从来没进过 i18n 门禁**，所以"删了它 i18n 还是绿的"不构成任何新证据 |
+| 后端 | **零 Java 改动 ⇒ 不重跑**，`Tests run: 215`（19.29.1）与 R1 表（280/254/26/7）照旧引用原读数 |
+
+### 四、一次事故（这条是本批最值钱的残留知识）：`pnpm exec` 的隐式 auto-install 在 Windows 上打断，症状长得像构建失败
+
+`pnpm --filter @dataviz/admin exec vite build` 回 **EXIT=1**，输出里**一条 Vue/TS 报错都没有**，只有 `Packages: -410` 与 `os error 5: 拒绝访问`（重命名 `electron@28.3.3` 的暂存目录）。根因：**我刚改过 `pnpm-workspace.yaml`**，pnpm 的 `exec` 在工作区清单变脏时**先做一次隐式 install**，那次 install 要裁掉四个已归档项目的依赖，撞上 Windows 对正被占用目录的重命名权限。**绕法**：不动依赖，直接跑本地二进制 `frontend/apps/admin$ ../../node_modules/.bin/vite build` ⇒ **EXIT=0 / 7.37s**，三条构建都是这么拿的。**残留状态如实登记**：`pnpm-lock.yaml` 被那次中断**重写**（内容与归档后的 workspace 一致，但它是"被事故改写"不是"被我审过"）、`node_modules` 里留着 `electron_pacquet-stage_*` 与 `@dcloudio+*` 孤儿目录；当前 `electron` 本体完好 ⇒ `pnpm dev:electron` 不受影响；**清干净要跑一次 `pnpm install` ⇒ 那是依赖动作，交用户**（我不在这台机器上动 `node_modules`）。**下一次判据**：改过 workspace 文件后的第一条 `pnpm ... exec` 若报 EXIT=1，先看有没有 `Packages: -N` / `os error 5`，**有就先确认它不是构建**，换本地二进制重跑取真读数。
+
+### 五、刻意没做 / 未取证
+
+① **没删任何东西**（用户选归档）；`frontend/packages/pc-desktop/{electron,src}` 那两个空目录（**API-77**）仍在，删除动作照旧留给用户。② **`pnpm install` 不跑**（见第四节）。③ **归档里的代码从此没有构建证据** —— "归档即可用"是推断，其最后一条真实证据是 2026-10-16 那四条 uni 构建 EXIT=0；**恢复移动端第一步应是重跑那四条**，别假设还能跑。④ 三份 SQL 照旧**一份都没执行**、第四份（`schedule_job` 播种对齐，**API-66**）照旧**没写**。⑤ U1~U15 / D1~D10 / E1~E9 / J1~J7 / R0 鉴权半区**一条没闭**，本批只减少了对已退场端的承诺，**现存端的验收责任一条没减**。⑥ **git 未提交**（未被要求）。
+
+### 六、三本台账同步 + 判据作废清单
+
+本文件（本节）；docs/10（**D79** 八条 + Phase 4 / Phase 5 两张表头 banner + 5.5/5.6 两行改状态 + §6.5 整节标题与两条 ✅ + §6.8 **R3 的 ②③④** 与其上状态覆盖段 + 三、关键文件两条路径 + 四、已知风险表头批注 + AT/AU 门禁表"未取证"行末尾的历史标记 + 第五章 2026-10-17 一行）；docs/12（**§19.30** 五小节：门禁读数 / 归档与六处引用 / `pnpm exec` 事故 / 作废判据表 / 证据边界；链条目补一条 AV，**并就地补记一条断链**：AQ 的"累计 49"直接跳到 AT+AU 的"累计 81"，中间少了 **AS 批的 API-50~57 八条**当时漏写链，49 + 8 + 24 = 81 才对得上）。任务：**#77 就地关闭**（安卓/iOS 打包 + 鸿蒙编译随移动端退场），#157/#158/#159 本批。
+
+**本轮自己犯错并当场改回的三条**（记进台账方法）：① **D79 ⑦ 的耗时起初抄错** —— 抄了 AT6 的 13.71s/10.38s 当本轮读数，靠 grep `built in` 回 `/tmp/av-build-*.log` 才发现本轮实为 **15.63s/11.13s**，就地改回。**规则：报数前先确认那个数是"本轮"的，跨批抄数就是造假**。② **D79 ⑧ 起初写了三件我没做的事** —— 声称"§6.2 第 4 项的清理清单（uni 部分）由归档动作替掉"和"AF4 的 T4~T6 里 uni 那半区"已作废，实际 **§6.2 第 4 项那四条**（apisix 容器、`_tmp_wordchk`、`screen-player` 残留、`deploy/apisix;D`）**与 uni 无关**，而 **T4~T6 是 web 端判据**（"设计端或分享页"），uni 的编译判据在 **AF5** 那行。改成按实测清单逐条点名，并说明"09-23 那几章原文不撤，因为每条本来就自带 ⬜ 未编译的限定"。**规则：作废清单要能逐条对回原文，写不出行号就是没做**。③ **类型门禁起初拿成了假红** —— 我用 `cd apps/pc-web && ../../node_modules/.bin/vue-tsc --noEmit` 拿到 **EXIT=1**，第一反应是"归档 + 重写 lockfile 把 pc-web 的类型面打坏了"。实际输出 289 字节里**一个 pc-web 文件名都没有**，只有 `vue-tsc@1.8.27` 的 `Search string not found` —— 根 `node_modules/.bin` 被 `shamefullyHoist` 顶成了 **admin 那份 1.8.27**，我拿 admin 的旧工具去查 pc-web。换成 app 本地二进制后 pc-web / pc-desktop **双双 EXIT=0**，与 AT6 同读数。**规则：报"门禁红了"之前先读日志正文，确认红的是被测 app 而不是取数工具**；口径已写进报告 19.30.1 与 19.30.3 末段。
+
+---
+
+## 2026-10-17 · 阶段 AW：用户改口"你自己启动前后端进行测试" —— 运行时取证轮 + 一处界面常量缺陷闭环 + 三份待执行 SQL 落库（任务 **#160~#165**，决策 **D80** / 报告 **19.31**，闭合 **API-82**，新登记 **API-83 / API-84 / API-85**）
+
+**用户指令原话**："功能全部完成了就开始测试，docker容器我已经启动了，你自己启动前后端进行测试，缺少什么及时告诉我"。这条指令**只改变了进程归属**（17 个 JVM 与三个 dev server 现在是我起的、因此由我重启），**没有改变凭据归属** —— 指令里没有口令，也没有"用我的账号跑"，所以 D65 ⑤ 那条老纪律继续有效。本批纪律：**零凭据、零 SQL 执行、零 git 提交**；登录态判据一条没跑（AW4 交回用户）。
+
+### 〇、本轮真实改动数量（`git status --porcelain -uall` 口径：只报本轮）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 源码 | **4** | `screen-service/.../vo/ScreenVO.java`（+2 行字段）、`.../service/impl/ScreenServiceImpl.java:134`（+1 行计数）、`packages/shared-types/src/screen.ts:64`（+1 可选字段）、`apps/pc-desktop/src/views/desktop/ScreenPane.vue:26-28`（列模板 + 注释） |
+| 台账 | **3** | 本文件、docs/10、docs/12 |
+| 产物 / 记账 | 若干 | 17 个 jar（`mvn package`）、`backend/logs/aw-win-pids.txt`（17 行 PID + 1 行 screen-service 重启更正）、`backend/logs/aw-*.log`、`frontend/_aw-*.log`、`devlog/_aw/` 探针脚本（收官后**归档不删**，已移到 `devlog/_archive/aw-runtime-evidence-20261017/`，README 里写明哪两份可复用） |
+| **数据库（AW5，#165）** | **0 个源码文件**，3 份补丁执行 + 2 张新表 + 17 行码表 + 2 张备份 | `db_admin.sys_license`（14 列 / 0 行）、`db_analysis.data_perm_rule`（15 列 / 0 行）、`sys_permission` +17（5 目录 + 12 两档码）、`sys_role_permission` role1 +17；备份 `zz_bak_20261017_sys_permission`（43 行）/ `zz_bak_20261017_sys_role_permission`（81 行）；体检与校验脚本归档在 `devlog/_archive/aw5-sql-20261017/`（`{pre,backup,post,delta}.sql` + 一份 README，**归档不删**）；它们全是只读校验与快照，真正的 DDL/INSERT 只有 `deploy/sql/patch/` 那三份 |
+
+⚠️ **口径**：全仓 `git status` 的未提交条目是 AS→AW **七批的累计**，不属于本轮。本轮报数只报上面那 4 个源码文件 —— 它们是唯一被我改过内容的源码（AW5 那一批**零源码改动**，只动库）。
+
+### 一、AW1：打包这一轮先红在构建配置，不是代码
+
+首轮 `mvn -o -f pom.xml package` **红**。根因不在任何业务代码：`spring-boot-maven-plugin` 没有在 `<pluginManagement>` 里钉版本，Maven 从 metadata 解析出 **`4.2.0-M2`**，离线取不到 ⇒ 构建中止。钉回与 Boot 同版（2.7.18）之后 **17 个 jar 一次性 MVN_EXIT=0**（`backend/logs/aw-package2.log`；首轮那份 `aw-package.log` 保留着红读数）。
+
+起服务用的是 `start-all.sh` 里那套环境变量（standalone 服务读 `DB_PASSWORD`，Nacos 化的 7 个读 `MYSQL_PASSWORD`）。逐端口活性的判据是 `/v3/api-docs`：8081~8096 **全 200、合计 240 个端点**，**网关 404 是预期**（它不暴露自身文档）。
+
+### 二、AW3：免登半区第一次有真响应
+
+前六批里 AF/AQ/AS/AP/AG/AH 全部停在"代码 + 编译 + 单测"，本轮把**不需要会话的那一半**全部打成读数（逐条表见报告 19.31.2）。最值得留进编辑日志的是三条：
+
+- **两层 401 可以分辨**。网关层与服务层的响应体外形不同，这条差异本身就是"谁拒的"的判据；16/16 条都是这个读法。
+- **SSRF 拦截拿到了活栈**：`OutboundUrlGuard.reject(:89) → requireAllowed(:52) → WebhookNotifier.urlOf(:101) → NotifyDispatcher.dispatch(:71) → AlertCheckEngine.evaluateRule(:62)`。API-33 从"代码已证"升为"运行时已证"。
+- **AQ3 的老数据回落与 AP1 的真 SMTP 都在日志里留了行**（`ruleId=911, channelId=901, type=EMAIL`；`smtp.example.com:465 ssl 10000ms`，`EmailNotifier.send(:142)`）。**连接失败不是缺陷**，那是这台机器上没有那台服务器；要的证据是"真的去连了、真的按超时口径失败"。
+
+### 三、AW2/AW3b：桌面端取证靠 CDP，而且要先绕开一个坏掉的 electron
+
+`node_modules/.bin/electron` 起不来 —— `Error: Cannot find module .../electron/cli.js`，`dist/` 里还缺 `chrome_100_percent.pak`（启动即警告）。**登记为 API-84**，修法要 `pnpm install` = 用户动作。绕法：直接跑 `node_modules/electron/dist/electron.exe . --remote-debugging-port=9231`，读数是完整的。
+
+驱动方式：**不需要 `ws` 包** —— Node 24 自带 `WebSocket` 与 `fetch`，抓 `/json` 里的 page target、`Runtime.evaluate({awaitPromise, returnByValue})` 就够。**只用 evaluate**：`Page.captureScreenshot` 打在隐藏窗口上**永不返回**，本轮被它挂住 >2 分钟（后台任务 bcy035oy5 被终止），要看画面就读 `innerText`。
+
+### 四、中途换策略：那扇主窗口被用户本人登录了
+
+启动时附件 target 的 URL 是 `http://localhost:3300/login#/login?redirect=/`；第一次调用时它已变成 `#/screen-view?target=6&offline=1`，而 `offline-cache/screen-6.json` 的 savedAt = **01:47:19**，比我起 Electron 后第一次 CDP 调用还早，**且"缓存快照"这个动作本身要鉴权才会成功** ⇒ 那一下是用户点的。**这不是猜测，是时间戳推断，报告里就按时间戳推断标注。**
+
+于是三条改口径：① **主窗口转只读**，所有写动作只在我自己 `window:create` 出来的 aux 窗口里做，收尾 `window.close()` **只关我开的那几扇**（收官只剩用户那扇）；② **删掉一条已经写好的探针** —— 它做 `fetch(..., {headers:{Authorization:'Bearer '+localStorage.getItem('dataviz_access_token')}})`，那等于代用户鉴权；改成点「大屏与离线」页签再读表格列，**同一条读数照样拿到**；③ 由此定下写探针的规矩：**凡"从浏览器存储取 token 再发请求"都不算免登取证**，它在语义上就是登录态用例。
+
+### 五、API-82：界面在显示一个恒定值，三段根因缺一不可
+
+「组件数」列对任何大屏都显示 **0**，而库里 id=6 有 1 个组件、id=2 有 6 个。三段：`ScreenServiceImpl.page()` **故意** `vo.setComponents(null)`（列表不带大字段）→ `ScreenVO` 只有列表专用的 `variantSizes`、**没有计数** → `ScreenPane.vue` 写 `row.components ? row.components.length : 0`，**兜底值恰好是 0** ⇒ "字段不存在"与"真的 0 个组件"在 UI 上不可区分。
+
+修法**补计数**而不是把大字段塞回列表（那是性能倒退）：`ScreenVO.java:44-45` 加 `componentCount`（注释写明为什么需要它）、`ScreenServiceImpl.java:134` 在置空**之前** `vo.setComponentCount(...size())`、`shared-types/src/screen.ts:64` 加 `componentCount?: number`、`ScreenPane.vue:28` 兜底改成 `'—'`。**最后这条是重点**：占位符让"数据缺失"重新可见，否则同类问题下次还是被 0 吃掉。
+
+端到端实测列读到 **1** 与 **6**；8088 `/v3/api-docs` 里 `componentCount` 出现 **1** 次（`variantSizes` 同时是 1 ⇒ 新字段没顶掉旧字段）。
+
+**改动后五条门禁 EXIT=0**：`mvn -q -pl screen-service test`（11 用例 0 fail/error）、pc-desktop 与 pc-web **各自 app 目录**的 `vue-tsc --noEmit`、shared-types `tsc --noEmit`、pc-desktop `vite build`（27.44s）。
+
+### 六、重启自己起的服务：两条必须写的顺序
+
+① `mvn -pl screen-service package` 报 `Unable to rename ...jar to ...jar.original` —— jar 被**正在运行的那个 JVM**占着。② 于是先 `Get-CimInstance Win32_Process -Filter "Name='java.exe'"` 看 `CommandLine`，**确认那个 PID 起的是我这条 `java -jar screen-service/target/...jar`**，再按 PID `Stop-Process`；**绝不按镜像名杀**。重启后 `Started ScreenServiceApplication in 7.779 seconds`、`Tomcat started on port(s): 8088`，新 PID **59428** 追加进 `aw-win-pids.txt`。⚠️ 我追加那行时**把端口写成 8087**（8087 是 dashboard-service），已就地订正 —— 这个混坑本轮真踩过：curl 8087 拿到满屏 Dashboard schema，差点误报"字段没进 OpenAPI"。
+
+### 七、刻意没做 / 未取证
+
+① **登录态判据一条没跑**（AW4：R0 #61/#79、AF T1~T6、AG S1~S6、AM N1~N3/P1~P6、AS J1~J7、AQ D1~D10、AP E1~E9、U15），前提是"以某个账号的身份发请求"。② **打印 / 导出 PDF 零证据** —— 会拉起系统模态窗口压在用户桌面上，那个代价不在本轮授权里。③ **多屏路由没法证伪**：本机一块屏，只能证明非法 `displayId` **不校验、静默回落**（API-85）。④ **electron 包不修**（API-84 要 `pnpm install`）、**win/nsis 包没打**。⑤ **API-83 剪贴板只有主进程白名单、没有界面入口** —— 补入口还是删判据是产品决策，我这边只登记事实：全 app `grep -i clipboard` 只命中 `main.js` 那一行。⑥ 三份 SQL 照旧一份没执行，第四份（API-66）照旧没写。⏩ **这半句当天就被推翻**：用户随后一句"执行sql"⇒ 三份由助手执行完毕（**#165**，见下面第九节），**第四份仍未写**。⑦ **git 未提交**（未被要求）。
+
+### 八、三本台账同步
+
+docs/10：**D80** 四条（边界读法 + 中途新事实 + 探针规矩 + 反证）+ **横切阶段 AW** 一节（AW1/AW2/AW3/AW3b/AW3c/AW3d/AW4 七行 + 一张"取证手段清单"）+ AT/AU 门禁表"未取证"行**就地订正**（服务改为我起、U1~U14 免登半区已闭合、U14 打印·PDF 与 U15 仍零证据）+ 第五章 2026-10-17 AW 一行。docs/12：**§19.31** 七小节（打包与启动读数 / 免登半区 / 桌面端逐条含三条 ⚠️ 前提 / API-82 修复与门禁 / 新登记缺陷 / 踩坑清单 / 证据边界与两个待拍项）。
+
+**本轮自己犯错并当场改回的三条**：① **误删 `variantSizes`** —— 给 `ScreenVO` 加字段时 Edit 的 `old_string` 圈太宽，把上一个字段一起替换掉了；靠重新 Read 36-49 行发现并补回，最终两个字段都在（报告里那句"8088 的 api-docs 中 `variantSizes` 仍出现 1 次"就是这条的验证读数）。**规则：给相邻字段插新字段时，`old_string` 要包含被保留字段的完整声明，改完必读回**。② **把端口记成 8087** —— 已就地订正 `aw-win-pids.txt` 并在 19.31.4 / 19.31.6 里写明"8087 = dashboard、8088 = screen"。**规则：端口写进台账前要对着 `/v3/api-docs` 的 schema 内容确认服务身份，不能凭记忆**。③ **差点用主窗口的登录态发请求** —— 那条 `Authorization: Bearer <localStorage 里的 token>` 探针已经写完，是在执行前被识别为"等于代用户鉴权"而删掉的。**规则：探针的合法性要看它是否需要别人的会话才能成立；需要，就换成不依赖会话的等价读数**（这次换成了点页签读列，读数完全等价）。
+
+### 九、AW5：三份待执行 SQL 落库（#165，用户一句"执行sql"）
+
+**为什么这不需要重新征求同意**：走的是 **D72**（2026-09-28"需要我跑的sql你自己去跑就可以"）—— 那句交接的是**执行权**，不是**决定权**。所以跑台账里早已审定内容的三份，而 R1 那份**第五节的 role 2/3 授权矩阵草案照旧不写进执行**（"哪个角色能干什么"是产品决策，D72 明确没把它交给我）。
+
+**执行前读现状**（D72 那条"待执行 ≠ 未执行"的规矩第二次兑现，读数全部来自 `information_schema` + 真实 `COUNT(*)`，**D35**：不用 `TABLE_ROWS` 估算）：`db_admin.sys_license` 与 `db_analysis.data_perm_rule` **两张表不存在** ⇒ 两份是纯增量 DDL、**D30 备份规则未触发**；`sys_permission` 有效 **43** 行、`sys_role_permission` role1 **43** / role2 **28** / role3 **10**；五个新目录里**只有 `monitor` 已有目录行**（id=13）⇒ 那份脚本"含父目录行"是必要的，不是冗余。**备份先行**：`zz_bak_20261017_sys_permission` **43** 行、`zz_bak_20261017_sys_role_permission` **81** 行（改名代替删除的既有口径）。
+
+**三份全 EXIT=0，校验按脚本自己写的判据读**：R1 自带那句"期望 17"回显 **17 行**、`role1_rows_for_new_codes = 17`；`sys_permission` **43→60**、role1 **43→60**、role2 **28→28**、role3 **10→10**；旧 43 行**变更 0 行**（逐行 diff，不是"总数相等"就算过）、新增子节点**孤儿 0**、每条中文 `HEX()` 验过是合法 UTF-8（**D31**：灌错不可逆，所以不看屏幕看字节）。新表读数 `sys_license` **14 列 / 0 行 / status=1 零条**、`data_perm_rule` **15 列 / 0 行 / 带 `tenant_id`**。
+
+**SQL 落库 ≠ 代码能用，所以补了跨层一致性**：`MybatisPlusConfig.java:50` 确有 `"sys_license"`（缺它就是登录态一查许可证 `Unknown column 'tenant_id'` ⇒ 500）；`data_perm_rule` **正确地不在**黑名单里（带 `tenant_id` ⇒ 默认被租户过滤，不用动共享 jar）；R1 那 12 个两档码逐码 grep 到注解引用计数，与 AS6 批 controller 对得上。
+
+**三条后果说在前面**：① **两张新表 0 行 = 查询路径与本补丁之前逐字一致**，这是两份脚本各自写明的回退判据，不是"没生效"；② **`LICENSE_SECRET` 未设**（`admin-service/application.yml:41` = `secret: ${LICENSE_SECRET:}`，代码里无默认值）⇒ 激活请求**明确失败**而不回退内置演示密钥，许可证面板显示"未激活"是**预期读数**；③ **本轮不需要重新登录** —— D55 边界①（直改库不驱逐 Redis 会话快照）本轮不咬人，因为新增的都是目录行 + **super_admin 短路角色**授权，非短路角色一个码都没拿到。管理端授权树多出 5 个目录 + 12 个可勾选两档码，但那属于登录态截图证据（AW4）。
+
+**第四条自我更正**：第一版校验脚本里有一行标签写 `live_role2_alive`、WHERE 却用 `role_id=3` ⇒ 那个 10 是 role 3 的读数被当成 role 2 落账。重跑 role 2 = **28**（与快照一致）后才写进 19.31.8。**规则：标签和条件必须成对读**；否则"校验通过"校验的是脚本，不是数据。
+
+**证据边界**：本轮零凭据、零登录、零 git 提交；落库证据 = 事后 `SELECT` 与 `information_schema` 读数（**属运行时**），"这些码在界面上能不能点、点了能不能过拦截器"仍属登录态判据（AW4）。台账同步：docs/10 **AW5 行** + D80 **⑤** + AT/AU 门禁表"数据库"行**就地订正** + 阶段 AS 表三处 + §6.8 与风险表两处"补丁未执行"改为"已执行、结论不变、原因换成授权未拍板" + 第五章新行；docs/12 **§19.31.8**；本文件本节。
+
+---
+
+## 2026-10-18 · 阶段 AX：把"后端有实现、前端零入口"的同族两个服务补上口，把 ai-service 从"壳"改成真调模型，桌面端导出与安装包第一次拿到磁盘字节（任务 **#166~#170**，决策 **D81** / 报告 **19.32**，新立 **API-86~API-92** 七条、当场修 5 条、**API-72 半闭**）
+
+**用户指令原话**（三条，都在此前几轮给出、本轮一次性兑现）："**全部都做**"、"**桌面端导出必须真的成功**"、"**要安装包 + 分发设计**"。这三条把本轮的判据抬高了一档：导出不能再停在"接口回 `saved:true`"，打包不能再停在"退出码 0"。本批纪律照旧：**零凭据、零登录、零 SQL 执行、零 git 提交**；运行时取证只到**我自己起的那个 8091**。
+
+### 〇、本轮真实改动数量（只报本轮）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 后端源码 | **32** | **ai-service 18** = 主 14（`pom.xml`、`llm/{LlmClient,LlmReply,SqlGuard}.java`、`schema/DatasourceSchemaReader.java`、`service/impl/{Chat,Insight,Nl2Sql}ServiceImpl.java`、`controller/AiStatusController.java`、`vo/{AiStatusVO,ChatMessageVO,InsightVO,Nl2SqlResultVO}.java`、`resources/application.yml`）+ 新测试 4；**monitor 5**（`pom.xml` + 测试 3 + `MybatisPlusTableInfoHelper`）；**openapi 7**（`pom.xml` + `ApiAuthServiceImpl.java` + 测试 4 + helper）；**collab 2**（`ApprovalServiceImplTest.java` + helper） |
+| 前端源码 | **23** | **admin 8**（`package.json`、双语 locale、`router/index.ts`、`FileManage.vue` 新建；`ChannelConfig.vue` / `NotifyGroupConfig.vue` / `UserManage.vue` 只因 i18n 补键同批动）；**pc-desktop 9**（`electron/{exporter,main,preload}.js`、`src/desktop/electronApi.ts`、`ScreenView.vue`、`CapabilityPane.vue`、双语 locale、`package.json`）；**pc-web 4**（`views/ai/AiAssistant.vue` 新建、`router/index.ts`、双语 locale）；**api-client 2**（`modules/ai.ts`、`modules/file.ts`） |
+| 台账 / 文档 | **4** | 本文件、docs/10（**D81** + 三条 2026-10-18 时间线行 + §6.4 / §6.5 / AU6 就地订正）、docs/12（**§19.32** 全节 + 缺陷计数 85→92 + 四处就地订正）、**新建 `docs/13-桌面端分发与更新方案.md`**（16,050 B，八节） |
+| SQL | **1 份草稿，未执行** | `deploy/sql/patch/2026-10-18-openapi-rate-limit-not-null.sql`（5,914 B）。**本轮零 SQL 执行** —— 它是数据侧收紧，D72 交接的是执行权不是决定权，且脚本自己列了"刻意不在里面"的三件事（角色授权、`allowed_ips` 的 CIDR 语义、`app_secret` 存储方式） |
+| 产物 | **5 个文件** | `release/DataViz Desktop-Setup-1.0.0.exe` **76,887,542 B** + `.blockmap` 81,343 B + `latest.yml` 358 B；`release/DataViz Desktop-1.0.0-x64.zip` **104,704,621 B**；被隔离的假产物 `DataViz Desktop-1.0.0-x64.zip.incomplete-20261018` 8,646,988 B（**改名不删**） |
+| 探针 | 0 个源码文件 | `devlog/_ax/` 35 份日志与脚本**原地保留**（docs/12 里那句 `devlog/_ax/ax6-output-resolution-probe.log` 指的就是这个路径，动它会让台账变成幻象）；两个前端 scratch 脚本从 `frontend/` 根目录移进该目录，不留在工作区 |
+
+⚠️ **口径**：全仓 `git status` 的未提交条目是 AS→AX **八批累计**，不属于本轮。本轮只有上表这些。
+
+### 一、AX7：本轮最值钱的一条不是新功能，是发现了一整类"壳"（**API-86**）
+
+`ai-service/application.yml` 里 `ai.llm.*` **七个键**（model / api-key / api-url / temperature / max-tokens / connect+read timeout）**零个 `@Value` 读取方**。四个 AI 端点各有响应、有结构、有中文 —— 内容全是**写死的占位文本**。冒烟测试对这种代码**一律通过**，因为它检查的是"有没有响应"。
+
+发现它的动作只有一个：**把配置清单与读取方做集合差**。这个动作要留在台账里，因为 `collab` 的 `notify_types`、monitor 的注册端点是同一个形状。
+
+修完的形状：`LlmClient.configured()` 要求 url 与 key 都非空**且 key ≠ 脚手架占位值 `your-api-key-here`**；`statusNote()` 未配置时**分别报**"api-url 未设置 / api-key 为空 / api-key 仍是脚手架占位值" —— 只缺地址却报 key，会把值班的人支去改一个本来没错的键。`RestTemplate` **自建而不注入**共用 bean（LLM 读超时是几十秒量级，共用会把"谁拿到哪个超时"变成隐式契约）。**api-key 只进 `Authorization` 头**，不进请求体、不进日志、不进 `statusNote()`（用户此前给的凭据边界）；NL2SQL 读真实表结构走 `DatasourceSchemaReader` → datasource-service 的 `/internal/**`，**不在 ai-service 里另开一条连库路径**。测试带出两条编码/空值缺陷：**API-87** 中文响应按平台默认字符集解 body ⇒ 乱码，改读 `byte[]` 再交 Jackson `readTree`；**API-88** `Nl2SqlResultVO.llmNote` 在"重试后仍不可用"时为 null ⇒ 降级原因丢失并可能 NPE，改 `joinNotes` 统一。
+
+### 二、AX1+AX2：§6.4 那条"零入口"清单本轮清了剩下的两个
+
+`api-client/src/modules/ai.ts` **152 行** + `file.ts` **107 行**；pc-web `views/ai/AiAssistant.vue` **571 行**（路由 `router/index.ts:67-68`）；admin `views/FileManage.vue` **211 行**（`router/index.ts:147-148`）。AT 那轮清的是 collab / schedule / monitor / openapi 四域，本轮清的是同族的 **8091 ai 与 8094 file**。
+
+⚠️ 台账里那句"`/api/ai/**` 无页面"从此**不成立**；仍然成立的后半句是 `/api/analysis`（裸 SQL）、`/api/analysis/report`、`/api/analysis/export` 无页面。**前置条件没变**：AW5 的码表只补了 role 1 的授权 ⇒ 这些新入口现在只有 super_admin 进得来。
+
+### 三、AX3：导出的判据是磁盘上的字节，不是接口的 `saved:true`
+
+打包态取证（`release/win-unpacked/electron.exe` + CDP，**只用 `Runtime.evaluate`** —— `Page.captureScreenshot` 打在隐藏窗口上永不返回，这条 AW 就踩过）。读数：**PDF 103,282 B / PNG 306,543 B**，两条 `export-recent` 记录 `exists=true`，另外**读了文件头魔数**（`%PDF` 与 PNG signature）。渲染侧桥形状 `{pdf, png, reveal, openDir, recent}` + `print.run`。
+
+系统打印对话框按用户此前口径**仍然不做**（"打印/PDF 走系统对话框"这条被明确缓期）；本轮交付的是**非模态导出**。
+
+### 四、AX6：出包 —— 退出码 0 与"产物可用"是两件事
+
+第一次真出包**红了两次**，都不是配置语法问题：
+
+- **`--prepackaged release/win-unpacked` 会对着一个空目录"成功"**。前一次失败构建把 win-unpacked 走了 `EnsureEmptyDir`（半删空），这次构建 **EXIT=0**，产出一个 **8,646,988 B 的 zip，只有 8 个条目、没有主程序**。唯一能看出来的是 `unzip -l`。该文件按"归档不删"改名 `*.incomplete-20261018` 隔离。**教训：`--prepackaged` 的输出必须逐条目核，不能只看退出码。**
+- **`-c.directories.output=` 是相对 projectDir 解析**，不是相对当前 shell 目录 ⇒ 我第一次以为"产物没生成"，其实是生成到了别处（探针日志 `ax6-output-resolution-probe.log`）。
+
+正确做法 = **换一个干净的 output 目录整包重打**，事后核 `latest.yml` 里的 sha512。最终两份：nsis 安装器 **76,887,542 B**，sha512(base64) `0ocUvS7GFcB2hOzNuzYIXkhbn1s39orPoS+BiNoHtwcco0z5lhi9LL2B20rhexoRYQLka53dhqJK8zWXTHUJDA==` 与 `latest.yml` **逐字相符**（sha256 前缀 `d8127e7c3ea19957`）；绿色包 **104,704,621 B**，`unzip -t` 通过、**74 条目**，含 `DataViz Desktop.exe` 176,813,568 与 `resources/app.asar` 2,910,874。AU 那轮"配置存在但一次都没跑"从此作废，**API-72 半闭**（出包已证；无签名证书、`publish.url` 还是 `REPLACE-WITH-INTRANET-UPDATE-HOST` 占位，这两条在用户侧）。
+
+**本轮最贵的一条是自己写的台账幻象（API-92）**：docs 里"package.json 带有配置校验脚本 + win 目标含 zip"两句来自**工具的陈旧快照** —— 磁盘上 `scripts/` 目录**不存在**、`build.win.target` **只有 nsis**。核实方式 = `node -e "require('./package.json')"` + `ls scripts` + 比对 mtime。配置校验改用 electron-builder 自带的 `app-builder-lib/out/util/config.js#validateConfig(config, debugLogger)`（第二参是 **debugLogger**，传 `{isEnabled:false}` 那种写法是错的）⇒ 读数 `VALIDATE_CONFIG_OK`。
+
+`docs/13` 八节里两条语义要说白：`electron/updater.js` 是**只检查不安装**，每条 `available` 响应都带那句 `note: '本版本只检查不安装：下载安装包与签名链路尚未配置'`，界面不许把它读成"能升级"；`src/desktop/apiBase.ts` 优先级 = 构建期 `VITE_API_BASE_URL` > 本机 `dataviz_api_base` > 相对 `/api`，而仓库里**没有任何 `.env*`** ⇒ **首装首开显示"接口地址不可用"是设计如此**（`file://` 下相对路径出不了本机），不是缺陷。
+
+### 五、AX4：三个"零测试源集"的服务补齐 101 条用例，坑都在机制层
+
+monitor **29**（HealthCheck 10 / Metric 6 / ServiceRegistry 13）、openapi **42**（AuthFilter 15 / ApiAuthServiceImpl 12 / CachedBody 6 / 签名 9）、collab **30**（含 `ApprovalServiceImplTest` 17）⇒ **净增 101 条**。三条要写进源码注释的坑：
+
+1. 裸 MyBatis `Configuration` 的 `mapUnderscoreToCamelCase` 默认 **false**，而 MyBatis-Plus 生产默认 **true** ⇒ 不显式打开时 `getSqlSegment()` 吐**属性名**（`applicantId`）而不是**列名**（`applicant_id`），**断言列名的用例会假失败**。三份 `MybatisPlusTableInfoHelper` 副本同批对齐。
+2. collab 裁决用例的申请人**不能等于会话用户 7**，否则还没走到断言就被"自批拦截"挡掉，症状是 FORBIDDEN 而不是期望路径 ⇒ 引入 `APPLICANT = 21L`，只有"自批 / 超管可自批"那两条**刻意保留 7**。
+3. 不初始化 `TableInfoHelper` 缓存 ⇒ `can not find lambda cache for this entity`。
+
+测试带出两个 openapi **生产缺陷**：**API-89** `openapi_client.rate_limit` 可空 ⇒ Integer 拆箱 NPE（可空性不是推测，对活库 `information_schema.COLUMNS` 读过 `IS_NULLABLE=YES`）；**API-90** IP 白名单**子串匹配 + 条目不 trim** ⇒ `10.0.0.1` 能命中 `110.0.0.1`，白名单看着收紧其实没收紧。两条改代码。**API-91**（`app_secret` 明文存储 + 非常量时间 `equals`）**登记不修** —— 改它等于改凭据生命周期和历史密钥处置方式，属用户决策。
+
+**收官门禁**：`mvn -o test` **BUILD SUCCESS / Tests run 345, Failures 0, Errors 0, Skipped 1 / Total 31.739 s**（datasource 11 / etl 65 / analysis 32 / screen 11 / collab 30 / alert 39 / ai 42 / openapi 42 / admin 13 含 1 skipped / schedule 31 / monitor 29）；`pnpm i18n:parity` OK（admin **658/658**、pc-web **542/542**、pc-desktop **209/209**）；admin `vite build` EXIT=0 / 9.14 s（`FileManage-DBIY_HB_.js` 6.47 kB）、pc-web EXIT=0 / 16.13 s（`AiAssistant-By5G_0hc.js` 13.33 kB）。**345 与 AT/AU 那个 215 不是矛盾**，是不同批次读数：净增 130 = monitor 29 + openapi 42 + collab 净增 17 + ai 42。旧读数保留在原文，不追改。
+
+### 六、就地订正清单（**证据分级**纪律：过期声明划掉改写，不删行）
+
+docs/10 三处：**AU6 行**（"打包一次都没执行"→ 已出包并核哈希，仍留签名与 publish 两条口子）、**§6.4 末段**（`/api/ai/**` 无页面作废，权限码前置条件改写为"已入库、只补 role 1"）、**§6.5 ②**（electron-builder 那句整段作废）；docs/12 四处：AT/AU 那条 bullet 尾、19.29.6 AU6、**API-72 表格行改半闭**、19.31.7 缺口清单里"打印 / PDF：没点"与"打包产物：没打"两句；缺陷计数 **85 → 92**。**幻象预防**：本轮每个数字都从活文件重读（`wc -l`、`grep -n`、日志、`ls -l`），不从上文摘要转录。
+
+### 七、证据边界与交回用户
+
+**拿到了的**：42 条 ai 单测 + 我起的 8091（`Tomcat started on port(s): 8091` 17:06:54）+ `/v3/api-docs` 200 + 免登 `GET /api/ai/status` 回 **401** —— 该端点带 `@RequiresPermission("ai:read")`，未认证回 401 是**正确形状**，不能读成"坏了"；导出两份文件字节与魔数；安装包与绿色包哈希。
+
+**没拿到的（全在用户侧）**：**V1** 登录后 AI 页端到端、**V2** 文件页上传下载、**V3** 更新通道（需要 `publish.url` 与签名）、**V4/V5** 安装器与绿色包真装一遍。另：`LLM_API_KEY` 未设 ⇒ 界面显示"未配置大模型服务"就是**当下的期望读数**，不是缺陷。
+
+**两条残留**：`release/win-unpacked` 被**第三方进程**占住（`crashpad_handler_.exe` ← `TsService.exe`，不是我的）⇒ `mv` 与 `rm -rf` 全回 "Device or resource busy"，**我没有动别人的进程**，清理留到重启；`node_modules/electron` 缺 `cli.js`（**API-84**）本轮**没修**，要 `pnpm install`。⚠️ 一句话别混：**API-84 与出包成功无关** —— electron-builder 自己下载 electron，不走那个坏掉的本地副本。
+
+---
+
+## 2026-10-18 · 阶段 AY：四条自动化测试流程自跑 —— 两条当场运行时结案，一条改 18 处异常类型，一条只出未执行补丁（任务 **#171~#175**，决策 **D82** / 报告 **19.33**，新立 **API-93~API-99** 七条、当场修 3 条）
+
+**用户指令原话**："**你自己运行自动化测试流程测试现有功能**"。追问两条边界各拍一条："**允许我登录演示账号（推荐）**"、"**允许，但只写我自己建的（推荐）**"。本轮的性质与前几轮不同：**不新增功能**，把已经存在的功能放进**可重跑的自动化流程**里过一遍，并且让**流程之间互相作证**。
+
+### 〇、本轮真实改动数量（只报本轮）
+
+| 档 | 数量 | 拆分 |
+|---|---|---|
+| 后端源码 | **9 个 Java 文件** | `gateway/filter/AuthGlobalFilter.java`（白名单 5 条 `/**`→`/*` + javadoc）、`common-security/config/SecurityConfig.java`（服务层 3 条排除项同步收紧，`/internal/**` 保持 `/**`）、`analysis/ReportServiceImpl`（**6 处**）、`dashboard/DashboardServiceImpl`（**5**）、`dashboard/WidgetServiceImpl`（**2**）、`collab/CommentServiceImpl`（**2**）、`openapi/OpenApiAppServiceImpl`（**2**）、`openapi/WebhookServiceImpl`（**1**）—— 共 **18 处** not-found 换异常类型、`screen/ScreenController.java`（**仅注释**：那句"网关与服务层均已放行 `/api/screen/share/**`"在收紧后已过期） |
+| 配置 | **1 个** | `gateway-service/src/main/resources/application.yml`：删掉 `etl-operator-service` 那条带 `StripPrefix=1` 的子路由（API-96），并在 auth 路由注释里写明"`/token/**` 刻意不补，是否对外开放属 API-34" |
+| 忽略规则 | **1 个** | `.gitignore` 增一条 `*token*.txt` —— 取证脚本 `ay5-login.cjs` 落盘的**是我自己登录换来的 admin JWT（234 字符、`userId=1`、24 h TTL）**，属凭据；`devlog/_ay/` 里只有它一个匹配，且此前**未被追踪**，所以不存在"从历史里抹"的问题，只堵住将来 |
+| 台账 / 文档 | **3** | 本文件、docs/10（**D82** + 三条 2026-10-18 时间线行）、docs/12（**§19.33** 全节 + 缺陷计数 92→**99**） |
+| SQL | **1 份草稿，未执行** | `deploy/sql/patch/2026-10-18-ay-query-history-columns.sql`（**7,166 B**）。**本轮零 SQL 执行**：D72 交出的是"跑我已审定的脚本"**执行权**，这份是本轮新写、`ALTER` 的是**既有生产表** ⇒ 属**决定权**，交用户（V2） |
+| 探针 | 0 个源码文件 | `devlog/_ay/` **40 份**脚本与日志（ay1~ay18）**原地保留**；`*.log` 已被 `.gitignore` 挡住，落库的只有 `.cjs`/`.json`/`.txt` |
+
+⚠️ **口径**：全仓 `git status` 的未提交条目是 AS→AY **九批累计**，不属于本轮。本轮只有上表这些。
+
+### 一、四条流程与读数（每条都能指回一个脚本）
+
+**AY1 单测门禁**：`mvn -o test` **BUILD SUCCESS / Tests run 345, Failures 0, Errors 0, Skipped 1 / 32.698 s**，11 模块与 AX 收官**逐模块对上**（datasource 11 / etl 65 / analysis 32 / screen 11 / collab 30 / alert 39 / ai 42 / openapi 42 / admin 13 含 1 skipped / schedule 31 / monitor 29）⇒ 那 18 处异常类型改动没碰坏任何用例。**AY3 前端**：三端 `vue-tsc --noEmit` 与 `vite build` **6× EXIT=0**，`pnpm i18n:parity` admin **658/658**、pc-web **542/542**、pc-desktop **209/209**。**AY2 路径一致性**：活 OpenAPI **281** 端点 × 客户端 **113** 调用 ⇒ `orphanClient` **0**、`methodMismatch` **0**、无客户端调用 **160**（能力冗余）、我这边"参数靠猜" **6** 条。**AY4 登录态矩阵**：**119 条 GET**，两轴统计 `200/0` 60、`200/404` 13、`500/500` 10、`400/400` 10、`403/403` 6、`200/-` 6、`200/500` 5、`200/2002` 3、`200/4002` 2、`404/-` 2。
+
+### 二、本轮最值钱的一条：113/113 全绿是**必要不充分**，因为那个比对看不见网关
+
+`ay2-path-diff.cjs` 拿的是 **api-client 的路径 × 服务自己的 `/v3/api-docs`** —— 两边**逐字相同**，所以全绿。而 API-96 的缺陷正好在**中间那一层**：`etl-operator-service` 子路由带 `StripPrefix=1`，把 `/api/etl/operator/list` 转成上游的 `/etl/operator/list`，控制器实际映射在 `/api/etl/operator` ⇒ **经网关恒 404、直连 8084 却 200**。处置 = **加第二个工具，而不是放宽第一个**：`ay8-route-parity.cjs` 把 17 条路由 × `StripPrefix` × 控制器真实映射 × **230** 条路径三方对齐 ⇒ **3 条无路由**（`/api/token/*` 三条，即 API-97）+ **2 条剥离不匹配**。**两个工具独立同意同一批缺口**，这才是登记的证据形状。**同类结论第二条**：HTTP 200 也不充分 —— `200 + code:500` 有 5 条、`200 + 无 code` 有 6 条，只看 2xx 会把 11 条读成"通过"。
+
+### 三、API-93：`/**` 连零段都匹配，白名单替裸前缀免了登（改完当场复验）
+
+`AntPathMatcher` 里 `/api/screen/share/**` 对 **`/api/screen/share`（零尾段）** 返回 true；`/*` 才要求"恰好一段且非空"。后果不是"少放行"而是**放行方向出错**：裸前缀免登进下游后落进**受保护的** `GET /{id}`（`/share` 那一个字面段被当成 `{id}`）。改 5 条条目 + 同步收紧 `common-security`。运行时判据（`ay17-whitelist-noauth.cjs`，无 token）：**5 条裸前缀全部 401**（`Missing or invalid Authorization header`，网关那句英文 ⇒ 与服务的中文 401 可区分），**2 条带尾段仍然免登可达**（`404 大屏不存在或链接无效` / `200+code:403 Config key is not public`）。⚠️ 那两条尾段的期望是**"不是 401"**而不是 200：`mourning_mode` 这个键名是我编的，真实公开键只有 `PublicConfigKeys.java:17` 的 `screen.mourning.enabled` ⇒ **403 是正确行为**，我没有把它登记成缺陷（同批还撤掉另一条自造的 `400`：探测 `/api/etl/task/page`，控制器实际是 `@GetMapping("/list")`）。
+
+### 四、API-96 的结案靠的是响应体形状，不是状态码
+
+`404` 且 body 回显 `"path":"/etl/operator/list"`、**没有 `code` 字段** = Spring 默认错误 JSON ⇒ 请求**已打到服务但没有路由匹配**；直连同一 path 却 **200** ⇒ 缺口在网关剥前缀这一层。删子路由后复验（`ay15-gateway-recheck.cjs`，jar 18:54 / 进程 18:54:13 同批）：经网关 **200**、body 与直连**同一份算子清单**（`aggregate / database_input / database_output / filter / sql`）；三条控制读数没被带坏（`/api/user/internal/by-phone` 仍 **403** `Internal API is not reachable through the gateway`、不存在路径仍默认 404、带 token 的 `/api/screen/share` 落 `{id}` 回 400）。**顺带更正一处陈旧台账**：`devlog/_ax/ax-click-pids.txt` 记的 `8080 … 93612` 已过期，活网关是 **93396** —— 用 `Get-Process StartTime` + jar mtime 对时间戳（D33 那条链），而不是信文件里那行。
+
+### 五、10 条 500 拆成两层，各在各的层修（API-98 改码 / API-99 出补丁）
+
+**代码层 API-98**：`throw new RuntimeException("Widget not found: " + id)` 落 `GlobalExceptionHandler` catch-all ⇒ **HTTP 500 + ERROR + 整栈**，语义却是 404。改成 `BizException(ErrorCode.NOT_FOUND, …)` ⇒ **200 + `code:404` + WARN 无栈**，与其余服务同形。**18 处 / 6 个文件**（6/5/2/2/2/1，逐文件 `grep` 现读；复核 not-found 族**剩 0 处**）。**刻意没扩大范围**：仓里还有 **28 处**裸 `RuntimeException` —— **18 处**在 `MinioService` 10 / `JsonUtils` 6 / `RedisLockHelper` 2，改成业务异常等于让存储层和 JSON 工具认领业务码（**错配**）；另 **10 处**在 datasource 4 / screen 3 / etl 3 的业务层，**没有对应的 500 实测**，"长得像"不动手。**判据：只修我实测到症状的那一族。**
+
+**schema 层 API-99**：异常原文 `Unknown column 'deleted' in 'where clause'`；`QueryHistory extends TenantEntity`（→ `BaseEntity.deleted`）+ 全局 `logic-delete-field: deleted` ⇒ 拦截器**无条件**注入 `AND deleted = 0`，而建表脚本里**这张表没这列** ⇒ `/api/analysis/history`（`AnalysisController.java:23/40`）与 `/api/analysis/query/history`（`QueryController.java:18/54`）两条 500（都走 `queryHistoryMapper.selectPage`，`QueryHistoryServiceImpl.java:53`、`QueryServiceImpl.java:131`）。与 **API-44** 同族（代码假设 ↔ schema 分叉），这次咬的是逻辑删除列。为了不再靠猜写了 `ay11-entity-ddl-audit.cjs`：解析继承链 → 推出所需列 → 对照 `deploy/sql` ⇒ 扫 **8 张** `TenantEntity` 表，`missingCol` **只有 1**、`unknown 0`、`logicOff 0`（**另外 7 张列齐，别动**）。补丁落盘**未执行**。**证据分级**：列缺失的直接证据是**异常原文 + 仓库 DDL**；想对活库读 `information_schema` 的两次 `docker exec` 被安全层挡下 ⇒ **没有换姿势重试**，结论在台账里**降级为静态推导**并写明降级原因。
+
+### 六、三条登记不修（各卡在一个不同理由上）
+
+**API-94**（P3，`%2F` 在**路径**里时 **Tomcat 容器层**先拒，回 `400 + text/html;charset=utf-8` 错误页而不是 R 信封 —— 现场复验三条对照（经网关 400 HTML / 直连 400 HTML / **查询串**里的 `%2F` 正常进控制器回 JSON），证明它与服务是谁无关；修它要动 **17 个服务**的容器与错误页策略，而现在**没有任何真实链路被它卡住**（路径变量都是 Long/UUID）。**API-95**（P2，`new BizException("…")` 单参构造**默认 code=500**（`BizException.java:20-21/44-45`），全仓 **68 处**跨 11 个服务（auth 24 / user 11 / openapi 10 / admin 7 / etl 4 / schedule·datasource 各 3 / alert·ai 各 2 / monitor·model 各 1）⇒ "手机号不存在"与"真·系统崩了"在响应体上**同码**，差别只在服务端留不留栈；另加 auth-service 一批**英文 message** 与其余服务中文不一致。**改码 = 改对外错误契约**，属接口设计决策）。**API-97**（P2，`/token/**` 三条端点**没有网关路由**，与 **API-34** 的"撤销主体来源"是同一个待拍板项 ⇒ **不顺手补路由**，把这句话写进 yml 注释）。**一条查过没登记**：`SubscriptionController.java:48` 的 `isSubscribed` 回**裸 `boolean`** —— 客户端 `unwrap()` 文件头明确写了兼容裸响应 ⇒ **已被前端吸收的约定偏差**，不产生用户可见故障，够不上"缺陷"这一档。
+
+### 七、本轮踩到的坑（下次直接照这条走）
+
+1. **`mvn -o -q test` 把门禁读数一起吞了**：只剩 `EXIT=0`，surefire 的 `Tests run:` 一行都没有 ⇒ **计数只能从非 `-q` 日志取**（`ay16-mvn-test-full.log`）。
+2. **模块级汇总行不总是 `[INFO]`**：admin 那条有 skipped，前缀是 **`[WARNING]`** ⇒ 第一版正则求和得 **332 / 10 模块**，看着像"退化 13 条"。补 `^\[(INFO|WARNING)\]` 才是 **345 / 11 / 1 skipped**。**计数对不上先怀疑自己的式子。**
+3. **网关 IP 限流把矩阵打成一片 429**：`RateLimitFilter.java:45/48` 的 `IP_RATE_LIMIT=60 / WINDOW_SECONDS=60`，key 只取 TCP peer ⇒ 首跑 **51 条 429**。这是**工具缺陷不是产品缺陷**：改 **≥1.15 s/条 + 命中 429 退避 30 s** 后 `ay10` **0 条 429**。
+4. **`'code' in j` 遇到裸 `true` 直接 TypeError** 并崩掉整个矩阵（第 30 条）⇒ 判字段先 `typeof j === 'object' && !Array.isArray(j)`。
+5. **heredoc 写 JS 会改转义**（本轮两次：`ay8` 正则 `missing /`、`ay12` 反引号）⇒ **脚本用编辑工具落盘，不要用 shell heredoc。**
+6. **两条我造出来的假缺陷**（`/api/etl/task/page`、`mourning_mode`）都源于"路径/键名靠猜" ⇒ 撤回归因到**回控制器/常量类读真实值**；**登记的每一条都要能指回一个文件行号。**
+
+### 八、重启面与交回用户（**本轮只重启了 1 个进程，是我自己起的**）
+
+**做了**：为 API-93/96 重新打包并重启**网关 8080（PID 93396，18:54:13）** —— 那是**我自己**在 AW 轮起的进程。**没做**：`API-98` 的运行时结案需要 **8086 analysis / 8087 dashboard / 8089 collab / 8092 openapi** 四个进程重启，`common-security` 那半收紧需要 **16 个**进程（17 个服务都嵌了这份 jar）—— 这两批进程是用户"全部启动，我点着看看"那批，**用户此刻正在点这套栈** ⇒ 只改码、列成交付项，不偷偷执行。**判据（V1）**：重启后那 10 条 `500/500` 里除 query_history 两条外都应变 **HTTP 200 + `code:404` + WARN 无栈**。**V2** = 那份补丁要不要跑；**V3** = 16 个进程的收紧何时生效（**在此之前服务层那半仍是 `/**`，只靠网关一层挡着**）；**V4** = API-95/97/34 三个设计决策；**V5** = 写面矩阵（"只写我自己建的"那条授权本轮**没用上**，原因是写链要"建→改→删→确认清理"四步同轮取证才不失真）。**本轮零 SQL 执行、零写接口调用、零用户凭据**（token 是我自己短信登录换的）；**git 提交：本轮按用户要求已提交**（见下一条）。
+
+### 九、提交口径（2026-10-18，用户指令"**把刚刚的改动提交一次**"）
+
+本轮**首次产生 git 提交**，范围 = 上面 〇 节那张表逐条列出的文件（9 Java + 1 yml + `.gitignore` + 三份台账 + 1 份未执行 SQL 草稿 + `devlog/_ay/` 的脚本与 JSON）。**按文件名逐个 `git add`，不用 `-A`**：全仓未提交条目是 AS→AY **九批累计**，把别人的批次一起带进这个提交就等于篡改本轮的账。`.gitignore` 那条 `*token*.txt` 必须与提交同批入库（否则下一次 `git add devlog/_ay` 会把 24 h TTL 的 admin JWT 带进历史），提交前用 `git check-ignore -v` 复验它确实被挡下，且 `git diff --cached --name-only` 里**一个 `*.log` / `node_modules` / `target` / `release` 都不该有**。

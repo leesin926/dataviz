@@ -49,7 +49,7 @@
         </el-table-column>
         <el-table-column :label="t('notifyGroup.reachable')" width="190">
           <template #default="{ row }">
-            <span v-if="!reachable(row).length" class="dv-text-3">—</span>
+            <span v-if="!reachable(row).email && !reachable(row).mobile" class="dv-text-3">—</span>
             <span v-else class="reach">{{ t('notifyGroup.reachableDetail', reachable(row)) }}</span>
           </template>
         </el-table-column>

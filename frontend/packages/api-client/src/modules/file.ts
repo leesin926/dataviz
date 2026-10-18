@@ -1,4 +1,4 @@
-import type { R } from '@dataviz/shared-types'
+import type { PageResult, R } from '@dataviz/shared-types'
 import { BASE_URL, request } from '../request'
 
 /** 与后端 FileUploadResultVO 对齐 */
@@ -50,6 +50,37 @@ export async function uploadFiles(files: File[]): Promise<FileUploadResult[]> {
 export async function downloadFile(fileId: string | number): Promise<Blob> {
   const res = await request.get(`/file/download/${fileId}`, { responseType: 'blob' })
   return res.data as Blob
+}
+
+/** 列表用的记录结构与上传返回值不同：后端 FileInfoVO 只有 fileName/filePath/fileType/bucket/createBy */
+export interface FileInfo {
+  id: number
+  fileName: string
+  filePath: string
+  fileSize: number
+  /** MIME 类型 */
+  fileType: string
+  bucket?: string
+  createBy?: number
+  createTime?: string
+}
+
+export interface FileQuery {
+  bizType?: string
+  bizId?: string | number
+  keyword?: string
+  uploaderId?: string | number
+  pageNum?: number
+  /** 后端上限 500 */
+  pageSize?: number
+  orderBy?: string
+  asc?: boolean
+}
+
+/** 分页查文件列表（需 file:read） */
+export async function listFiles(query: FileQuery = {}): Promise<PageResult<FileInfo>> {
+  const res = await request.get<R<PageResult<FileInfo>>>('/file/list', { params: query })
+  return res.data.data
 }
 
 /** 文件信息 */

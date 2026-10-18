@@ -10,6 +10,7 @@ import com.dataviz.monitor.mapper.ServiceInstanceMapper;
 import com.dataviz.monitor.service.ServiceRegistryService;
 import com.dataviz.monitor.vo.ServiceInstanceVO;
 import com.dataviz.common.core.util.JsonUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -17,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -66,9 +69,7 @@ public class ServiceRegistryServiceImpl implements ServiceRegistryService {
             log.info("注册服务实例: serviceName={}, instanceId={}", registerDTO.getServiceName(), registerDTO.getInstanceId());
         }
 
-        ServiceInstanceVO vo = new ServiceInstanceVO();
-        BeanUtils.copyProperties(instance, vo);
-        return vo;
+        return toVO(instance);
     }
 
     @Override
@@ -109,11 +110,7 @@ public class ServiceRegistryServiceImpl implements ServiceRegistryService {
     public List<ServiceInstanceVO> getAllInstances() {
         List<ServiceInstance> instances = serviceInstanceMapper.selectList(
                 new LambdaQueryWrapper<ServiceInstance>().orderByDesc(ServiceInstance::getLastHeartbeat));
-        return instances.stream().map(inst -> {
-            ServiceInstanceVO vo = new ServiceInstanceVO();
-            BeanUtils.copyProperties(inst, vo);
-            return vo;
-        }).collect(Collectors.toList());
+        return instances.stream().map(this::toVO).collect(Collectors.toList());
     }
 
     @Override
@@ -122,11 +119,7 @@ public class ServiceRegistryServiceImpl implements ServiceRegistryService {
         wrapper.eq(ServiceInstance::getServiceName, serviceName)
                .orderByDesc(ServiceInstance::getLastHeartbeat);
         List<ServiceInstance> instances = serviceInstanceMapper.selectList(wrapper);
-        return instances.stream().map(inst -> {
-            ServiceInstanceVO vo = new ServiceInstanceVO();
-            BeanUtils.copyProperties(inst, vo);
-            return vo;
-        }).collect(Collectors.toList());
+        return instances.stream().map(this::toVO).collect(Collectors.toList());
     }
 
     @Override
@@ -145,5 +138,29 @@ public class ServiceRegistryServiceImpl implements ServiceRegistryService {
             log.warn("检测到死亡实例: serviceName={}, instanceId={}, lastHeartbeat={}",
                     instance.getServiceName(), instance.getInstanceId(), instance.getLastHeartbeat());
         }
+    }
+
+    /**
+     * 实例转 VO。
+     * <p>{@code metadata} 在库里是 JSON 字符串、在 VO 上是 {@code Map}，
+     * 直接 {@code BeanUtils.copyProperties} 会因为类型不匹配被<b>静默跳过</b>，
+     * 前端拿到的永远是 null。所以这里显式反序列化。</p>
+     */
+    private ServiceInstanceVO toVO(ServiceInstance instance) {
+        ServiceInstanceVO vo = new ServiceInstanceVO();
+        BeanUtils.copyProperties(instance, vo);
+        if (instance.getMetadata() == null || instance.getMetadata().isEmpty()) {
+            vo.setMetadata(Collections.<String, String>emptyMap());
+        } else {
+            try {
+                vo.setMetadata(JsonUtils.fromJson(instance.getMetadata(),
+                        new TypeReference<Map<String, String>>() {}));
+            } catch (Exception e) {
+                log.warn("实例元数据解析失败，按空元数据返回: serviceName={}, instanceId={}",
+                        instance.getServiceName(), instance.getInstanceId());
+                vo.setMetadata(Collections.<String, String>emptyMap());
+            }
+        }
+        return vo;
     }
 }

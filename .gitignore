@@ -43,7 +43,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# ---------- uni-app（mobile / tablet / mini-program） ----------
+# ---------- uni-app 产物（三端已归档到 frontend/_archive/uni-apps-20261017/，规则留着免得归档里的构建产物变成未跟踪噪声） ----------
 unpackage/
 .hbuilderx/
 .uni/
@@ -75,6 +75,8 @@ secrets/
 # 本地覆盖用的 Spring 配置（真口令写这里，不要写 application.yml）
 application-local.yml
 application-*.local.yml
+# 自动化测试轮"我自己登录"换来的会话 token（属凭据，且带角色权限；见 docs/12 §19.33）
+*token*.txt
 
 # ---------- IDE / 编辑器 ----------
 .idea/

@@ -49,6 +49,37 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'nav.config', icon: 'Setting', group: 'nav.groupPlatform', permission: 'platform:read' },
       },
       {
+        // 调度任务归平台管理：它决定的是"服务端什么时候替谁跑一段代码"，不是某个租户的内容。
+        // 用后端真实码 schedule:read / schedule:write —— 这批码在 2026-10-16-r1-permission-codes.sql 里，
+        // 补丁未执行前只有 super_admin 能进（超管走 '*' 通配），其他角色要等码表落库。
+        path: 'schedule',
+        name: 'ScheduleJobs',
+        component: () => import('@/views/ScheduleJobs.vue'),
+        meta: { titleKey: 'nav.schedule', icon: 'Timer', group: 'nav.groupPlatform', permission: 'schedule:read' },
+      },
+      {
+        // 监控面是全局的：service_instance / monitor_metric 这两张表没有租户列（在拦截器黑名单里），
+        // 所以这一页任何有 monitor:read 的人都看到同一份事实。
+        path: 'monitor',
+        name: 'ServiceMonitor',
+        component: () => import('@/views/ServiceMonitor.vue'),
+        meta: { titleKey: 'nav.monitor', icon: 'TrendCharts', group: 'nav.groupPlatform', permission: 'monitor:read' },
+      },
+      {
+        path: 'open-platform',
+        name: 'OpenPlatform',
+        component: () => import('@/views/OpenPlatform.vue'),
+        meta: { titleKey: 'nav.openPlatform', icon: 'Connection', group: 'nav.groupPlatform', permission: 'openapi:read' },
+      },
+      {
+        // 审批中心：流水与裁决都在 collab-service，通过后不会自动上线、也不会通知申请人，
+        // 页面文案把这一点写死了（见 approval.noAutoPublish）。
+        path: 'approvals',
+        name: 'ApprovalCenter',
+        component: () => import('@/views/ApprovalCenter.vue'),
+        meta: { titleKey: 'nav.approvals', icon: 'Stamp', group: 'nav.groupPlatform', permission: 'collab:read' },
+      },
+      {
         path: 'users',
         name: 'AdminUserManage',
         component: () => import('@/views/UserManage.vue'),
@@ -100,6 +131,22 @@ const routes: RouteRecordRaw[] = [
         name: 'AlertNotifyGroupConfig',
         component: () => import('@/views/NotifyGroupConfig.vue'),
         meta: { titleKey: 'nav.notifyGroups', icon: 'Collection', group: 'nav.groupSystem', permission: 'alert:read' },
+      },
+      {
+        // 行列权限规则放在管理端而不是设计端：它决定的是"谁能看到哪些行、哪些列"，属于运维口径。
+        // 权限沿用 analysis:read / analysis:write（配规则是"自助分析"能力的一部分），不新增权限行。
+        path: 'perm-rules',
+        name: 'DataPermRuleConfig',
+        component: () => import('@/views/PermRuleConfig.vue'),
+        meta: { titleKey: 'nav.permRules', icon: 'Lock', group: 'nav.groupSystem', permission: 'analysis:read' },
+      },
+      {
+        // file:read / file:write 是 D66 码表里的两档，补丁已执行（AW5）。此前它们在后端有注解、前端零入口，
+        // 这一页就是那个缺口。/view/{id} 仍是免登直读，所以上传后的大屏背景图不需要登录也能显示。
+        path: 'files',
+        name: 'FileManage',
+        component: () => import('@/views/FileManage.vue'),
+        meta: { titleKey: 'nav.files', icon: 'FolderOpened', group: 'nav.groupSystem', permission: 'file:read' },
       },
     ],
   },

@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@dataviz/shared-types": ["../../packages/shared-types/src"],
+      "@dataviz/shared-utils": ["../../packages/shared-utils/src"],
+      "@dataviz/shared-styles": ["../../packages/shared-styles/src"],
+      "@dataviz/api-client": ["../../packages/api-client/src"],
+      "@dataviz/screen-engine": ["../../packages/screen-engine/src"]
+    },
+    "types": ["vite/client", "node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue"]
+}

@@ -14,7 +14,8 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/etl/operator")
+// etl 路由没有 StripPrefix，转发过来的路径带 /api（见 D38）；这里漏写会 404，而设计器只会显示"算子列表为空"
+@RequestMapping("/api/etl/operator")
 @RequiredArgsConstructor
 @Tag(name = "ETL Operator", description = "List operators and get configuration schemas")
 // 类级 = 本控制器全部端点至少要 etl:read（PermissionInterceptor 会回落到类上的注解），本控制器纯读，无 write 端点。

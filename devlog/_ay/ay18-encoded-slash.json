@@ -1,0 +1,20 @@
+[
+  {
+    "url": "http://localhost:8080/api/file/view/a%2Fb",
+    "status": 400,
+    "ctype": "text/html;charset=utf-8",
+    "body": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 400 – Bad Request</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, "
+  },
+  {
+    "url": "http://localhost:8080/api/dashboard/list?id=1%2F2",
+    "status": 400,
+    "ctype": "application/json",
+    "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792322129976,\"success\":false}"
+  },
+  {
+    "url": "http://localhost:8084/api/file/view/a%2Fb",
+    "status": 400,
+    "ctype": "text/html;charset=utf-8",
+    "body": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 400 – Bad Request</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, "
+  }
+]

@@ -1,0 +1,80 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/admin/config/public",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/screen/share",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/file/view",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/sso",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/config/public/deadline_switch",
+    "status": 200,
+    "body": "{\"code\":403,\"message\":\"Config key is not public: deadline_switch\",\"data\":null,\"timestamp\":1792320357492,\"success\":false}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/screen/share/tok123",
+    "status": 200,
+    "body": "{\"code\":404,\"message\":\"大屏不存在或链接无效\",\"data\":null,\"timestamp\":1792320357538,\"success\":false}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/file/view/2080000000000000001.png",
+    "status": 400,
+    "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792320357552,\"success\":false}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/sso/login",
+    "status": 405,
+    "body": "{\"code\":405,\"message\":\"请求方法不允许\",\"data\":null,\"timestamp\":1792320357570,\"success\":false}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/sso/callback",
+    "status": 400,
+    "body": "{\"code\":400,\"message\":\"缺少必要参数: code\",\"data\":null,\"timestamp\":1792320357583,\"success\":false}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/screen/ws/share",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/captcha",
+    "status": 200,
+    "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":{\"captchaKey\":\"848c16edc8c54698bf161e399f84546e\",\"captchaImage\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAsCAIAAAA"
+  },
+  {
+    "method": "GET",
+    "path": "/api/dashboard/list",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/config/123",
+    "status": 401,
+    "body": "{\"code\":401,\"message\":\"Missing or invalid Authorization header\",\"data\":null}"
+  }
+]

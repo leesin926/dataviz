@@ -1,0 +1,16 @@
+### tsc admin
+EXIT=0
+### tsc pc-web
+EXIT=0
+### tsc pc-desktop
+EXIT=0
+### build admin
+EXIT=0
+### build pc-web
+EXIT=0
+### build pc-desktop
+EXIT=0
+### i18n
+admin: zh=658 en=658
+pc-web: zh=542 en=542
+pc-desktop: zh=209 en=209

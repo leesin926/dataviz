@@ -6,6 +6,7 @@ import com.dataviz.collab.entity.CollabSubscription;
 import com.dataviz.collab.mapper.SubscriptionMapper;
 import com.dataviz.collab.service.SubscriptionService;
 import com.dataviz.collab.vo.SubscriptionVO;
+import com.dataviz.common.security.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -27,6 +28,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public Long subscribe(SubscriptionDTO dto) {
         CollabSubscription subscription = new CollabSubscription();
         BeanUtils.copyProperties(dto, subscription);
+        // 主体只能取自会话：DTO 里没有 userId，而 user_id 是 NOT NULL 且无默认值 —— 不写这一句，
+        // 严格模式下 INSERT 直接报错、非严格模式下落 0，两种结果都是"订阅成功但我的订阅里查不到"。
+        subscription.setUserId(SecurityContextHolder.getUserId());
         subscriptionMapper.insert(subscription);
         log.info("Created subscription: id={}", subscription.getId());
         return subscription.getId();

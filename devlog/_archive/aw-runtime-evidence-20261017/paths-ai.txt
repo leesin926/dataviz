@@ -1,0 +1,11 @@
+POST /api/ai/recommend/chart
+POST /api/ai/nl2sql/translate
+POST /api/ai/nl2sql/explain
+POST /api/ai/insight/generate
+POST /api/ai/chat/send
+POST /api/ai/chat/conversation
+GET /api/ai/insight/{id}
+GET /api/ai/insight/list
+GET /api/ai/chat/history/{conversationId}
+GET /api/ai/chat/conversations
+DELETE /api/ai/chat/conversation/{conversationId}

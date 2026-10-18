@@ -59,6 +59,20 @@ public class ScheduleJobVO {
     private String misfirePolicy;
 
     /**
+     * {@code job_class} 是否还能解析到注册过的处理器。
+     *
+     * <p>{@code false} 意味着这条任务每次触发只会留下一条 FAILED 日志。演示数据里
+     * 那三条 {@code com.dataviz.schedule.job.*Job} 就是这个状态 —— 类从来没有存在过。
+     * 把它显出来，列表才不会把一条永远跑不起来的任务显示成一条正常任务。</p>
+     */
+    private Boolean handlerRegistered;
+
+    /**
+     * 处理器的中文名；{@code handlerRegistered=false} 时为 null
+     */
+    private String handlerLabel;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

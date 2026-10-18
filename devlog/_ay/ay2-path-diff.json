@@ -1,0 +1,92 @@
+{
+ "liveEndpointCount": 281,
+ "clientCallCount": 113,
+ "orphanClient": [],
+ "paramGuess": [
+  {
+   "call": "POST /api/admin/tenant/:x/:x",
+   "candidates": [
+    "/api/admin/tenant/:x/enable",
+    "/api/admin/tenant/:x/disable"
+   ],
+   "files": [
+    "packages/api-client/src/modules/admin.ts {/admin/tenant/${id}/${active ? 'enable' : 'disable'}}"
+   ]
+  },
+  {
+   "call": "POST /api/alert/rule/:x/:x",
+   "candidates": [
+    "/api/alert/rule/:x/test",
+    "/api/alert/rule/:x/enable",
+    "/api/alert/rule/:x/disable"
+   ],
+   "files": [
+    "packages/api-client/src/modules/alert.ts {/alert/rule/${id}/${enabled ? 'enable' : 'disable'}}"
+   ]
+  },
+  {
+   "call": "POST /api/alert/channel/:x/:x",
+   "candidates": [
+    "/api/alert/channel/:x/test",
+    "/api/alert/channel/:x/enable",
+    "/api/alert/channel/:x/disable"
+   ],
+   "files": [
+    "packages/api-client/src/modules/alert.ts {/alert/channel/${id}/${enabled ? 'enable' : 'disable'}}"
+   ]
+  },
+  {
+   "call": "POST /api/alert/contact/:x/:x",
+   "candidates": [
+    "/api/alert/contact/:x/enable",
+    "/api/alert/contact/:x/disable"
+   ],
+   "files": [
+    "packages/api-client/src/modules/alert.ts {/alert/contact/${id}/${enabled ? 'enable' : 'disable'}}"
+   ]
+  },
+  {
+   "call": "POST /api/alert/notify-group/:x/:x",
+   "candidates": [
+    "/api/alert/notify-group/:x/enable",
+    "/api/alert/notify-group/:x/disable"
+   ],
+   "files": [
+    "packages/api-client/src/modules/alert.ts {/alert/notify-group/${id}/${enabled ? 'enable' : 'disable'}}"
+   ]
+  },
+  {
+   "call": "POST /api/analysis/export/:x",
+   "candidates": [
+    "/api/analysis/export/excel",
+    "/api/analysis/export/csv"
+   ],
+   "files": [
+    "packages/api-client/src/modules/analysis.ts {/analysis/export/${format}}"
+   ]
+  }
+ ],
+ "methodMismatch": [],
+ "noClientCount": 160,
+ "noClientByService": {
+  "auth": 8,
+  "token": 3,
+  "user": 10,
+  "role": 4,
+  "dept": 3,
+  "permission": 2,
+  "datasource": 9,
+  "etl": 7,
+  "model": 14,
+  "analysis": 19,
+  "dashboard": 8,
+  "screen": 10,
+  "collab": 10,
+  "alert": 15,
+  "ai": 10,
+  "openapi": 4,
+  "admin": 13,
+  "file": 5,
+  "monitor": 6
+ }
+}

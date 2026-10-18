@@ -5,7 +5,7 @@ import type { ChartData } from '../renderer/BaseRenderer'
 /**
  * 雷达图选项构建
  */
-export function buildRadarOption(config: ChartConfig, data: ChartData): EChartsOption {
+export function buildRadarOption(_config: ChartConfig, data: ChartData): EChartsOption {
   const maxVal = Math.max(
     ...data.series.flatMap((s) => s.data as number[]).filter((v) => typeof v === 'number'),
     1,
@@ -21,7 +21,7 @@ export function buildRadarOption(config: ChartConfig, data: ChartData): EChartsO
         type: 'radar' as const,
         data: data.series.map((s) => ({
           name: s.name,
-          value: s.data,
+          value: s.data as (number | string | null)[],
           areaStyle: { opacity: 0.2 },
         })),
       },

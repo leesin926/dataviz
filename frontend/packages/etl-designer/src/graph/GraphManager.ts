@@ -1,4 +1,4 @@
-import { Graph, type Cell, type Node as X6Node } from '@antv/x6'
+import { Graph, Snapline, type Node as X6Node } from '@antv/x6'
 import type { EtlDag, EtlNode, EtlEdge } from '@dataviz/shared-types'
 
 /**
@@ -12,8 +12,7 @@ export class GraphManager {
     this.graph = new Graph({
       container,
       grid: { visible: true, size: 10, type: 'dot' },
-      snapline: { enabled: true },
-      selecting: { enabled: true, rubberband: true },
+      // 框选/多选需要 @antv/x6-plugin-selection（peer 仍写 x6 ^2.x）；原先的 selecting 选项在 v3 会被静默忽略
       connecting: {
         router: 'manhattan',
         connector: 'rounded',
@@ -27,12 +26,14 @@ export class GraphManager {
         magnetAvailable: { name: 'stroke', args: { padding: 4, attrs: { 'stroke-width': 2, stroke: '#5F95FF' } } },
       },
     })
+    // snapline 在 v3 里是插件而不是 Graph 选项，写在选项字面量里会被静默忽略
+    this.graph.use(new Snapline({ enabled: true }))
   }
 
   onNodeSelect(handler: (node: EtlNode) => void): void {
     this.nodeSelectHandler = handler
     this.graph?.on('node:click', ({ node }) => {
-      const etlNode = node.getData<EtlNode>('etlNode')
+      const etlNode = node.getData<{ etlNode?: EtlNode }>().etlNode
       if (etlNode && this.nodeSelectHandler) this.nodeSelectHandler(etlNode)
     })
   }
@@ -48,7 +49,7 @@ export class GraphManager {
       height: 50,
       label: etlNode.name,
       attrs: {
-        body: { fill: this.getColorByType(etlNode.type), stroke: '#5F95FF, rx: 6, ry: 6' },
+        body: { fill: this.getColorByType(etlNode.type), stroke: '#5F95FF', rx: 6, ry: 6 },
         text: { fill: '#fff', fontSize: 13 },
       },
       ports: this.buildPorts(etlNode),
@@ -88,7 +89,7 @@ export class GraphManager {
     const nodes: EtlNode[] = []
     const edges: EtlEdge[] = []
     this.graph.getNodes().forEach((cell) => {
-      const etl = cell.getData<EtlNode>('etlNode')
+      const etl = cell.getData<{ etlNode?: EtlNode }>().etlNode
       if (etl) {
         const pos = cell.getPosition()
         nodes.push({ ...etl, x: pos.x, y: pos.y })

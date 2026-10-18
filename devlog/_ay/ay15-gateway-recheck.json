@@ -1,0 +1,66 @@
+[
+  {
+    "label": "API-96 etl/operator/list via gateway",
+    "method": "GET",
+    "url": "http://localhost:8080/api/etl/operator/list?page=1&size=5",
+    "status": 200,
+    "ms": 92,
+    "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":[\"aggregate\",\"database_input\",\"database_output\",\"filter\",\"sql\"],\"timestamp\":1792321694974,\"success\":true}"
+  },
+  {
+    "label": "API-96 control: direct 8084",
+    "method": "GET",
+    "url": "http://localhost:8084/api/etl/operator/list?page=1&size=5",
+    "status": 200,
+    "ms": 11,
+    "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":[\"aggregate\",\"database_input\",\"database_output\",\"filter\",\"sql\"],\"timestamp\":1792321696200,\"success\":true}"
+  },
+  {
+    "label": "API-93 /api/auth/sso (zero-segment whitelist)",
+    "method": "GET",
+    "url": "http://localhost:8080/api/auth/sso",
+    "status": 404,
+    "ms": 86,
+    "body": "{\"timestamp\":\"2026-10-18T11:08:17.485+00:00\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/auth/sso\"}"
+  },
+  {
+    "label": "API-93 /api/file/view (zero-segment whitelist)",
+    "method": "GET",
+    "url": "http://localhost:8080/api/file/view",
+    "status": 405,
+    "ms": 12,
+    "body": "{\"code\":405,\"message\":\"请求方法不允许\",\"data\":null,\"timestamp\":1792321698705,\"success\":false}"
+  },
+  {
+    "label": "API-93 /api/screen/share (zero-segment whitelist)",
+    "method": "GET",
+    "url": "http://localhost:8080/api/screen/share",
+    "status": 400,
+    "ms": 13,
+    "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792321699932,\"success\":false}"
+  },
+  {
+    "label": "API-93 /api/admin/config/public (zero-segment)",
+    "method": "GET",
+    "url": "http://localhost:8080/api/admin/config/public",
+    "status": 400,
+    "ms": 11,
+    "body": "{\"code\":400,\"message\":\"参数格式不正确: id\",\"data\":null,\"timestamp\":1792321701157,\"success\":false}"
+  },
+  {
+    "label": "internal blocked at gateway",
+    "method": "GET",
+    "url": "http://localhost:8080/api/user/internal/by-phone",
+    "status": 403,
+    "ms": 2,
+    "body": "{\"code\":403,\"message\":\"Internal API is not reachable through the gateway\",\"data\":null}"
+  },
+  {
+    "label": "no route matched (control)",
+    "method": "GET",
+    "url": "http://localhost:8080/api/nope/nope",
+    "status": 404,
+    "ms": 4,
+    "body": "{\"timestamp\":\"2026-10-18T11:08:23.580+00:00\",\"path\":\"/api/nope/nope\",\"status\":404,\"error\":\"Not Found\",\"requestId\":\"418f10fe-158\"}"
+  }
+]

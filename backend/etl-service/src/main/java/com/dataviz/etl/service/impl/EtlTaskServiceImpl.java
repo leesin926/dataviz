@@ -122,8 +122,10 @@ public class EtlTaskServiceImpl implements EtlTaskService {
         if (task == null) {
             throw new BizException(ErrorCode.ETL_TASK_NOT_FOUND);
         }
-        if (EtlTaskStatus.RUNNING.name().equals(task.getStatus())) {
-            throw new BizException("任务已在运行中");
+        if (etlExecutionService.isRunning(id)) {
+            // 这里不能拿 status 当判据：RUNNING 是"这个任务开着、要按 cron 跑"，演示数据里三条有两条就是
+            // RUNNING。按 status 拦的话，开着的服务永远点不动「启动」，而真正的重复执行（连点两次）反而拦不住
+            throw new BizException("任务的上一次执行还在进行中，请等待本轮结束");
         }
         task.setStatus(EtlTaskStatus.RUNNING.name());
         etlTaskMapper.updateById(task);
@@ -138,6 +140,8 @@ public class EtlTaskServiceImpl implements EtlTaskService {
         if (task == null) {
             throw new BizException(ErrorCode.ETL_TASK_NOT_FOUND);
         }
+        // 先登记停止意图再改状态：反过来的话，改状态这一步抛异常会让"停止"永远没人应答，任务继续跑
+        etlExecutionService.cancelTask(id);
         task.setStatus(EtlTaskStatus.STOPPED.name());
         etlTaskMapper.updateById(task);
     }

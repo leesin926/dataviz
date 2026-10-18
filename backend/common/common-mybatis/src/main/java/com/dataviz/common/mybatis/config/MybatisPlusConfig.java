@@ -46,6 +46,8 @@ public class MybatisPlusConfig {
     private static final Set<String> IGNORE_TENANT_TABLES = new HashSet<String>(Arrays.asList(
             // —— 平台与全局表 ——
             "sys_tenant",
+            // 许可证是整个部署的属性，不属于某个租户（2026-10-16-sys-license.sql 新建）
+            "sys_license",
             // —— RBAC：码表全局共享，关联表靠父表定租户 ——
             "sys_permission", "sys_user_role", "sys_role_permission", "sys_oauth_client",
             // —— 元数据 / 子表 / 日志表（只存明细，不带租户列）——

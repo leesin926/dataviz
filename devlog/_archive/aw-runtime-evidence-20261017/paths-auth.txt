@@ -1,0 +1,12 @@
+POST /auth/sso/login
+POST /auth/sms/send
+POST /auth/sms/login
+POST /auth/refreshToken
+POST /auth/logout
+POST /auth/login
+GET /token/validate
+GET /token/check
+GET /auth/userinfo
+GET /auth/sso/callback
+GET /auth/captcha
+DELETE /token/revoke/{userId}

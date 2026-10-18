@@ -241,7 +241,14 @@
     saving.value = true
     try {
       if (editingId.value) {
-        await updateUser(editingId.value, { ...form, password: undefined })
+        await updateUser(editingId.value, {
+          username: form.username,
+          nickname: form.nickname,
+          email: form.email,
+          phone: form.phone,
+          deptId: form.deptId,
+          status: form.status,
+        })
       } else {
         await createUser({ ...form, password: form.password })
       }

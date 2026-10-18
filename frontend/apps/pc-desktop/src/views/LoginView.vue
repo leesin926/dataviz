@@ -44,7 +44,7 @@
             </el-form-item>
             <el-form-item>
               <el-button type="primary" size="large" :loading="loading" class="login-btn" @click="handleLogin">
-                登录
+                {{ t('login.login') }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -64,7 +64,7 @@
             </el-form-item>
             <el-form-item>
               <el-button type="primary" size="large" :loading="smsLoading" class="login-btn" @click="handleSmsLogin">
-                登录
+                {{ t('login.login') }}
               </el-button>
             </el-form-item>
           </el-form>

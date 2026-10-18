@@ -54,6 +54,18 @@
             </div>
             <el-button type="primary" @click="executeQuery" :loading="loading">{{ t('analysis.run') }}</el-button>
           </div>
+          <div class="config-row">
+            <span class="config-label">{{ t('analysis.exportResult') }}:</span>
+            <el-radio-group v-model="exportFormat" size="small">
+              <el-radio-button value="excel">Excel</el-radio-button>
+              <el-radio-button value="csv">CSV</el-radio-button>
+            </el-radio-group>
+            <el-checkbox v-model="exportAllRows">{{ t('analysis.allRows') }}</el-checkbox>
+            <el-button :disabled="!queryResult" :loading="exporting" @click="doExport">
+              {{ t('analysis.exportResult') }}
+            </el-button>
+          </div>
+          <el-alert v-if="exportHint" :type="exportHintType" :closable="false" show-icon :title="exportHint" />
           <div class="chart-area">
             <ChartEngine
               v-if="chartConfig && queryResult"
@@ -83,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
   import { useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus'
   import { useI18n } from 'vue-i18n'
@@ -91,7 +103,8 @@
   import { rowsOf } from '@dataviz/shared-types'
   import { ChartType } from '@dataviz/shared-types'
   import { ChartEngine } from '@dataviz/chart-engine'
-  import { executeQuery as execApi, getDataset, listDatasets } from '@dataviz/api-client'
+  import { downloadByBlob } from '@dataviz/shared-utils'
+  import { executeQuery as execApi, exportQueryResult, getDataset, listDatasets } from '@dataviz/api-client'
 
   const { t } = useI18n()
   const route = useRoute()
@@ -105,6 +118,15 @@
   const queryResult = ref<{ columns: Array<{ field: string; type: string; displayName?: string }>; rows: Record<string, unknown>[] } | null>(null)
   const chartConfig = ref<ChartConfig | null>(null)
   const loading = ref(false)
+
+  const exportFormat = ref<'excel' | 'csv'>('excel')
+  const exportAllRows = ref(false)
+  const exporting = ref(false)
+  /** 导出结果的一句话说明（行数 / 是否被上限截断）。留在页面上而不是只弹一次 toast：
+   *  "下下来的这个文件是不是全量"要能被回头看到 */
+  const exportHint = ref('')
+  const exportTruncated = ref(false)
+  const exportHintType = computed(() => (exportTruncated.value ? 'warning' : 'success'))
 
   async function loadDatasets() {
     try {
@@ -149,18 +171,23 @@
     queryMeasures.value.splice(i, 1)
   }
 
+  function currentQuery() {
+    return {
+      datasetId: datasetId.value,
+      dimensions: queryDimensions.value,
+      measures: queryMeasures.value,
+    }
+  }
+
   async function executeQuery() {
     if (!datasetId.value) {
       ElMessage.warning(t('analysis.pickDataset'))
       return
     }
     loading.value = true
+    exportHint.value = ''
     try {
-      const result = await execApi({
-        datasetId: datasetId.value,
-        dimensions: queryDimensions.value,
-        measures: queryMeasures.value,
-      })
+      const result = await execApi(currentQuery())
       queryResult.value = { columns: result.columns, rows: result.rows }
       chartConfig.value = {
         chartType: ChartType.BAR,
@@ -174,6 +201,42 @@
     } finally {
       loading.value = false
     }
+  }
+
+  async function doExport() {
+    if (!queryResult.value) {
+      ElMessage.warning(t('analysis.needResult'))
+      return
+    }
+    exporting.value = true
+    exportHint.value = ''
+    try {
+      const file = await exportQueryResult(currentQuery(), {
+        format: exportFormat.value,
+        fileName: exportFileName(),
+        allRows: exportAllRows.value,
+      })
+      downloadByBlob(file.blob, file.fileName)
+      exportTruncated.value = file.truncated
+      // 截断时必须说清楚是多少行：一个"看起来是全部"的文件比半截文件更坏
+      exportHint.value = file.truncated
+        ? t('analysis.exportTruncated', { rows: file.rowCount })
+        : t('analysis.exportOk', { rows: file.rowCount })
+    } catch (e) {
+      exportTruncated.value = false
+      exportHint.value = ''
+      ElMessage.error((e as Error).message || t('analysis.exportFailed'))
+    } finally {
+      exporting.value = false
+    }
+  }
+
+  /** 数据集名当文件名（后端会把中文名按 RFC 5987 编进 Content-Disposition），非法文件名字符换成下划线 */
+  function exportFileName() {
+    const ext = exportFormat.value === 'csv' ? 'csv' : 'xlsx'
+    const selected = datasets.value.find((d) => String(d.id) === String(datasetId.value))
+    const base = (selected?.name || 'analysis').replace(/[\\/:*?"<>|]/g, '_').trim()
+    return `${base || 'analysis'}.${ext}`
   }
 
   onMounted(loadDatasets)

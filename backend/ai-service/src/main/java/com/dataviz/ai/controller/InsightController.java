@@ -4,6 +4,7 @@ import com.dataviz.ai.dto.InsightGenerateDTO;
 import com.dataviz.ai.service.InsightService;
 import com.dataviz.ai.vo.InsightVO;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +15,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/ai/insight")
 @RequiredArgsConstructor
+@RequiresPermission("ai:read")
 public class InsightController {
 
     private final InsightService insightService;
 
     @PostMapping("/generate")
+    @RequiresPermission("ai:write")
     public R<InsightVO> generateInsight(@RequestBody InsightGenerateDTO dto) {
         return R.ok(insightService.generateInsight(dto));
     }

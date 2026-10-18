@@ -1,0 +1,10 @@
+PUT /api/schedule/job POST /api/schedule/job
+POST /api/schedule/job/{id}/runOnce
+POST /api/schedule/job/{id}/resume
+POST /api/schedule/job/{id}/pause
+GET /api/schedule/job/{id} DELETE /api/schedule/job/{id}
+GET /api/schedule/job/{id}/logs
+GET /api/schedule/job/list
+GET /api/schedule/job/handlers
+GET /api/schedule/dashboard/stats
+GET /api/schedule/dashboard/runningJobs

@@ -48,14 +48,26 @@ export interface SysConfig {
   updateTime?: string
 }
 
-/** 许可证信息（对应 LicenseController /info，后端直接返回 Map，无 R 包装） */
+/**
+ * 许可证信息（对应 LicenseController /info，R 包装后的 data）。
+ * <p>{@code activated} 与 {@code valid} 不是一回事：库里有证但证过期时
+ * activated=true、valid=false。面板要能分开显示这两种，否则"换过钥匙"和"钥匙还能用"会被混成一件事。</p>
+ */
 export interface LicenseInfo {
+  activated?: boolean
+  valid?: boolean
   type?: string
   issuedTo?: string
   issuedAt?: string
   expiresAt?: string
   maxUsers?: number
   maxNodes?: number
-  valid?: boolean
+  /** 距到期天数；已过期为负数，未激活为 null */
+  daysLeft?: number | null
+  message?: string
+  /** 密钥指纹（sha256 前 6 字节 hex），后端不返回密钥原文 */
+  fingerprint?: string
+  activateTime?: string
+  activatedBy?: string
   [key: string]: unknown
 }

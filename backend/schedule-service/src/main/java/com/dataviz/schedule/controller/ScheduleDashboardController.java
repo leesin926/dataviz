@@ -2,6 +2,7 @@ package com.dataviz.schedule.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dataviz.common.core.result.R;
+import com.dataviz.common.security.annotation.RequiresPermission;
 import com.dataviz.schedule.entity.ScheduleJob;
 import com.dataviz.schedule.entity.ScheduleJobLog;
 import com.dataviz.schedule.enums.JobStatus;
@@ -24,11 +25,13 @@ import java.util.stream.Collectors;
 
 /**
  * 调度仪表盘控制器
+ * <p>两个端点都是只读统计，所以只有类级读码，没有方法级写码。</p>
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/schedule/dashboard")
 @RequiredArgsConstructor
+@RequiresPermission("schedule:read")
 public class ScheduleDashboardController {
 
     private final ScheduleJobMapper scheduleJobMapper;

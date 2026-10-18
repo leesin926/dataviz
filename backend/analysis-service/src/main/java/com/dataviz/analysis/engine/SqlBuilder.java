@@ -81,12 +81,39 @@ public class SqlBuilder {
      * Build a SQL query from the visual analysis configuration against the dataset's real source.
      */
     public String buildSql(AnalysisQueryDTO queryDTO, DatasetMeta meta) {
+        return buildSql(queryDTO, meta, null, null);
+    }
+
+    /**
+     * 同一条查询的分页形态，供"导出全量"逐页取数使用。
+     * <p>
+     * {@code rowLimit}/{@code rowOffset} 为 null 时沿用查询自带的 limit（交互查询路径的口径一字不改）。
+     * 分页能骑在既有的 5000 行天花板<b>之内</b>：每一页都不超过天花板，总量靠 OFFSET 往前推，
+     * 所以不需要把服务端天花板抬大 —— 天花板防的是"一次查询把库拖垮"，不是"导出总量"。
+     */
+    public String buildSql(AnalysisQueryDTO queryDTO, DatasetMeta meta, Integer rowLimit, Integer rowOffset) {
+        return buildSql(queryDTO, meta, rowLimit, rowOffset, null);
+    }
+
+    /**
+     * @param permissionPredicate 行级权限谓词（已由 {@link #permissionPredicate} 过白名单）。
+     *                            它拼进 WHERE，因此必然在 GROUP BY / HAVING / ORDER BY / LIMIT <b>之前</b> ——
+     *                            原先在成品 SQL 上做 {@code sql + " AND (...)"} 的写法会把谓词留在 LIMIT 之后，
+     *                            规则一真配上就是语法错。
+     */
+    public String buildSql(AnalysisQueryDTO queryDTO, DatasetMeta meta, Integer rowLimit, Integer rowOffset,
+                           String permissionPredicate) {
         StringBuilder sql = new StringBuilder();
 
         sql.append("SELECT ").append(buildSelectClause(queryDTO));
         sql.append(" FROM ").append(resolveFrom(meta));
 
         String whereClause = buildWhereClause(queryDTO);
+        String permission = trimToNull(permissionPredicate);
+        if (permission != null) {
+            whereClause = whereClause.isEmpty() ? "(" + permission + ")"
+                    : whereClause + " AND (" + permission + ")";
+        }
         if (!whereClause.isEmpty()) {
             sql.append(" WHERE ").append(whereClause);
         }
@@ -106,9 +133,37 @@ public class SqlBuilder {
             sql.append(" ORDER BY ").append(orderByClause);
         }
 
-        sql.append(" LIMIT ").append(resolveLimit(queryDTO));
+        sql.append(" LIMIT ").append(resolveLimit(queryDTO, rowLimit));
+
+        if (rowOffset != null && rowOffset > 0) {
+            sql.append(" OFFSET ").append(rowOffset);
+        }
 
         return sql.toString();
+    }
+
+    /**
+     * 行级权限规则用的就是这条白名单：字段名、操作符、字面量与业务 filters 走同一个收口。
+     * <p>
+     * 规则绝不能存成"管理员手写的一段 SQL"然后原样拼接 —— 那等于给配规则的人开了一个比查询本身更大的
+     * 注入口（他能越过规则去读这个数据源能读的任何东西）。存结构化条件、渲染时过白名单，是唯一能证的地方。
+     */
+    public String permissionPredicate(List<AnalysisQueryDTO.FilterConfig> conditions) {
+        if (conditions == null || conditions.isEmpty()) {
+            return "";
+        }
+        return conditions.stream()
+                .map(f -> predicate(column(f.getField(), "权限字段"),
+                        canonicalOperator(f.getOperator()), f.getValue()))
+                .collect(Collectors.joining(" AND "));
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String buildSelectClause(AnalysisQueryDTO queryDTO) {
@@ -279,7 +334,10 @@ public class SqlBuilder {
         throw new BizException(ErrorCode.BAD_REQUEST, "数据集未配置表名或自定义 SQL，无法执行查询");
     }
 
-    private int resolveLimit(AnalysisQueryDTO queryDTO) {
+    private int resolveLimit(AnalysisQueryDTO queryDTO, Integer rowLimit) {
+        if (rowLimit != null && rowLimit > 0) {
+            return Math.min(rowLimit, MAX_LIMIT);
+        }
         Integer limit = queryDTO.getLimit();
         if (limit == null || limit <= 0) {
             return DEFAULT_LIMIT;
@@ -293,6 +351,24 @@ public class SqlBuilder {
             throw new BizException(ErrorCode.BAD_REQUEST, label + "名无效: " + raw);
         }
         return "`" + cleaned + "`";
+    }
+
+    /**
+     * 保存规则用的严格判据：字段名必须<b>本来就是</b>合法标识符，不能被清洗后通过。
+     * <p>
+     * 查询侧沿用上面的清洗（前端传来的列名带杂字符时尽量救回一个能用的名字），但规则是长期存在的配置：
+     * {@code salary; drop} 被清洗成 {@code salarydrop} 会静默存成一条永远匹配不到的规则，
+     * 症状是"规则配了没生效"，比当场拒绝难查得多。
+     */
+    public static String requireIdentifier(String raw, String label) {
+        String value = raw == null ? "" : raw.trim();
+        if (value.isEmpty()) {
+            throw new BizException(ErrorCode.BAD_REQUEST, label + "不能为空");
+        }
+        if (!IDENTIFIER.matcher(value).matches()) {
+            throw new BizException(ErrorCode.BAD_REQUEST, label + "不是合法列名: " + raw);
+        }
+        return value;
     }
 
     private List<?> asList(Object value, String operator) {

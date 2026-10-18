@@ -26,7 +26,9 @@ spring:
           enabled: false
       routes:
         # ===== Nacos-enabled services (lb://) =====
-        # Auth Service (controllers mapped at /auth, /token -> strip only /api)
+        # Auth Service：控制器映射在 /auth，故剥掉 /api。TokenController 映射在 /token，
+        # 但这里刻意不给它路由 —— 它是网关自己验签用的内部口径，且 /token/check 把 token 放在 query 上；
+        # 是否对外开放属于 API-34 的待拍板项，不要顺手补一条 /api/token/**。
         - id: auth-service
           uri: http://localhost:8081
           predicates:
@@ -47,13 +49,9 @@ spring:
           uri: http://localhost:8083
           predicates:
             - Path=/api/datasource/**
-        # ETL Service (operator controller is /etl/operator without /api)
-        - id: etl-operator-service
-          uri: http://localhost:8084
-          predicates:
-            - Path=/api/etl/operator/**
-          filters:
-            - StripPrefix=1
+        # ETL Service —— EtlOperatorController 自己就映射在 /api/etl/operator，所以这里不剥前缀。
+        # 曾经有一条单独的 etl-operator-service 路由带 StripPrefix=1，把 /api/etl/operator/list
+        # 转成了上游的 /etl/operator/list，实测网关侧恒 404、直连 8084 却 200（见阶段 AY / API-96）。
         - id: etl-service
           uri: http://localhost:8084
           predicates:

@@ -1,0 +1,15 @@
+PUT /api/openapi/webhook POST /api/openapi/webhook
+POST /api/openapi/proxy/invoke
+POST /api/openapi/key/{clientId}/reset-secret
+POST /api/openapi/key/{clientId}/disable
+POST /api/openapi/key/generate
+POST /api/openapi/callback/webhook/test
+POST /api/openapi/callback/datasource/{datasourceId}
+POST /api/openapi/callback/auth/callback
+POST /api/openapi/app
+POST /api/openapi/app/{id}/regenerate-secret
+GET /api/openapi/webhook/{id} DELETE /api/openapi/webhook/{id}
+GET /api/openapi/webhook/list/{appId}
+GET /api/openapi/key/clients
+GET /api/openapi/app/{id} DELETE /api/openapi/app/{id}
+GET /api/openapi/app/list

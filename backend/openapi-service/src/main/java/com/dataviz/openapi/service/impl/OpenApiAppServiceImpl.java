@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.dataviz.common.core.exception.BizException;
+import com.dataviz.common.core.result.ErrorCode;
 
 @Slf4j
 @Service
@@ -50,7 +52,7 @@ public class OpenApiAppServiceImpl implements OpenApiAppService {
     public AppVO getById(Long id) {
         OpenApiApp app = openApiAppMapper.selectById(id);
         if (app == null) {
-            throw new RuntimeException("OpenAPI app not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "OpenAPI app not found: " + id);
         }
         AppVO vo = new AppVO();
         BeanUtils.copyProperties(app, vo);
@@ -77,7 +79,7 @@ public class OpenApiAppServiceImpl implements OpenApiAppService {
     public AppVO regenerateSecret(Long id) {
         OpenApiApp app = openApiAppMapper.selectById(id);
         if (app == null) {
-            throw new RuntimeException("OpenAPI app not found: " + id);
+            throw new BizException(ErrorCode.NOT_FOUND, "OpenAPI app not found: " + id);
         }
         app.setAppSecret(generateAppSecret());
         app.setUpdateTime(LocalDateTime.now());

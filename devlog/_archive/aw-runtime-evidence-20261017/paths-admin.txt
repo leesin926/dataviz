@@ -1,0 +1,16 @@
+PUT /api/admin/tenant POST /api/admin/tenant
+PUT /api/admin/config POST /api/admin/config
+POST /api/admin/tenant/{id}/enable
+POST /api/admin/tenant/{id}/disable
+POST /api/admin/license/activate
+GET /api/admin/tenant/{id} DELETE /api/admin/tenant/{id}
+GET /api/admin/tenant/page
+GET /api/admin/license/validate
+GET /api/admin/license/info
+GET /api/admin/config/{id} DELETE /api/admin/config/{id}
+GET /api/admin/config/public/{configKey}
+GET /api/admin/config/page
+GET /api/admin/config/key/{configKey}
+GET /api/admin/audit/{id}
+GET /api/admin/audit/page
+GET /api/admin/audit/export

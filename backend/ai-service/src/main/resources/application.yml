@@ -38,6 +38,17 @@ ai:
     api-url: ${LLM_API_URL:https://api.openai.com/v1/chat/completions}
     temperature: ${LLM_TEMPERATURE:0.7}
     max-tokens: ${LLM_MAX_TOKENS:4096}
+    # 大模型响应是十秒量级，读超时不能用别处那套短超时口径
+    connect-timeout-seconds: ${LLM_CONNECT_TIMEOUT:5}
+    read-timeout-seconds: ${LLM_READ_TIMEOUT:60}
+
+# NL2SQL 要读真实表结构，取数统一走 datasource-service 的内部只读端点（口令由 internal.api.token 校验）
+internal:
+  api:
+    token: ${INTERNAL_API_TOKEN:dataviz-internal-dev-token}
+
+datasource-service:
+  base-url: ${DATASOURCE_SERVICE_URL:http://localhost:8083}
 
 logging:
   level:

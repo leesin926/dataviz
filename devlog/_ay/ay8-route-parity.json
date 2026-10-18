@@ -1,0 +1,33 @@
+{
+  "total": 230,
+  "noRoute": [
+    {
+      "gw": "/api/token/validate",
+      "port": "8081"
+    },
+    {
+      "gw": "/api/token/check",
+      "port": "8081"
+    },
+    {
+      "gw": "/api/token/revoke/{userId}",
+      "port": "8081"
+    }
+  ],
+  "stripped": [
+    {
+      "gw": "/api/etl/operator/{type}/schema",
+      "routedTo": "etl-operator-service",
+      "upstream": "/etl/operator/{type}/schema",
+      "realUpstream": "/api/etl/operator/{type}/schema",
+      "port": "8084"
+    },
+    {
+      "gw": "/api/etl/operator/list",
+      "routedTo": "etl-operator-service",
+      "upstream": "/etl/operator/list",
+      "realUpstream": "/api/etl/operator/list",
+      "port": "8084"
+    }
+  ]
+}

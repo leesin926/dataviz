@@ -9,6 +9,7 @@ import com.dataviz.screen.mapper.ScreenMapper;
 import com.dataviz.screen.service.ScreenService;
 import com.dataviz.screen.vo.ScreenListVO;
 import com.dataviz.screen.vo.ScreenVO;
+import com.dataviz.screen.websocket.ScreenChangeBroadcaster;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class ScreenServiceImpl implements ScreenService {
 
     private final ScreenMapper screenMapper;
     private final ObjectMapper objectMapper;
+    private final ScreenChangeBroadcaster screenChangeBroadcaster;
 
     @Override
     @Transactional
@@ -84,6 +86,7 @@ public class ScreenServiceImpl implements ScreenService {
         }
         screenMapper.updateById(screen);
         log.info("Updated screen: id={}", id);
+        screenChangeBroadcaster.publishAfterCommit(id, screen.getShareToken(), "updated");
     }
 
     @Override
@@ -100,8 +103,11 @@ public class ScreenServiceImpl implements ScreenService {
     @Override
     @Transactional
     public void delete(Long id) {
+        // 先查再删：删除后就没有拿令牌的机会了，而在看这块屏的人最需要知道的是"它没了"
+        Screen screen = selectOrThrow(id);
         screenMapper.deleteById(id);
         log.info("Deleted screen: id={}", id);
+        screenChangeBroadcaster.publishAfterCommit(id, screen.getShareToken(), "deleted");
     }
 
     @Override
@@ -124,7 +130,8 @@ public class ScreenServiceImpl implements ScreenService {
         List<ScreenVO> vos = new ArrayList<ScreenVO>();
         for (Screen s : all.subList(from, to)) {
             ScreenVO vo = toVO(s);
-            // 列表不携带大字段，编辑器打开详情时再取全量
+            // 列表不携带大字段，编辑器打开详情时再取全量；计数保留给列表列显示，否则前端只能显示 0
+            vo.setComponentCount(vo.getComponents() == null ? 0 : vo.getComponents().size());
             vo.setComponents(null);
             applyListPlatformSize(vo, platform);
             vo.setVariantSizes(variantSizes(vo.getVariants()));
@@ -145,6 +152,8 @@ public class ScreenServiceImpl implements ScreenService {
         }
         screenMapper.updateById(screen);
         log.info("Published screen: id={}, shareToken={}", id, screen.getShareToken());
+        // 首次发布时令牌刚生成，此刻没有订阅者；这一步覆盖的是"下架后重新发布"——旧链接的访客要能自己刷回来
+        screenChangeBroadcaster.publishAfterCommit(id, screen.getShareToken(), "published");
     }
 
     @Override
@@ -154,6 +163,7 @@ public class ScreenServiceImpl implements ScreenService {
         screen.setStatus(0);
         screenMapper.updateById(screen);
         log.info("Unpublished screen: id={}", id);
+        screenChangeBroadcaster.publishAfterCommit(id, screen.getShareToken(), "unpublished");
     }
 
     @Override
@@ -226,6 +236,7 @@ public class ScreenServiceImpl implements ScreenService {
         screen.setVariantsJson(writeJson(variants));
         screenMapper.updateById(screen);
         log.info("Saved variant: screenId={}, platform={}", id, key);
+        screenChangeBroadcaster.publishAfterCommit(id, screen.getShareToken(), "updated");
     }
 
     // ---------- 序列化 / 契约转换 ----------

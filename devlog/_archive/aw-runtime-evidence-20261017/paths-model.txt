@@ -1,0 +1,11 @@
+GET /api/model/metric/{id} PUT /api/model/metric/{id} DELETE /api/model/metric/{id}
+GET /api/model/dimension/{id} PUT /api/model/dimension/{id} DELETE /api/model/dimension/{id}
+GET /api/model/dataset/{id} PUT /api/model/dataset/{id} DELETE /api/model/dataset/{id}
+POST /api/model/metric
+POST /api/model/dimension
+POST /api/model/dataset
+POST /api/model/dataset/preview
+GET /api/model/metric/list
+GET /api/model/internal/dataset/{id}
+GET /api/model/dimension/list
+GET /api/model/dataset/list
