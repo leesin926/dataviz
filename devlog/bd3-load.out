@@ -1,0 +1,12 @@
+check_name	value
+任务总数(演示 8 条 + 旧 3 条)	11
+check_name	value
+transform_config 非法 JSON 条数(必须 0)	0
+check_name	value
+写入方式非 append 的新任务(必须 0)	0
+check_name	value
+每条新任务都有源端与目标节点	8/8
+check_name	value
+引用的数据源存在且可用	9/9
+check_name	value
+新任务的历史条数(必须 0：还没跑过就不该有记录)	0

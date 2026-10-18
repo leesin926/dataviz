@@ -1,0 +1,12 @@
+s
+== A. db_datasource tables ==
+TABLE_NAME
+datasource
+datasource_metadata
+s
+== B. datasource rows ==
+id	tenant_id	name	type	config	host	port	database_name	username	password	properties	status	last_check_time	description	create_by	create_time	update_by	update_time	deleted
+901	1	分析库（演示）	mysql	{"host":"localhost","port":3306,"database":"db_analysis","username":"root","password":"root123456","maxPoolSize":4,"minIdle":1,"queryTimeoutSeconds":30}	localhost	3306	db_analysis	root	root123456	{"minIdle": 2, "maxPoolSize": 10, "queryTimeoutSeconds": 30}	1	2026-09-21 19:52:50	平台自带的分析库，承载 OLAP 演示宽表	NULL	2026-08-22 20:04:50	NULL	2026-09-22 00:38:12	0
+902	1	订单业务库	mysql	{"host":"localhost","port":3306,"database":"db_model","username":"root","password":"root123456","maxPoolSize":4,"minIdle":1}	localhost	3306	db_model	root	root123456	{"minIdle": 1, "maxPoolSize": 8}	1	2026-09-21 19:04:50	订单/客户维度来源	NULL	2026-08-24 20:04:50	NULL	2026-09-22 00:38:12	0
+903	1	行为日志集群	clickhouse	{"host":"172.18.0.1","port":8123,"database":"dwh","username":"default","cluster":"ch-single","replica":1}	172.18.0.1	8123	dwh	default		{"cluster": "ch-single", "replica": 1}	1	2026-09-21 18:04:50	埋点与行为明细（示例，未真实连通）	NULL	2026-09-01 20:04:50	NULL	2026-09-21 18:04:50	0
+904	1	指标开放接口	api	{"endpoint":"https://api.example.com/metrics","authType":"bearer","cacheSeconds":300}	https://api.example.com	443				{"authType": "bearer", "endpoint": "/metrics", "cacheSeconds": 300}	0	2026-09-18 20:04:50	第三方指标 API 数据源，已停用	NULL	2026-09-06 20:04:50	NULL	2026-09-18 20:04:50	0

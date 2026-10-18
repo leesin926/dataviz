@@ -1,0 +1,109 @@
+CONCAT('@@MD ~|~ ', id, ' ~|~ ', datasource_id, ' ~|~ ', COALESCE(table_name, 'NULL'), ' ~|~ ', COALESCE(sql_query, 'NULL'), ' ~|~ ', COALESCE(dimensions, 'NULL'), ' ~|~ ', COALESCE(metrics, 'NULL'), ' ~|~ ', COALESCE(filters, 'NULL'))
+@@MD ~|~ 911 ~|~ 901 ~|~ ods_order_detail ~|~ NULL ~|~ [{"field":"stat_date","displayName":"下单日期","type":"time","format":"yyyy-MM-dd"},{"field":"stat_hour","displayName":"下单小时","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"},{"field":"store_name","displayName":"门店","type":"category"},{"field":"channel","displayName":"渠道","type":"category"},{"field":"category","displayName":"商品类目","type":"category"},{"field":"member_level","displayName":"会员等级","type":"category"},{"field":"order_status","displayName":"订单状态","type":"category"},{"field":"created_at","displayName":"下单时间","type":"time","format":"yyyy-MM-dd HH:mm:ss"}] ~|~ [{"field":"pay_amount","displayName":"实付金额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"qty","displayName":"件数","aggregation":"sum","format":"#,##0"},{"field":"order_id","displayName":"订单数","aggregation":"count","format":"#,##0"}] ~|~ [{"field":"order_status","operator":"!=","value":"CANCELLED"}]
+@@MD ~|~ 912 ~|~ 901 ~|~ dwd_sales_daily ~|~ NULL ~|~ [{"field":"stat_date","displayName":"统计日期","type":"time","format":"yyyy-MM-dd"},{"field":"region","displayName":"大区","type":"category"},{"field":"category","displayName":"商品类目","type":"category"},{"field":"channel","displayName":"渠道","type":"category"}] ~|~ [{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"qty","displayName":"件数","aggregation":"sum","format":"#,##0"}] ~|~ []
+@@MD ~|~ 913 ~|~ 901 ~|~ dws_store_sales ~|~ NULL ~|~ [{"field":"store_name","displayName":"门店","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"}] ~|~ [{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"avg_pay_amount","displayName":"平均客单价","aggregation":"avg","format":"#,##0.00"}] ~|~ []
+@@MD ~|~ 914 ~|~ 901 ~|~ dws_member_level ~|~ NULL ~|~ [{"field":"member_level","displayName":"会员等级","type":"category"}] ~|~ [{"field":"amount","displayName":"消费金额","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"avg_pay_amount","displayName":"平均客单价","aggregation":"avg","format":"#,##0.00"}] ~|~ []
+@@MD ~|~ 915 ~|~ 901 ~|~ ads_store_performance ~|~ NULL ~|~ [{"field":"store_name","displayName":"门店","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"}] ~|~ [{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"target_amount","displayName":"月度目标","aggregation":"sum","format":"#,##0.00"},{"field":"avg_pay_amount","displayName":"平均客单价","aggregation":"avg","format":"#,##0.00"},{"field":"achievement_rate","displayName":"达成率","aggregation":"avg","format":"0.00"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}] ~|~ []
+@@MD ~|~ 916 ~|~ 901 ~|~ ads_hour_heat ~|~ NULL ~|~ [{"field":"stat_hour","displayName":"下单小时","type":"category"}] ~|~ [{"field":"orders","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"avg_amount","displayName":"时段均值","aggregation":"avg","format":"#,##0.00"}] ~|~ []
+@@MD ~|~ 917 ~|~ 901 ~|~ ads_member_value ~|~ NULL ~|~ [{"field":"member_level","displayName":"会员等级","type":"category"}] ~|~ [{"field":"members","displayName":"会员数","aggregation":"sum","format":"#,##0"},{"field":"amount","displayName":"消费金额","aggregation":"sum","format":"#,##0.00"},{"field":"avg_amount","displayName":"人均消费","aggregation":"avg","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"repurchase_rate","displayName":"复购率","aggregation":"avg","format":"0.00"}] ~|~ []
+@@MD ~|~ 918 ~|~ 901 ~|~ ads_realtime_feed ~|~ NULL ~|~ [{"field":"feed_time","displayName":"成交时间","type":"time","format":"yyyy-MM-dd HH:mm:ss"},{"field":"store_name","displayName":"门店","type":"category"},{"field":"city","displayName":"城市","type":"category"},{"field":"category","displayName":"商品类目","type":"category"},{"field":"channel","displayName":"渠道","type":"category"}] ~|~ [{"field":"amount","displayName":"成交金额","aggregation":"sum","format":"#,##0.00"}] ~|~ []
+@@MD ~|~ 919 ~|~ 901 ~|~ NULL ~|~ SELECT s.store_name, s.region, s.city, MAX(s.monthly_target) AS target_amount, SUM(t.amount) AS amount, SUM(t.profit) AS profit, ROUND(SUM(t.amount) / NULLIF(MAX(s.monthly_target), 0) * 100, 2) AS achievement_rate, ROUND(SUM(t.profit) / NULLIF(SUM(t.amount), 0) * 100, 2) AS margin_rate FROM db_model.demo_stores s JOIN db_analysis.dws_store_sales t ON t.store_id = s.store_id GROUP BY s.store_name, s.region, s.city ~|~ [{"field":"store_name","displayName":"门店","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"}] ~|~ [{"field":"target_amount","displayName":"月度目标","aggregation":"sum","format":"#,##0.00"},{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"achievement_rate","displayName":"达成率","aggregation":"avg","format":"0.00"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}] ~|~ []
+@@MD ~|~ 920 ~|~ 901 ~|~ NULL ~|~ SELECT channel, category, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY channel, category ~|~ [{"field":"channel","displayName":"渠道","type":"category"},{"field":"category","displayName":"商品类目","type":"category"}] ~|~ [{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}] ~|~ []
+@@MD ~|~ 921 ~|~ 901 ~|~ NULL ~|~ SELECT stat_date, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, SUM(qty) AS qty, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY stat_date ~|~ [{"field":"stat_date","displayName":"统计日期","type":"time","format":"yyyy-MM-dd"}] ~|~ [{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"qty","displayName":"件数","aggregation":"sum","format":"#,##0"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}] ~|~ []
+CONCAT('@@DIM ~|~ ', id, ' ~|~ ', dataset_id, ' ~|~ ', column_name, ' ~|~ ', dimension_type, ' ~|~ ', COALESCE(table_name, 'NULL'), ' ~|~ ', data_type, ' ~|~ ', sort)
+@@DIM ~|~ 911 ~|~ 911 ~|~ stat_date ~|~ TIME ~|~ ods_order_detail ~|~ DATE ~|~ 1
+@@DIM ~|~ 912 ~|~ 911 ~|~ stat_hour ~|~ CATEGORY ~|~ ods_order_detail ~|~ TINYINT ~|~ 2
+@@DIM ~|~ 913 ~|~ 911 ~|~ region ~|~ GEO ~|~ ods_order_detail ~|~ VARCHAR ~|~ 3
+@@DIM ~|~ 914 ~|~ 911 ~|~ city ~|~ CATEGORY ~|~ ods_order_detail ~|~ VARCHAR ~|~ 4
+@@DIM ~|~ 915 ~|~ 911 ~|~ store_name ~|~ CATEGORY ~|~ ods_order_detail ~|~ VARCHAR ~|~ 5
+@@DIM ~|~ 916 ~|~ 911 ~|~ channel ~|~ CATEGORY ~|~ ods_order_detail ~|~ VARCHAR ~|~ 6
+@@DIM ~|~ 917 ~|~ 911 ~|~ category ~|~ CATEGORY ~|~ ods_order_detail ~|~ VARCHAR ~|~ 7
+@@DIM ~|~ 918 ~|~ 911 ~|~ member_level ~|~ CATEGORY ~|~ ods_order_detail ~|~ VARCHAR ~|~ 8
+@@DIM ~|~ 919 ~|~ 911 ~|~ order_status ~|~ CATEGORY ~|~ ods_order_detail ~|~ VARCHAR ~|~ 9
+@@DIM ~|~ 920 ~|~ 911 ~|~ created_at ~|~ TIME ~|~ ods_order_detail ~|~ DATETIME ~|~ 10
+@@DIM ~|~ 921 ~|~ 912 ~|~ stat_date ~|~ TIME ~|~ dwd_sales_daily ~|~ DATE ~|~ 1
+@@DIM ~|~ 922 ~|~ 912 ~|~ region ~|~ GEO ~|~ dwd_sales_daily ~|~ VARCHAR ~|~ 2
+@@DIM ~|~ 923 ~|~ 912 ~|~ category ~|~ CATEGORY ~|~ dwd_sales_daily ~|~ VARCHAR ~|~ 3
+@@DIM ~|~ 924 ~|~ 912 ~|~ channel ~|~ CATEGORY ~|~ dwd_sales_daily ~|~ VARCHAR ~|~ 4
+@@DIM ~|~ 925 ~|~ 913 ~|~ store_name ~|~ CATEGORY ~|~ dws_store_sales ~|~ VARCHAR ~|~ 1
+@@DIM ~|~ 926 ~|~ 913 ~|~ region ~|~ GEO ~|~ dws_store_sales ~|~ VARCHAR ~|~ 2
+@@DIM ~|~ 927 ~|~ 913 ~|~ city ~|~ CATEGORY ~|~ dws_store_sales ~|~ VARCHAR ~|~ 3
+@@DIM ~|~ 928 ~|~ 914 ~|~ member_level ~|~ CATEGORY ~|~ dws_member_level ~|~ VARCHAR ~|~ 1
+@@DIM ~|~ 929 ~|~ 915 ~|~ store_name ~|~ CATEGORY ~|~ ads_store_performance ~|~ VARCHAR ~|~ 1
+@@DIM ~|~ 930 ~|~ 915 ~|~ region ~|~ GEO ~|~ ads_store_performance ~|~ VARCHAR ~|~ 2
+@@DIM ~|~ 931 ~|~ 915 ~|~ city ~|~ CATEGORY ~|~ ads_store_performance ~|~ VARCHAR ~|~ 3
+@@DIM ~|~ 932 ~|~ 916 ~|~ stat_hour ~|~ CATEGORY ~|~ ads_hour_heat ~|~ TINYINT ~|~ 1
+@@DIM ~|~ 933 ~|~ 917 ~|~ member_level ~|~ CATEGORY ~|~ ads_member_value ~|~ VARCHAR ~|~ 1
+@@DIM ~|~ 934 ~|~ 918 ~|~ feed_time ~|~ TIME ~|~ ads_realtime_feed ~|~ DATETIME ~|~ 1
+@@DIM ~|~ 935 ~|~ 918 ~|~ store_name ~|~ CATEGORY ~|~ ads_realtime_feed ~|~ VARCHAR ~|~ 2
+@@DIM ~|~ 936 ~|~ 918 ~|~ city ~|~ CATEGORY ~|~ ads_realtime_feed ~|~ VARCHAR ~|~ 3
+@@DIM ~|~ 937 ~|~ 918 ~|~ category ~|~ CATEGORY ~|~ ads_realtime_feed ~|~ VARCHAR ~|~ 4
+@@DIM ~|~ 938 ~|~ 918 ~|~ channel ~|~ CATEGORY ~|~ ads_realtime_feed ~|~ VARCHAR ~|~ 5
+@@DIM ~|~ 939 ~|~ 919 ~|~ store_name ~|~ CATEGORY ~|~ NULL ~|~ VARCHAR ~|~ 1
+@@DIM ~|~ 940 ~|~ 919 ~|~ region ~|~ GEO ~|~ NULL ~|~ VARCHAR ~|~ 2
+@@DIM ~|~ 941 ~|~ 919 ~|~ city ~|~ CATEGORY ~|~ NULL ~|~ VARCHAR ~|~ 3
+@@DIM ~|~ 942 ~|~ 920 ~|~ channel ~|~ CATEGORY ~|~ NULL ~|~ VARCHAR ~|~ 1
+@@DIM ~|~ 943 ~|~ 920 ~|~ category ~|~ CATEGORY ~|~ NULL ~|~ VARCHAR ~|~ 2
+@@DIM ~|~ 944 ~|~ 921 ~|~ stat_date ~|~ TIME ~|~ NULL ~|~ DATE ~|~ 1
+CONCAT('@@MET ~|~ ', id, ' ~|~ ', dataset_id, ' ~|~ ', column_name, ' ~|~ ', aggregation_type, ' ~|~ ', COALESCE(table_name, 'NULL'), ' ~|~ ', data_type, ' ~|~ ', sort)
+@@MET ~|~ 911 ~|~ 911 ~|~ pay_amount ~|~ SUM ~|~ ods_order_detail ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 912 ~|~ 911 ~|~ profit ~|~ SUM ~|~ ods_order_detail ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 913 ~|~ 911 ~|~ qty ~|~ SUM ~|~ ods_order_detail ~|~ BIGINT ~|~ 3
+@@MET ~|~ 914 ~|~ 911 ~|~ order_id ~|~ COUNT ~|~ ods_order_detail ~|~ BIGINT ~|~ 4
+@@MET ~|~ 915 ~|~ 912 ~|~ amount ~|~ SUM ~|~ dwd_sales_daily ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 916 ~|~ 912 ~|~ profit ~|~ SUM ~|~ dwd_sales_daily ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 917 ~|~ 912 ~|~ order_count ~|~ SUM ~|~ dwd_sales_daily ~|~ BIGINT ~|~ 3
+@@MET ~|~ 918 ~|~ 912 ~|~ qty ~|~ SUM ~|~ dwd_sales_daily ~|~ BIGINT ~|~ 4
+@@MET ~|~ 919 ~|~ 913 ~|~ amount ~|~ SUM ~|~ dws_store_sales ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 920 ~|~ 913 ~|~ profit ~|~ SUM ~|~ dws_store_sales ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 921 ~|~ 913 ~|~ order_count ~|~ SUM ~|~ dws_store_sales ~|~ BIGINT ~|~ 3
+@@MET ~|~ 922 ~|~ 913 ~|~ avg_pay_amount ~|~ AVG ~|~ dws_store_sales ~|~ DECIMAL ~|~ 4
+@@MET ~|~ 923 ~|~ 914 ~|~ amount ~|~ SUM ~|~ dws_member_level ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 924 ~|~ 914 ~|~ order_count ~|~ SUM ~|~ dws_member_level ~|~ BIGINT ~|~ 2
+@@MET ~|~ 925 ~|~ 914 ~|~ avg_pay_amount ~|~ AVG ~|~ dws_member_level ~|~ DECIMAL ~|~ 3
+@@MET ~|~ 926 ~|~ 915 ~|~ amount ~|~ SUM ~|~ ads_store_performance ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 927 ~|~ 915 ~|~ profit ~|~ SUM ~|~ ads_store_performance ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 928 ~|~ 915 ~|~ order_count ~|~ SUM ~|~ ads_store_performance ~|~ BIGINT ~|~ 3
+@@MET ~|~ 929 ~|~ 915 ~|~ target_amount ~|~ SUM ~|~ ads_store_performance ~|~ DECIMAL ~|~ 4
+@@MET ~|~ 930 ~|~ 915 ~|~ avg_pay_amount ~|~ AVG ~|~ ads_store_performance ~|~ DECIMAL ~|~ 5
+@@MET ~|~ 931 ~|~ 915 ~|~ achievement_rate ~|~ AVG ~|~ ads_store_performance ~|~ DECIMAL ~|~ 6
+@@MET ~|~ 932 ~|~ 915 ~|~ margin_rate ~|~ AVG ~|~ ads_store_performance ~|~ DECIMAL ~|~ 7
+@@MET ~|~ 933 ~|~ 916 ~|~ orders ~|~ SUM ~|~ ads_hour_heat ~|~ BIGINT ~|~ 1
+@@MET ~|~ 934 ~|~ 916 ~|~ amount ~|~ SUM ~|~ ads_hour_heat ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 935 ~|~ 916 ~|~ avg_amount ~|~ AVG ~|~ ads_hour_heat ~|~ DECIMAL ~|~ 3
+@@MET ~|~ 936 ~|~ 917 ~|~ members ~|~ SUM ~|~ ads_member_value ~|~ BIGINT ~|~ 1
+@@MET ~|~ 937 ~|~ 917 ~|~ amount ~|~ SUM ~|~ ads_member_value ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 938 ~|~ 917 ~|~ avg_amount ~|~ AVG ~|~ ads_member_value ~|~ DECIMAL ~|~ 3
+@@MET ~|~ 939 ~|~ 917 ~|~ order_count ~|~ SUM ~|~ ads_member_value ~|~ BIGINT ~|~ 4
+@@MET ~|~ 940 ~|~ 917 ~|~ repurchase_rate ~|~ AVG ~|~ ads_member_value ~|~ DECIMAL ~|~ 5
+@@MET ~|~ 941 ~|~ 918 ~|~ amount ~|~ SUM ~|~ ads_realtime_feed ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 942 ~|~ 919 ~|~ target_amount ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 943 ~|~ 919 ~|~ amount ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 944 ~|~ 919 ~|~ profit ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 3
+@@MET ~|~ 945 ~|~ 919 ~|~ achievement_rate ~|~ AVG ~|~ NULL ~|~ DECIMAL ~|~ 4
+@@MET ~|~ 946 ~|~ 919 ~|~ margin_rate ~|~ AVG ~|~ NULL ~|~ DECIMAL ~|~ 5
+@@MET ~|~ 947 ~|~ 920 ~|~ amount ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 948 ~|~ 920 ~|~ profit ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 949 ~|~ 920 ~|~ order_count ~|~ SUM ~|~ NULL ~|~ BIGINT ~|~ 3
+@@MET ~|~ 950 ~|~ 920 ~|~ margin_rate ~|~ AVG ~|~ NULL ~|~ DECIMAL ~|~ 4
+@@MET ~|~ 951 ~|~ 921 ~|~ amount ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 1
+@@MET ~|~ 952 ~|~ 921 ~|~ profit ~|~ SUM ~|~ NULL ~|~ DECIMAL ~|~ 2
+@@MET ~|~ 953 ~|~ 921 ~|~ order_count ~|~ SUM ~|~ NULL ~|~ BIGINT ~|~ 3
+@@MET ~|~ 954 ~|~ 921 ~|~ qty ~|~ SUM ~|~ NULL ~|~ BIGINT ~|~ 4
+@@MET ~|~ 955 ~|~ 921 ~|~ margin_rate ~|~ AVG ~|~ NULL ~|~ DECIMAL ~|~ 5
+CONCAT('@@RPT ~|~ ', id, ' ~|~ ', dataset_id, ' ~|~ ', is_published, ' ~|~ ', COALESCE(config, 'NULL'))
+@@RPT ~|~ 911 ~|~ 915 ~|~ 1 ~|~ {"dimensions":[{"field":"store_name"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"achievement_rate","aggFunction":"AVG","alias":"achievement_rate"}],"limit":50}
+@@RPT ~|~ 912 ~|~ 917 ~|~ 1 ~|~ {"dimensions":[{"field":"member_level"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"members","aggFunction":"SUM","alias":"members"}],"orders":[{"field":"amount","direction":"DESC"}],"limit":20}
+@@RPT ~|~ 913 ~|~ 916 ~|~ 1 ~|~ {"dimensions":[{"field":"stat_hour"}],"metrics":[{"field":"orders","aggFunction":"SUM","alias":"orders"},{"field":"amount","aggFunction":"SUM","alias":"amount"}],"orders":[{"field":"stat_hour","direction":"ASC"}],"limit":24}
+@@RPT ~|~ 914 ~|~ 920 ~|~ 1 ~|~ {"dimensions":[{"field":"channel"},{"field":"category"}],"metrics":[{"field":"margin_rate","aggFunction":"AVG","alias":"margin_rate"}],"limit":50}
+@@RPT ~|~ 915 ~|~ 921 ~|~ 1 ~|~ {"dimensions":[{"field":"stat_date"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"profit","aggFunction":"SUM","alias":"profit"}],"orders":[{"field":"stat_date","direction":"ASC"}],"limit":120}
+@@RPT ~|~ 916 ~|~ 919 ~|~ 1 ~|~ {"dimensions":[{"field":"region"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"target_amount","aggFunction":"SUM","alias":"target_amount"}],"limit":20}
+@@RPT ~|~ 917 ~|~ 911 ~|~ 0 ~|~ {"dimensions":[{"field":"region"},{"field":"channel"}],"metrics":[{"field":"pay_amount","aggFunction":"SUM","alias":"pay_amount"}],"filters":[{"field":"order_status","operator":"!=","value":"CANCELLED"}],"limit":500}
+CONCAT('@@RULE ~|~ ', id, ' ~|~ ', dataset_id, ' ~|~ ', scope_type, ' ~|~ ', scope_value, ' ~|~ ', COALESCE(conditions_json, 'NULL'), ' ~|~ ', COALESCE(restricted_columns, 'NULL'), ' ~|~ ', enabled)
+@@RULE ~|~ 911 ~|~ 913 ~|~ ROLE ~|~ user ~|~ [{"field":"region","operator":"eq","value":"华东"}] ~|~ NULL ~|~ 1
+@@RULE ~|~ 912 ~|~ 915 ~|~ ROLE ~|~ user ~|~ NULL ~|~ profit,margin_rate ~|~ 1
+CONCAT('@@DS ~|~ ', id, ' ~|~ ', name, ' ~|~ ', status)
+@@DS ~|~ 901 ~|~ 分析库（演示） ~|~ 1
+@@DS ~|~ 902 ~|~ 订单业务库 ~|~ 1
+@@DS ~|~ 903 ~|~ 行为日志集群 ~|~ 0
+@@DS ~|~ 904 ~|~ 指标开放接口 ~|~ 0

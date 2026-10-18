@@ -1,0 +1,21 @@
+SET NAMES utf8mb4;
+USE db_analysis;
+-- 每条已发布报告的 config-SQL 行数与列名（生成器产出，勿手改）
+SELECT '@@Q 911' AS marker;
+SELECT CONCAT('@@ROWS ~|~ 911 ~|~ ', COUNT(*)) FROM (SELECT `store_name`, SUM(`amount`) AS `amount`, AVG(`achievement_rate`) AS `achievement_rate` FROM `ads_store_performance` GROUP BY `store_name` LIMIT 50) wrapped;
+SELECT * FROM (SELECT `store_name`, SUM(`amount`) AS `amount`, AVG(`achievement_rate`) AS `achievement_rate` FROM `ads_store_performance` GROUP BY `store_name` LIMIT 50) sample LIMIT 3;
+SELECT '@@Q 912' AS marker;
+SELECT CONCAT('@@ROWS ~|~ 912 ~|~ ', COUNT(*)) FROM (SELECT `member_level`, SUM(`amount`) AS `amount`, SUM(`members`) AS `members` FROM `ads_member_value` GROUP BY `member_level` ORDER BY `amount` DESC LIMIT 20) wrapped;
+SELECT * FROM (SELECT `member_level`, SUM(`amount`) AS `amount`, SUM(`members`) AS `members` FROM `ads_member_value` GROUP BY `member_level` ORDER BY `amount` DESC LIMIT 20) sample LIMIT 3;
+SELECT '@@Q 913' AS marker;
+SELECT CONCAT('@@ROWS ~|~ 913 ~|~ ', COUNT(*)) FROM (SELECT `stat_hour`, SUM(`orders`) AS `orders`, SUM(`amount`) AS `amount` FROM `ads_hour_heat` GROUP BY `stat_hour` ORDER BY `stat_hour` ASC LIMIT 24) wrapped;
+SELECT * FROM (SELECT `stat_hour`, SUM(`orders`) AS `orders`, SUM(`amount`) AS `amount` FROM `ads_hour_heat` GROUP BY `stat_hour` ORDER BY `stat_hour` ASC LIMIT 24) sample LIMIT 3;
+SELECT '@@Q 914' AS marker;
+SELECT CONCAT('@@ROWS ~|~ 914 ~|~ ', COUNT(*)) FROM (SELECT `channel`, `category`, AVG(`margin_rate`) AS `margin_rate` FROM (SELECT channel, category, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY channel, category) t_source GROUP BY `channel`, `category` LIMIT 50) wrapped;
+SELECT * FROM (SELECT `channel`, `category`, AVG(`margin_rate`) AS `margin_rate` FROM (SELECT channel, category, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY channel, category) t_source GROUP BY `channel`, `category` LIMIT 50) sample LIMIT 3;
+SELECT '@@Q 915' AS marker;
+SELECT CONCAT('@@ROWS ~|~ 915 ~|~ ', COUNT(*)) FROM (SELECT `stat_date`, SUM(`amount`) AS `amount`, SUM(`profit`) AS `profit` FROM (SELECT stat_date, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, SUM(qty) AS qty, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY stat_date) t_source GROUP BY `stat_date` ORDER BY `stat_date` ASC LIMIT 120) wrapped;
+SELECT * FROM (SELECT `stat_date`, SUM(`amount`) AS `amount`, SUM(`profit`) AS `profit` FROM (SELECT stat_date, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, SUM(qty) AS qty, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY stat_date) t_source GROUP BY `stat_date` ORDER BY `stat_date` ASC LIMIT 120) sample LIMIT 3;
+SELECT '@@Q 916' AS marker;
+SELECT CONCAT('@@ROWS ~|~ 916 ~|~ ', COUNT(*)) FROM (SELECT `region`, SUM(`amount`) AS `amount`, SUM(`target_amount`) AS `target_amount` FROM (SELECT s.store_name, s.region, s.city, MAX(s.monthly_target) AS target_amount, SUM(t.amount) AS amount, SUM(t.profit) AS profit, ROUND(SUM(t.amount) / NULLIF(MAX(s.monthly_target), 0) * 100, 2) AS achievement_rate, ROUND(SUM(t.profit) / NULLIF(SUM(t.amount), 0) * 100, 2) AS margin_rate FROM db_model.demo_stores s JOIN db_analysis.dws_store_sales t ON t.store_id = s.store_id GROUP BY s.store_name, s.region, s.city) t_source GROUP BY `region` LIMIT 20) wrapped;
+SELECT * FROM (SELECT `region`, SUM(`amount`) AS `amount`, SUM(`target_amount`) AS `target_amount` FROM (SELECT s.store_name, s.region, s.city, MAX(s.monthly_target) AS target_amount, SUM(t.amount) AS amount, SUM(t.profit) AS profit, ROUND(SUM(t.amount) / NULLIF(MAX(s.monthly_target), 0) * 100, 2) AS achievement_rate, ROUND(SUM(t.profit) / NULLIF(SUM(t.amount), 0) * 100, 2) AS margin_rate FROM db_model.demo_stores s JOIN db_analysis.dws_store_sales t ON t.store_id = s.store_id GROUP BY s.store_name, s.region, s.city) t_source GROUP BY `region` LIMIT 20) sample LIMIT 3;

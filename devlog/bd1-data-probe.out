@@ -1,0 +1,65 @@
+s
+--- sales_daily shape ---
+Field	Type	Null	Key	Default	Extra
+stat_date	date	NO	MUL	NULL	
+region	varchar(32)	NO		NULL	
+category	varchar(32)	NO		NULL	
+amount	decimal(18,2)	NO		NULL	
+order_count	int	NO		NULL	
+s
+--- orders shape ---
+Field	Type	Null	Key	Default	Extra
+order_id	bigint	NO	PRI	NULL	auto_increment
+user_id	bigint	NO		NULL	
+region	varchar(32)	NO		NULL	
+pay_amount	decimal(18,2)	NO		NULL	
+status	varchar(16)	NO		NULL	
+created_at	datetime	NO	MUL	NULL	
+s
+--- behavior shape ---
+Field	Type	Null	Key	Default	Extra
+event_time	datetime	NO	MUL	NULL	
+user_id	bigint	NO		NULL	
+event_type	varchar(32)	NO		NULL	
+page	varchar(64)	NO		NULL	
+duration_ms	int	NO		NULL	
+s
+--- sales_daily range/coverage ---
+mn	mx	rows_cnt	regions	cats	total_amount	total_orders
+2026-08-30	2026-09-21	135	5	3	3956715.00	26190
+s
+--- sales_daily by region ---
+region	c	amt
+东北	27	798417.00
+西南	27	794880.00
+华南	27	791343.00
+华北	27	787806.00
+华东	27	784269.00
+s
+--- categories ---
+category	c	amt
+食品	45	1322707.50
+服装	45	1318905.00
+家电	45	1315102.50
+s
+--- orders status ---
+status	c	amt
+SHIPPED	33	69852.75
+REFUNDING	30	63133.25
+CANCELLED	32	67736.00
+PAID	30	68071.75
+s
+--- behavior ---
+event_type	c	avg_ms
+export	125	15989.0
+login	125	15936.0
+click	125	15883.0
+view	125	15830.0
+s
+--- views alive? ---
+sales_view_rows
+135
+s
+--- 901 components_json raw ---
+*************************** 1. row ***************************
+components_json: [{"h": 48, "w": 600, "x": 40, "y": 24, "id": "comp_title", "name": "主标题", "type": "text", "props": {"text": "销售实时监控中心", "color": "#1f2d3d", "fontSize": "28px", "fontWeight": "600"}, "locked": false, "zIndex": 1, "request": {"sourceType": "static", "staticData": {}}, "visible": true}, {"h": 90, "w": 280, "x": 700, "y": 24, "id": "comp_kpi_1", "name": "今日销售额", "type": "statCard", "props": {"unit": "元", "color": "#26323f", "title": "今日销售额", "precision": 0, "accentColor": "#1f6feb"}, "locked": false, "zIndex": 2, "request": {"sourceType": "static", "staticData": {"rows": [{"value": 1286430}]}}, "visible": true}, {"h": 90, "w": 280, "x": 1000, "y": 24, "id": "comp_kpi_2", "name": "今日订单量", "type": "statCard", "props": {"unit": "单", "color": "#26323f", "title": "今日订单量", "precision": 0, "accentColor": "#0f9d58"}, "locked": false, "zIndex": 3, "request": {"sourceType": "static", "staticData": {"rows": [{"value": 8426}]}}, "visible": true}, {"h": 420, "w": 900, "x": 40, "y": 140, "id": "comp_bar_region", "name": "各大区销售额", "type": "chart", "props": {"color": ["#3aa2ff", "#4dd6a8", "#ffb547"], "title": "各大区销售额"}, "locked": false, "zIndex": 4, "request": {"sourceType": "static", "staticData": {"rows": [{"amount": 428000, "category": "华东"}, {"amount": 312000, "category": "华南"}, {"amount": 286000, "category": "华北"}, {"amount": 148000, "category": "西南"}, {"amount": 76000, "category": "东北"}, {"amount": 36430, "category": "西北"}]}}, "visible": true, "chartPreset": "bar"}, {"h": 420, "w": 920, "x": 960, "y": 140, "id": "comp_line_trend", "name": "近 7 日趋势", "type": "chart", "props": {"color": ["#1f6feb"], "title": "近 7 日销售趋势"}, "locked": false, "zIndex": 5, "request": {"sourceType": "static", "staticData": {"rows": [{"date": "09-14", "amount": 98000}, {"date": "09-15", "amount": 112000}, {"date": "09-16", "amount": 104500}, {"date": "09-17", "amount": 131200}, {"date": "09-18", "amount": 127800}, {"date": "09-19", "amount": 143600}, {"date": "09-20", "amount": 128643}]}}, "visible": true, "chartPreset": "lineArea"}, {"h": 460, "w": 1840, "x": 40, "y": 580, "id": "comp_pie_category", "name": "类目占比", "type": "chart", "props": {"color": ["#3aa2ff", "#4dd6a8", "#ffb547", "#ff7875", "#9254de"], "title": "商品类目销售额占比"}, "locked": false, "zIndex": 6, "request": {"sourceType": "static", "staticData": {"rows": [{"amount": 468000, "category": "家用电器"}, {"amount": 352000, "category": "服饰鞋包"}, {"amount": 226000, "category": "食品生鲜"}, {"amount": 148000, "category": "美妆个护"}, {"amount": 92430, "category": "其他"}]}}, "visible": true, "chartPreset": "donut"}]

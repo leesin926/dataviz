@@ -1,0 +1,11 @@
+SET NAMES utf8mb4;
+SELECT '== 1. etl_task columns ==' AS section;
+SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+  FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='db_etl' AND TABLE_NAME='etl_task'
+  ORDER BY ORDINAL_POSITION;
+SELECT '== 2. etl_datasource columns ==' AS section;
+SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+  FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='db_etl' AND TABLE_NAME='etl_datasource'
+  ORDER BY ORDINAL_POSITION;
+SELECT '== 3. db_etl tables ==' AS section;
+SELECT TABLE_NAME, TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA='db_etl' ORDER BY TABLE_NAME;

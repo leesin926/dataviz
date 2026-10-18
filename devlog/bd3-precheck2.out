@@ -1,0 +1,56 @@
+ERROR 1054 (42S22) at line 18: Unknown column 'level' in 'field list'
+s
+== A. etl_task rows ==
+id	tenant_id	name	status	source_datasource_id	target_datasource_id	source_table	target_table	cron_expression	schedule_cron	last_run_status	deleted	dag_len	tc_len
+901	1	销售日汇总入仓	RUNNING	902	901	demo_orders	demo_sales_daily	NULL	10 1 * * *	SUCCESS	0	NULL	552
+902	1	用户行为清洗	RUNNING	901	901	demo_user_behavior	demo_user_behavior	NULL	*/30 * * * *	SUCCESS	0	NULL	516
+903	1	门店主数据同步	STOPPED	904	901	/stores	demo_sales_daily	NULL	0 2 * * 1	ERROR	0	NULL	316
+s
+== B. transform_config full ==
+id	name	transform_config
+901	销售日汇总入仓	{"nodes":[{"id":"n1","type":"input","name":"订单明细(demo_orders)","x":80,"y":120,"config":{"datasourceId":902,"tableName":"demo_orders"}},{"id":"n2","type":"aggregate","name":"按大区/日期汇总","x":320,"y":120,"config":{"groupBy":["DATE(created_at)","region"],"agg":{"SUM(pay_amount)":"amount","COUNT(1)":"order_count"}}},{"id":"n3","type":"output","name":"写入 demo_sales_daily","x":580,"y":120,"config":{"datasourceId":901,"tableName":"demo_sales_daily","mode":"upsert"}}],"edges":[{"id":"e1","source":"n1","target":"n2"},{"id":"e2","source":"n2","target":"n3"}]}
+902	用户行为清洗	{"nodes":[{"id":"n1","type":"input","name":"原始埋点","x":80,"y":140,"config":{"datasourceId":901,"tableName":"demo_user_behavior"}},{"id":"n2","type":"filter","name":"过滤心跳事件","x":320,"y":140,"config":{"filters":[{"field":"event_type","operator":"!=","value":"heartbeat"}]}},{"id":"n3","type":"output","name":"写回 demo_user_behavior","x":560,"y":140,"config":{"datasourceId":901,"tableName":"demo_user_behavior","mode":"append"}}],"edges":[{"id":"e1","source":"n1","target":"n2"},{"id":"e2","source":"n2","target":"n3"}]}
+903	门店主数据同步	{"nodes":[{"id":"n1","type":"input","name":"门店接口","x":100,"y":100,"config":{"datasourceId":904,"sql":"SELECT * FROM /stores"}},{"id":"n2","type":"output","name":"写入维表","x":360,"y":100,"config":{"datasourceId":901,"tableName":"demo_sales_daily","mode":"overwrite"}}],"edges":[{"id":"e1","source":"n1","target":"n2"}]}
+s
+== C. dag_json full ==
+id	name	dag_json
+901	销售日汇总入仓	NULL
+902	用户行为清洗	NULL
+903	门店主数据同步	NULL
+s
+== D. etl_task_instance cols ==
+COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+id	bigint	NO	NULL
+task_id	bigint	NO	NULL
+tenant_id	bigint	NO	1
+trigger_type	varchar(32)	NO	manual
+status	tinyint	NO	0
+start_time	datetime	YES	NULL
+end_time	datetime	YES	NULL
+duration_ms	bigint	YES	NULL
+log	longtext	YES	NULL
+error_msg	text	YES	NULL
+create_time	datetime	YES	CURRENT_TIMESTAMP
+s
+== E. etl_task_log cols ==
+COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+id	bigint	NO	NULL
+task_id	bigint	NO	NULL
+start_time	datetime	YES	NULL
+end_time	datetime	YES	NULL
+status	varchar(16)	YES	NULL
+records_read	bigint	YES	NULL
+records_written	bigint	YES	NULL
+error_message	text	YES	NULL
+create_time	datetime	YES	CURRENT_TIMESTAMP
+s
+== F. instances/logs ==
+id	task_id	tenant_id	trigger_type	status	start_time	end_time	duration_ms	log	error_msg	create_time
+901	901	1	cron	1	2026-09-21 14:04:50	2026-09-21 14:07:50	182450	extracted 128,540 rows; aggregated 1,204 groups; loaded 1,204 rows	NULL	2026-09-21 14:04:50
+902	901	1	cron	1	2026-09-20 14:04:50	2026-09-20 14:07:50	179800	extracted 126,010 rows; loaded 1,198 rows	NULL	2026-09-20 14:04:50
+903	901	1	manual	0	2026-09-21 20:02:50	NULL	NULL	extracting from demo_orders...	NULL	2026-09-21 20:02:50
+904	902	1	cron	1	2026-09-21 19:39:50	2026-09-21 19:40:50	61200	filtered 4,120 of 88,245 rows	NULL	2026-09-21 19:39:50
+905	902	1	cron	2	2026-09-21 18:39:50	2026-09-21 18:40:50	42300	connection reset by peer	ClickHouse: code 210 DB::NetException connection reset (903)	2026-09-21 18:39:50
+906	903	1	api	3	2026-09-12 20:04:50	2026-09-12 20:05:30	40000	cancelled by operator	任务已停用	2026-09-12 20:04:50
+s
+== G. logs ==

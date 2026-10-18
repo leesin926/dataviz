@@ -1,0 +1,22 @@
+CONCAT('@@CNT ~|~ 911 ~|~ ', COUNT(*))
+@@CNT ~|~ 911 ~|~ 2000
+CONCAT('@@CNT ~|~ 912 ~|~ ', COUNT(*))
+@@CNT ~|~ 912 ~|~ 1746
+CONCAT('@@CNT ~|~ 913 ~|~ ', COUNT(*))
+@@CNT ~|~ 913 ~|~ 21
+CONCAT('@@CNT ~|~ 914 ~|~ ', COUNT(*))
+@@CNT ~|~ 914 ~|~ 4
+CONCAT('@@CNT ~|~ 915 ~|~ ', COUNT(*))
+@@CNT ~|~ 915 ~|~ 21
+CONCAT('@@CNT ~|~ 916 ~|~ ', COUNT(*))
+@@CNT ~|~ 916 ~|~ 12
+CONCAT('@@CNT ~|~ 917 ~|~ ', COUNT(*))
+@@CNT ~|~ 917 ~|~ 4
+CONCAT('@@CNT ~|~ 918 ~|~ ', COUNT(*))
+@@CNT ~|~ 918 ~|~ 40
+CONCAT('@@CNT ~|~ 919 ~|~ ', COUNT(*))
+@@CNT ~|~ 919 ~|~ 21
+CONCAT('@@CNT ~|~ 920 ~|~ ', COUNT(*))
+@@CNT ~|~ 920 ~|~ 20
+CONCAT('@@CNT ~|~ 921 ~|~ ', COUNT(*))
+@@CNT ~|~ 921 ~|~ 90

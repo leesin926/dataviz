@@ -2503,3 +2503,80 @@ BA 轮刚踩过"mtime 把被写坏的产物读成刚打好"，所以这次判"�
 2. **API-107**：要不要为「连接地址」这一列动后端 VO（补非敏感摘要）并重启 8083。
 
 未闭合项状态不变：Z2 对外信封、Z3/API-95 错误码口径、API-97/API-34、AA6/AB6/AF4/AG5/AM5 那批登录态判据、其余 12 个服务的写面同族（**没有实测就不登记不修改**）、API-104 的其余 16 个进程。
+
+---
+
+## 2026-10-19 · 阶段 BD：一整套演示数据闭环（数据源→ETL→模型→分析→两块大屏）跑通，逼出 3 条、当场修 3 条，并就地更正一条说法（任务 **#183~#190**，决策 **D87** / 报告 **19.37**，新立 **API-108 / API-109 / API-110**）
+
+**驱动指令**：用户一句"**现在帮我配置一套完整可供演示的大屏数据，包含数据源，大屏，分析，etl设计，数据模型等，大屏要设计的好看且有完整数据展示，这也是全流程打通的重要依据**"；执行权仍是上一轮那句"**不用问我，你自己决定执行**"。
+
+### 〇、本轮计数
+
+| 面 | 读数 |
+|---|---|
+| 新立缺陷 | **3 条，全部当场修**：**API-108**（P1，前端 `DataAdapter` 取值键）+ **API-109**（P1，后端 `SqlBuilder` 的 `ORDER BY`）+ **API-110**（P1，构建交付链）⇒ 累计 **110** |
+| 就地更正 | **1 条说法**（911 画布"免登链接上这一屏是空的"）+ **3 个我自己检查器的 bug**（第七节） |
+| Java 改动 | `analysis-service/.../engine/SqlBuilder.java`（`metricAliases` + 方向校验）；新增 `SqlBuilderOrderByTest.java` **7** 条 |
+| 前端改动 | `packages/chart-engine/src/adapters/DataAdapter.ts`（`measureKey` 四级回落 + 系列名用 alias）、`packages/screen-engine/src/components/ScreenChart.vue`（错误面显式画在组件上）、`packages/screen-engine/src/components/ScreenProgress.vue`（达成率 118% 不再读成 100%） |
+| 演示数据包 | SQL 补丁 **5** 份（`deploy/sql/patch/2026-10-18-bd-demo-{data,etl,model,screen}.sql` + `-etl-reload.sql`）；生成器 **4** 份（`devlog/_ay/bd{2,3,4,5}-gen-*.mjs`）；探针/对账脚本 **44** 个（`.sql` 38 + `.cjs` 5 + `bd5-negative.mjs`）、声明面 JSON **4** 份、读数 **36** 份（`devlog/bd*.{out,err,txt}`） |
+| 库里写面 | **本轮的交付物就是数据**（用户明确要求配置演示数据），逐表读数见第一节；改业务库前先落备份表 `db_model.zz_bak_20261018_demo_orders`（**125** 行，不删） |
+| 进程 | 重启 **2** 个，都是我自己的进程：8086 analysis-service（AW 轮我起的，为装载 API-109 新包）、8087 dashboard-service（BA3 我起的，本轮发现已死 → pid **76384**）；**用户侧进程零触碰**（8083 等照旧） |
+| 台账 | 3 本：docs/10 新增 **D87** + 变更记录 **BD** 行；docs/12 新增 **19.37**（九小节）+ 清单头弹；EDIT_LOG 本章 |
+| 提交 | **2** 次：代码与单测 = **`66d365d`**（`git show --stat` = **5 文件 / +220 / −14**）；演示数据包 + 4 份生成器 + 对账/探针 + 读数 + 三本台账 = 本条提交（hash 不预先编造，`git log -1` 给；**顺带补入 AY 轮漏入库的 19 个 `devlog/_ay/probe/*.sql`**，准数以 `git show --stat` 为准）；**未推送远端** |
+| 门禁 | `bd5-contract.cjs` **通过 413 / 失败 0**、`bd5-contract-negative.cjs` **21 种变异各有其检查且无变异对照退出码 0**、`mvn -o -pl analysis-service test` **39 / 0 失败**、pc-web `vue-tsc --noEmit` **EXIT=0**、`vite build` **EXIT=0 / 23.36 s**、`/v3/api-docs` 端口扫 **8081~8096 全 200**、屏补丁重跑 **ERROR 0 行 / `@@BAD` 0 行** |
+
+### 一、闭环读数（`COUNT(*)` 实查，不用 `information_schema.TABLE_ROWS` 的估算）
+
+业务库 `db_model`：`demo_orders` **2286** / `demo_members` **600** / `demo_stores` **21** ⇒ 分层 `db_analysis`：`ods_order_detail` **2000** / `dwd_sales_daily` **1746** / `dws_store_sales` **21** / `dws_member_level` **4** / `ads_hour_heat` **12** / `ads_member_value` **4** / `ads_store_performance` **21** / `ads_realtime_feed` **40** ⇒ 元数据：`datasource` **4** 条、`etl_task` **11** 条（可执行 DAG）、`model_dataset` 911~921 **11** 个 + 维度 **34** / 指标 **45**、`analysis_report` **10**、`data_perm_rule` **2**（role `user`，遮 913/915）⇒ 展示：901 静态屏 **27** 组件（+ mobile 变体 **6**）、911 直连屏 **11** 组件（图表 **9**），合计 **38**。
+
+**改布局改生成器再重跑，不手改产物** —— 本轮改 911 画布文案就是走这条路（`bd5-gen-screen.mjs` 重跑出补丁，自检 `@@BAD` 0 行），所以产物与生成器之间没有"只有其一是对的"的缝。
+
+### 二、这一轮的验收口径：检查必须能自己失败
+
+"配得好看"不可验证，所以每条门禁都被要求**在注入缺陷时变红**：`bd5-contract-negative.cjs` 拿 **21** 种变异逐条打（缺别名、改组件数、把排序改回裸列名……），并要求"**变异没命中就 `throw`**"，同时保留一个**无变异对照**（退出码必须 0）。这条判据是被第七节第 1 个坑逼出来的 —— 抄错一个下划线，负向测试会静默通过，整轮看着全绿。
+
+### 三、API-108（P1，前端）：接口 200、库里 1746 行、图上是一张空框
+
+`SqlBuilder` 把聚合列投影成**别名**（有 `alias` 用清洗后的 alias，否则 `<聚合>_<字段>` ⇒ `SUM(amount)` 出来是 **`sum_amount`**），而 `DataAdapter` 拿 `chartConfig.measures[].field`（`amount`）直接索引结果行 ⇒ `row['amount']` 是 `undefined`，整条系列空值。坏味道在于**三处都"正常"**：HTTP 200、库里有数、前端没报错。修法：`measureKey(row, m)` 按 `field → alias → 清洗后 alias → <agg>_<field>` 依次回落，清洗正则与后端 `column()` 用同一条 `[^a-zA-Z0-9_]`（两端不同正则 = 下一轮再错一次）；图例名优先 alias。
+
+### 四、API-109（P1，后端）：`ORDER BY` 拼裸列名 —— 同一个写法活在这张图、死在那张图
+
+`sql_mode=only_full_group_by` 下 `ORDER BY <物理列>` 只有在分组列是**唯一键**时靠函数依赖豁免活着 ⇒ 会员等级图（`member_level` 唯一）**侥幸通过**，大区/渠道/门店三张图（`region`/`channel`/`store_name` 非唯一）**报错变空图**。所以这不是"一直错"，是"在有的数据集上侥幸对" —— 判"某条 SQL 写法安全"不能只看它在一个数据集上跑通。
+
+失败还藏在**业务体**里（HTTP 仍 200，`api-client` 拦 `code!==0` 才 reject），而 `ScreenChart` 原先只 `console.error` ⇒ 页面只剩一张空图，我看错方向看了半轮（先怀疑行级权限，读完两条 `data_perm_rule` 和服务日志才推翻）。修法：`metricAliases(queryDTO)` 建 `字段(小写) → 投影别名` 的 `LinkedHashMap`（同字段多聚合取先出现者，与 SELECT 顺序一致）；方向不在 `ASC/DESC` 抛 `BizException(BAD_REQUEST)`；组件侧把 `取数失败：…` 与 `查询返回 0 行（检查数据集与行级权限）` 显式画出来。
+
+**三档证据，各写各的等级**：单测 **7** 条（别名排序 / 自定义 alias / 维度排序 / 同字段双聚合取首个 / 垃圾字段被清洗且不带 `;` / 非法方向 400 / 子查询源按别名排序）⇒ 模块 **39 通过 0 失败**；数据层修后 SQL 直连活库 ⇒ d4 **6** / d5 **4** / d8 **4** / d10 **21** 行（修前三条 0 行）；运行时新 jar 起 8086，日志 **9** 条 `Final SQL` 全是 ``ORDER BY `sum_amount` `` / ``ORDER BY `stat_date`` 形态、查询路径零 ERROR。
+
+### 五、API-110（P1，构建交付链）：`BUILD SUCCESS`、`grep` 到改动，服务仍起不来
+
+`mvn -o -pl analysis-service package` 返回 0，`SqlBuilder.class` 常量池里 `metricAliases` **确实在**，但重启后进程约 **90 秒不应答**，日志尾部 `NoClassDefFoundError: com/dataviz/common/core/client/DatasourceQueryClient`。两层叠加：① `.m2` 里的 `common-core` 是 **2026-09-18** 那份，早于 AB2 把查询客户端下沉；② `maven-jar-plugin` 的 `forceCreation` 默认 false + spring-boot `repackage` 复用已存在的 fat jar ⇒ **连 mtime 都没变**。
+
+⇒ **判据**：改过 `common/*` 之后必须**带 `clean` 打包**（或 `-am`），验收看**嵌套 `BOOT-INF/lib/common-core-*.jar` 的字节数**（本轮 **21671 ⇒ 36824**），不看 `BUILD SUCCESS`、不看 mtime。**grep 到改动只证明代码在，不证明依赖新。** 与 19.36.6 那次"8083 跑旧包"同源，所以进本报告而不只进本日志。
+
+### 六、两块屏的分工，和一条被我写错又改回来的说法
+
+901 每个组件带 `request.staticData`（数值取自对 `db_analysis` 演示层的实查回读）⇒ 免登链接就整屏渲染；911 只带 `chartConfig.datasetId` ⇒ 必须经 `POST /api/analysis/query/execute` 现取现画。分开是因为合在一起就分不清"配好了但查不出来"和"根本没配"。
+
+**更正**：911 画布原文"查询接口需登录，故免登链接上这一屏是空的"不准确 —— 实测 `GET /api/screen/share/{token}` 免登 **200**（在 `EXCLUDE_PATHS` 白名单内），`POST /api/analysis/query/execute` 免登 **401**（不在，且 `SecurityConfig` 注释里写明"新增端点漏配 ⇒ 多拦一道 401"是**故意**方向）；"空"是 `ScreenChart` 静默 catch 的**后果**，不是接口行为。文案已改成那句如实的。**没有做、也不建议默认做**：给免登分享开一条只读取数通道（等于把 OLAP 查询面挂到无身份入口，还要连带决定行级权限按谁生效）—— **属产品/安全决策，归用户**。两块屏的分享 token 记在 docs/12 §19.37 与 `devlog/bd5-readback.out`，不在本日志重复。
+
+### 七、三个"检查自己骗自己" + 一条被门禁当场拦下的自伤（原样记，都是我的新代码的锅）
+
+1. **变异静默不命中**：探针生成器里别名公式我抄成 `sumamount`（漏下划线），变异按 ``ORDER BY `sum_amount` `` 替换 ⇒ 一处也没换到 ⇒ 那条负向测试静默通过、整轮仍绿。修一半是纠正公式，另一半是**没命中就 `throw`**。
+2. **回读探针缺 `--raw`**：`mysql -B` 默认把 `\\` 折成 `\`，JSON 里转义引号被吃一层 ⇒ `JSON.parse` 炸，报的是"库里与声明不一致"—— **库里是好的，是探针改了字节**（画布文案里一个英文引号就足够触发）。修法是把 `--raw` 连同原因写进生成器产出的 SQL 头，让下一轮重新生成就带着这条判据。
+3. **台账自伤重演**：给 docs/12 插头弹时 `old_string` 又取了长行**行首片段**，把 BA4 那条的头部吃掉了 —— 这正是 D85 里我自己写过的判据，本轮换了文件类型再踩一次。靠 `sed` 定位 + `splice` 复位并改回时间序。**判据补一条：长行追加一律用"新行 + 紧邻锚点"，不复用被追加行的头部。**
+4. （顺带）`vue-tsc` 抓出我自己引入的 `TS6133`（`config.measures.forEach((m, i)` 的 `m` 在改用 `measureKey` 后不再被引用）⇒ `(m, i)` → `(_, i)`。这是构建门禁本轮第一次替我拦住一次提交，记它的价值而不是它的成本。
+
+### 八、没拿到什么（不粉饰）
+
+- **911 九张图的登录态目视**没有做成正证。navigate 分享页时上下文里**本来就带着既有会话**（api-client 自己附令牌，9 条 `execute` 因此 200）—— 我**没有读取、复制或使用**那个令牌，只读网络列表与服务日志；截图面在隐藏页签拿不到（`NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`，已知限制）。
+- **登录态正证**依旧受两道闸门约束（口令面 captcha、短信面 `sms:day` 日配额），本轮**没有新退路可试**，也不做绕过。
+- **ETL 真执行**没有为本轮 11 条 DAG 跑运行时（写面风险与既有 AB5 判据同源），本轮只证到"任务配置成环可解析 + 目标层有真数据 + 回读一致"。
+
+### 九、交回用户的四件
+
+1. 用自己的会话打开 911（直连屏），逐张确认 **9** 个图表有形状；顺手确认故意配错的数据集/权限下，组件报的是**取数失败原文**而不是空框。
+2. **免登分享是否开放一条只读取数通道** —— 本轮只证明了接口层 401，产品层放开与否是决策，我没有做。
+3. **API-107**（列表「连接地址」列恒为 `-`）要不要动后端 VO 并重启 8083；这条与本轮无关，状态不变。
+4. 本批 **2 次提交未推送远端**，要不要推、以什么节奏推由你定。
+
+未闭合项状态不变：Z2 对外信封、Z3/API-95 错误码口径、API-97/API-34、AA6/AB6/AF4/AG5/AM5 那批登录态判据、其余 12 个服务的写面同族、API-104 的其余 16 个进程。

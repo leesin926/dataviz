@@ -1,0 +1,13 @@
+CONCAT('@@COUNT screen_demo = ', COUNT(*))
+@@COUNT screen_demo = 2
+CONCAT('@@LEN ', id, ' ~|~ ', JSON_LENGTH(components_json))
+@@LEN 901 ~|~ 27
+@@LEN 911 ~|~ 11
+CONCAT(IF(s.id IN (901,911), '@@BAD ', '@@NOTE '), s.id, ' ~|~ preset-only ~|~ ', c.cid, ' ~|~ ', c.preset)
+@@NOTE 902 ~|~ preset-only ~|~ comp_chart ~|~ bar
+CONCAT('@@VARIANT ', id, ' ~|~ mobile ~|~ ', JSON_LENGTH(JSON_EXTRACT(variants_json, '$.mobile.components')))
+@@VARIANT 901 ~|~ mobile ~|~ 6
+n
+@@NOTE 组件契约核对请跑 node devlog/_ay/bd5-contract.cjs
+end_marker
+@@CHECKS-END

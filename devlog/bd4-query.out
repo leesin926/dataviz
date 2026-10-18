@@ -1,0 +1,48 @@
+marker
+@@Q 911
+CONCAT('@@ROWS ~|~ 911 ~|~ ', COUNT(*))
+@@ROWS ~|~ 911 ~|~ 21
+store_name	amount	achievement_rate
+优选上海滨江1店	307235.84	128.620000
+优选上海中心2店	259389.80	115.680000
+优选杭州中心店	334800.32	84.650000
+marker
+@@Q 912
+CONCAT('@@ROWS ~|~ 912 ~|~ ', COUNT(*))
+@@ROWS ~|~ 912 ~|~ 4
+member_level	amount	members
+普通	2336638.05	313
+银卡	828706.09	114
+钻石	430060.22	35
+marker
+@@Q 913
+CONCAT('@@ROWS ~|~ 913 ~|~ ', COUNT(*))
+@@ROWS ~|~ 913 ~|~ 12
+stat_hour	orders	amount
+10	91	292207.91
+11	156	498780.90
+12	255	848516.49
+marker
+@@Q 914
+CONCAT('@@ROWS ~|~ 914 ~|~ ', COUNT(*))
+@@ROWS ~|~ 914 ~|~ 20
+channel	category	margin_rate
+门店	数码	11.960000
+小程序	家居	29.560000
+第三方平台	家居	29.680000
+marker
+@@Q 915
+CONCAT('@@ROWS ~|~ 915 ~|~ ', COUNT(*))
+@@ROWS ~|~ 915 ~|~ 90
+stat_date	amount	profit
+2026-07-21	44589.57	7549.24
+2026-07-22	39520.28	10734.20
+2026-07-23	31692.49	6717.89
+marker
+@@Q 916
+CONCAT('@@ROWS ~|~ 916 ~|~ ', COUNT(*))
+@@ROWS ~|~ 916 ~|~ 6
+region	amount	target_amount
+华东	1578142.46	1574005.08
+华南	1439336.93	1329258.16
+华北	1080887.33	928231.09

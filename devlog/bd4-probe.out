@@ -1,0 +1,44 @@
+marker
+@@PROBE 911
+order_id	stat_date	stat_hour	region	city	store_id	store_name	channel	category	member_id	member_level	pay_amount	profit	qty	order_status	created_at	loaded_at
+90001	2026-07-21	15	华北	北京	510	优选北京中心2店	APP	数码	9411	普通	9543.74	1015.68	2	SHIPPED	2026-07-21 15:16:46	2026-10-18 22:44:49
+marker
+@@PROBE 912
+stat_date	region	category	channel	amount	profit	order_count	qty	updated_at
+2026-07-21	东北	数码	门店	16261.06	2051.41	1	4	2026-10-18 22:44:50
+marker
+@@PROBE 913
+store_id	store_name	region	city	amount	profit	order_count	avg_pay_amount
+501	优选上海滨江1店	华东	上海	307235.84	57049.35	88	3491.32
+marker
+@@PROBE 914
+member_level	amount	order_count	avg_pay_amount
+普通	2336638.05	735	3179.10
+marker
+@@PROBE 915
+store_id	store_name	region	city	amount	profit	order_count	avg_pay_amount	target_amount	achievement_rate	margin_rate
+501	优选上海滨江1店	华东	上海	307235.84	57049.35	88	3491.32	238876.15	128.62	18.57
+marker
+@@PROBE 916
+stat_hour	orders	amount	avg_amount
+10	91	292207.91	3211.08
+marker
+@@PROBE 917
+member_level	members	amount	avg_amount	order_count	repurchase_rate
+普通	313	2336638.05	7465.30	735	68.37
+marker
+@@PROBE 918
+feed_id	feed_time	store_name	city	category	channel	amount
+92225	2026-10-17 20:52:23	优选成都滨江店	成都	家居	门店	1136.32
+marker
+@@PROBE 919
+store_name	region	city	target_amount	amount	profit	achievement_rate	margin_rate
+优选上海滨江1店	华东	上海	238876.15	307235.84	57049.35	128.62	18.57
+marker
+@@PROBE 920
+channel	category	amount	profit	order_count	margin_rate
+门店	数码	1728898.37	206810.64	207	11.96
+marker
+@@PROBE 921
+stat_date	amount	profit	order_count	qty	margin_rate
+2026-07-21	44589.57	7549.24	15	34	16.93

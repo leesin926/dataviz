@@ -1,0 +1,677 @@
+[
+  {
+    "id": 911,
+    "name": "ODS 订单明细入仓",
+    "targetTable": "ods_order_detail",
+    "outCols": [
+      "order_id",
+      "stat_date",
+      "stat_hour",
+      "region",
+      "city",
+      "store_id",
+      "store_name",
+      "channel",
+      "category",
+      "member_id",
+      "member_level",
+      "pay_amount",
+      "profit",
+      "qty",
+      "order_status",
+      "created_at"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i1",
+          "type": "input",
+          "name": "订单明细(业务库)",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 902,
+            "sql": "SELECT o.order_id AS order_id, DATE(o.created_at) AS stat_date, HOUR(o.created_at) AS stat_hour,        o.region AS region, s.city AS city, o.store_id AS store_id, s.store_name AS store_name,        o.channel AS channel, o.category AS category, o.user_id AS member_id,        IFNULL(m.level, '散客') AS member_level, o.pay_amount AS pay_amount, o.profit AS profit,        o.qty AS qty, o.status AS order_status, o.created_at AS created_at   FROM demo_orders o   JOIN demo_stores s ON s.store_id = o.store_id   LEFT JOIN demo_members m ON m.member_id = o.user_id  WHERE o.status IN ('PAID', 'SHIPPED')"
+          }
+        },
+        {
+          "id": "o2",
+          "type": "output",
+          "name": "写入 ods_order_detail",
+          "x": 380,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ods_order_detail",
+            "writeMode": "append",
+            "columns": [
+              "order_id",
+              "stat_date",
+              "stat_hour",
+              "region",
+              "city",
+              "store_id",
+              "store_name",
+              "channel",
+              "category",
+              "member_id",
+              "member_level",
+              "pay_amount",
+              "profit",
+              "qty",
+              "order_status",
+              "created_at"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i1",
+          "target": "o2"
+        }
+      ]
+    }
+  },
+  {
+    "id": 912,
+    "name": "DWD 日销售汇总",
+    "targetTable": "dwd_sales_daily",
+    "outCols": [
+      "stat_date",
+      "region",
+      "category",
+      "channel",
+      "amount",
+      "profit",
+      "order_count",
+      "qty"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i3",
+          "type": "input",
+          "name": "ODS 明细",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ods_order_detail",
+            "columns": [
+              "stat_date",
+              "region",
+              "category",
+              "channel",
+              "pay_amount",
+              "profit",
+              "order_id",
+              "qty"
+            ]
+          }
+        },
+        {
+          "id": "a4",
+          "type": "aggregate",
+          "name": "按日期/大区/品类/渠道汇总",
+          "x": 300,
+          "y": 140,
+          "config": {
+            "groupBy": [
+              "stat_date",
+              "region",
+              "category",
+              "channel"
+            ],
+            "aggregations": [
+              {
+                "field": "pay_amount",
+                "function": "sum",
+                "alias": "amount"
+              },
+              {
+                "field": "profit",
+                "function": "sum",
+                "alias": "profit"
+              },
+              {
+                "field": "order_id",
+                "function": "count",
+                "alias": "order_count"
+              },
+              {
+                "field": "qty",
+                "function": "sum",
+                "alias": "qty"
+              }
+            ]
+          }
+        },
+        {
+          "id": "o5",
+          "type": "output",
+          "name": "写入 dwd_sales_daily",
+          "x": 560,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "dwd_sales_daily",
+            "writeMode": "append",
+            "columns": [
+              "stat_date",
+              "region",
+              "category",
+              "channel",
+              "amount",
+              "profit",
+              "order_count",
+              "qty"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i3",
+          "target": "a4"
+        },
+        {
+          "id": "e2",
+          "source": "a4",
+          "target": "o5"
+        }
+      ]
+    }
+  },
+  {
+    "id": 913,
+    "name": "DWS 门店销售汇总",
+    "targetTable": "dws_store_sales",
+    "outCols": [
+      "store_id",
+      "store_name",
+      "region",
+      "city",
+      "amount",
+      "profit",
+      "order_count",
+      "avg_pay_amount"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i6",
+          "type": "input",
+          "name": "ODS 明细",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ods_order_detail",
+            "columns": [
+              "store_id",
+              "store_name",
+              "region",
+              "city",
+              "pay_amount",
+              "profit",
+              "order_id"
+            ]
+          }
+        },
+        {
+          "id": "a7",
+          "type": "aggregate",
+          "name": "按门店汇总",
+          "x": 300,
+          "y": 140,
+          "config": {
+            "groupBy": [
+              "store_id",
+              "store_name",
+              "region",
+              "city"
+            ],
+            "aggregations": [
+              {
+                "field": "pay_amount",
+                "function": "sum",
+                "alias": "amount"
+              },
+              {
+                "field": "profit",
+                "function": "sum",
+                "alias": "profit"
+              },
+              {
+                "field": "order_id",
+                "function": "count",
+                "alias": "order_count"
+              },
+              {
+                "field": "pay_amount",
+                "function": "avg",
+                "alias": "avg_pay_amount"
+              }
+            ]
+          }
+        },
+        {
+          "id": "o8",
+          "type": "output",
+          "name": "写入 dws_store_sales",
+          "x": 560,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "dws_store_sales",
+            "writeMode": "append",
+            "columns": [
+              "store_id",
+              "store_name",
+              "region",
+              "city",
+              "amount",
+              "profit",
+              "order_count",
+              "avg_pay_amount"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i6",
+          "target": "a7"
+        },
+        {
+          "id": "e2",
+          "source": "a7",
+          "target": "o8"
+        }
+      ]
+    }
+  },
+  {
+    "id": 914,
+    "name": "DWS 会员等级汇总",
+    "targetTable": "dws_member_level",
+    "outCols": [
+      "member_level",
+      "amount",
+      "order_count",
+      "avg_pay_amount"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i9",
+          "type": "input",
+          "name": "ODS 明细",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ods_order_detail",
+            "columns": [
+              "member_id",
+              "member_level",
+              "pay_amount",
+              "order_id"
+            ]
+          }
+        },
+        {
+          "id": "f10",
+          "type": "filter",
+          "name": "剔除散客",
+          "x": 300,
+          "y": 140,
+          "config": {
+            "filters": [
+              {
+                "field": "member_id",
+                "operator": "gt",
+                "value": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "a11",
+          "type": "aggregate",
+          "name": "按会员等级汇总",
+          "x": 540,
+          "y": 140,
+          "config": {
+            "groupBy": [
+              "member_level"
+            ],
+            "aggregations": [
+              {
+                "field": "pay_amount",
+                "function": "sum",
+                "alias": "amount"
+              },
+              {
+                "field": "order_id",
+                "function": "count",
+                "alias": "order_count"
+              },
+              {
+                "field": "pay_amount",
+                "function": "avg",
+                "alias": "avg_pay_amount"
+              }
+            ]
+          }
+        },
+        {
+          "id": "o12",
+          "type": "output",
+          "name": "写入 dws_member_level",
+          "x": 780,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "dws_member_level",
+            "writeMode": "append",
+            "columns": [
+              "member_level",
+              "amount",
+              "order_count",
+              "avg_pay_amount"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i9",
+          "target": "f10"
+        },
+        {
+          "id": "e2",
+          "source": "f10",
+          "target": "a11"
+        },
+        {
+          "id": "e3",
+          "source": "a11",
+          "target": "o12"
+        }
+      ]
+    }
+  },
+  {
+    "id": 915,
+    "name": "ADS 门店绩效（关联月度目标）",
+    "targetTable": "ads_store_performance",
+    "outCols": [
+      "store_id",
+      "store_name",
+      "region",
+      "city",
+      "amount",
+      "profit",
+      "order_count",
+      "avg_pay_amount",
+      "target_amount",
+      "achievement_rate",
+      "margin_rate"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i13",
+          "type": "input",
+          "name": "门店汇总×月度目标",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "sql": "SELECT d.store_id AS store_id, d.store_name AS store_name, d.region AS region, d.city AS city,        d.amount AS amount, d.profit AS profit, d.order_count AS order_count,        d.avg_pay_amount AS avg_pay_amount, s.monthly_target AS target_amount,        ROUND(d.amount / NULLIF(s.monthly_target, 0) * 100, 2) AS achievement_rate,        ROUND(d.profit / NULLIF(d.amount, 0) * 100, 2) AS margin_rate   FROM dws_store_sales d   JOIN db_model.demo_stores s ON s.store_id = d.store_id"
+          }
+        },
+        {
+          "id": "o14",
+          "type": "output",
+          "name": "写入 ads_store_performance",
+          "x": 400,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ads_store_performance",
+            "writeMode": "append",
+            "columns": [
+              "store_id",
+              "store_name",
+              "region",
+              "city",
+              "amount",
+              "profit",
+              "order_count",
+              "avg_pay_amount",
+              "target_amount",
+              "achievement_rate",
+              "margin_rate"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i13",
+          "target": "o14"
+        }
+      ]
+    }
+  },
+  {
+    "id": 916,
+    "name": "ADS 时段热力",
+    "targetTable": "ads_hour_heat",
+    "outCols": [
+      "stat_hour",
+      "orders",
+      "amount",
+      "avg_amount"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i15",
+          "type": "input",
+          "name": "ODS 明细",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ods_order_detail",
+            "columns": [
+              "stat_hour",
+              "order_id",
+              "pay_amount"
+            ]
+          }
+        },
+        {
+          "id": "a16",
+          "type": "aggregate",
+          "name": "按小时汇总",
+          "x": 300,
+          "y": 140,
+          "config": {
+            "groupBy": [
+              "stat_hour"
+            ],
+            "aggregations": [
+              {
+                "field": "order_id",
+                "function": "count",
+                "alias": "orders"
+              },
+              {
+                "field": "pay_amount",
+                "function": "sum",
+                "alias": "amount"
+              },
+              {
+                "field": "pay_amount",
+                "function": "avg",
+                "alias": "avg_amount"
+              }
+            ]
+          }
+        },
+        {
+          "id": "o17",
+          "type": "output",
+          "name": "写入 ads_hour_heat",
+          "x": 560,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ads_hour_heat",
+            "writeMode": "append",
+            "columns": [
+              "stat_hour",
+              "orders",
+              "amount",
+              "avg_amount"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i15",
+          "target": "a16"
+        },
+        {
+          "id": "e2",
+          "source": "a16",
+          "target": "o17"
+        }
+      ]
+    }
+  },
+  {
+    "id": 917,
+    "name": "ADS 会员价值分层",
+    "targetTable": "ads_member_value",
+    "outCols": [
+      "member_level",
+      "members",
+      "amount",
+      "avg_amount",
+      "order_count",
+      "repurchase_rate"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i18",
+          "type": "input",
+          "name": "会员分层去重",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "sql": "SELECT t.member_level AS member_level, t.members AS members, t.amount AS amount,        ROUND(t.amount / NULLIF(t.members, 0), 2) AS avg_amount, t.order_count AS order_count,        ROUND(t.repeat_members / NULLIF(t.members, 0) * 100, 2) AS repurchase_rate   FROM (SELECT o.member_level AS member_level, COUNT(DISTINCT o.member_id) AS members,                COUNT(DISTINCT CASE WHEN o.cnt >= 2 THEN o.member_id END) AS repeat_members,                SUM(o.amount) AS amount, SUM(o.cnt) AS order_count           FROM (SELECT member_level, member_id, SUM(pay_amount) AS amount, COUNT(order_id) AS cnt                    FROM ods_order_detail WHERE member_id > 0                   GROUP BY member_level, member_id) o          GROUP BY o.member_level) t"
+          }
+        },
+        {
+          "id": "o19",
+          "type": "output",
+          "name": "写入 ads_member_value",
+          "x": 400,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ads_member_value",
+            "writeMode": "append",
+            "columns": [
+              "member_level",
+              "members",
+              "amount",
+              "avg_amount",
+              "order_count",
+              "repurchase_rate"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i18",
+          "target": "o19"
+        }
+      ]
+    }
+  },
+  {
+    "id": 918,
+    "name": "ADS 实时成交流水",
+    "targetTable": "ads_realtime_feed",
+    "outCols": [
+      "feed_id",
+      "feed_time",
+      "store_name",
+      "city",
+      "category",
+      "channel",
+      "amount"
+    ],
+    "dag": {
+      "nodes": [
+        {
+          "id": "i20",
+          "type": "input",
+          "name": "最近 40 笔成交",
+          "x": 60,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "sql": "SELECT order_id AS feed_id, created_at AS feed_time, store_name AS store_name, city AS city,        category AS category, channel AS channel, pay_amount AS amount   FROM ods_order_detail  ORDER BY created_at DESC  LIMIT 40"
+          }
+        },
+        {
+          "id": "o21",
+          "type": "output",
+          "name": "写入 ads_realtime_feed",
+          "x": 400,
+          "y": 140,
+          "config": {
+            "datasourceId": 901,
+            "tableName": "ads_realtime_feed",
+            "writeMode": "append",
+            "columns": [
+              "feed_id",
+              "feed_time",
+              "store_name",
+              "city",
+              "category",
+              "channel",
+              "amount"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "i20",
+          "target": "o21"
+        }
+      ]
+    }
+  }
+]

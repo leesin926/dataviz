@@ -1,0 +1,42 @@
+CONCAT('@@C', ' ~|~ ', TABLE_NAME, ' ~|~ ', COLUMN_NAME, ' ~|~ ', COLUMN_TYPE, ' ~|~ ', IS_NULLABLE, ' ~|~ ', IFNULL(COLUMN_DEFAULT,'~N~'))
+@@C ~|~ screen ~|~ id ~|~ bigint ~|~ NO ~|~ ~N~
+@@C ~|~ screen ~|~ tenant_id ~|~ bigint ~|~ NO ~|~ 1
+@@C ~|~ screen ~|~ name ~|~ varchar(128) ~|~ NO ~|~ ~N~
+@@C ~|~ screen ~|~ description ~|~ varchar(512) ~|~ YES ~|~ 
+@@C ~|~ screen ~|~ config_json ~|~ json ~|~ NO ~|~ ~N~
+@@C ~|~ screen ~|~ components_json ~|~ json ~|~ NO ~|~ ~N~
+@@C ~|~ screen ~|~ variants_json ~|~ json ~|~ YES ~|~ ~N~
+@@C ~|~ screen ~|~ cover_url ~|~ varchar(512) ~|~ YES ~|~ 
+@@C ~|~ screen ~|~ status ~|~ tinyint ~|~ NO ~|~ 0
+@@C ~|~ screen ~|~ adapt_mode ~|~ varchar(16) ~|~ NO ~|~ SCALE
+@@C ~|~ screen ~|~ view_count ~|~ int ~|~ NO ~|~ 0
+@@C ~|~ screen ~|~ share_token ~|~ varchar(64) ~|~ YES ~|~ ~N~
+@@C ~|~ screen ~|~ share_expire_time ~|~ datetime ~|~ YES ~|~ ~N~
+@@C ~|~ screen ~|~ create_by ~|~ bigint ~|~ YES ~|~ ~N~
+@@C ~|~ screen ~|~ create_time ~|~ datetime ~|~ YES ~|~ CURRENT_TIMESTAMP
+@@C ~|~ screen ~|~ update_by ~|~ bigint ~|~ YES ~|~ ~N~
+@@C ~|~ screen ~|~ update_time ~|~ datetime ~|~ YES ~|~ CURRENT_TIMESTAMP
+@@C ~|~ screen ~|~ deleted ~|~ tinyint ~|~ NO ~|~ 0
+@@C ~|~ screen_component ~|~ id ~|~ bigint ~|~ NO ~|~ ~N~
+@@C ~|~ screen_component ~|~ screen_id ~|~ bigint ~|~ NO ~|~ ~N~
+@@C ~|~ screen_component ~|~ component_type ~|~ varchar(32) ~|~ NO ~|~ ~N~
+@@C ~|~ screen_component ~|~ title ~|~ varchar(128) ~|~ YES ~|~ ~N~
+@@C ~|~ screen_component ~|~ config_json ~|~ json ~|~ YES ~|~ ~N~
+@@C ~|~ screen_component ~|~ data_config_json ~|~ json ~|~ YES ~|~ ~N~
+@@C ~|~ screen_component ~|~ position_json ~|~ json ~|~ YES ~|~ ~N~
+@@C ~|~ screen_component ~|~ refresh_interval ~|~ int ~|~ YES ~|~ 0
+@@C ~|~ screen_component ~|~ create_time ~|~ datetime ~|~ YES ~|~ CURRENT_TIMESTAMP
+@@C ~|~ screen_component ~|~ update_time ~|~ datetime ~|~ YES ~|~ CURRENT_TIMESTAMP
+CONCAT('@@S', ' ~|~ ', id, ' ~|~ ', name, ' ~|~ ', status, ' ~|~ ', CHAR_LENGTH(config_json), ' ~|~ ', IFNULL(share_token,'NULL'), ' ~|~ ', tenant_id, ' ~|~ ', deleted)
+@@S ~|~ 1 ~|~ 冒烟-三端变体 ~|~ 0 ~|~ 88 ~|~ NULL ~|~ 1 ~|~ 0
+@@S ~|~ 2 ~|~ 冒烟-改名 ~|~ 0 ~|~ 88 ~|~ NULL ~|~ 1 ~|~ 1
+@@S ~|~ 3 ~|~ 冒烟-克隆 ~|~ 0 ~|~ 88 ~|~ NULL ~|~ 1 ~|~ 1
+@@S ~|~ 4 ~|~ 编辑器验证-三端 ~|~ 0 ~|~ 388 ~|~ NULL ~|~ 1 ~|~ 1
+@@S ~|~ 5 ~|~ 编辑器反馈验证-临时 ~|~ 0 ~|~ 136 ~|~ NULL ~|~ 1 ~|~ 1
+@@S ~|~ 6 ~|~ 回归-拖拽缩放测试 ~|~ 1 ~|~ 154 ~|~ smoke0921bbbb ~|~ 1 ~|~ 0
+@@S ~|~ 901 ~|~ 销售实时监控大屏 ~|~ 1 ~|~ 410 ~|~ smoke0921aaaa ~|~ 1 ~|~ 0
+@@S ~|~ 902 ~|~ 三端适配演示大屏 ~|~ 0 ~|~ 244 ~|~ NULL ~|~ 1 ~|~ 0
+@@S ~|~ 903 ~|~ 地图与飞线演示 ~|~ 2 ~|~ 202 ~|~ NULL ~|~ 1 ~|~ 0
+@@S ~|~ 904 ~|~ 逻辑删除的待验证大屏 ~|~ 0 ~|~ 102 ~|~ NULL ~|~ 1 ~|~ 1
+@@S ~|~ 905 ~|~ zz_ay20_screen-renamed ~|~ 0 ~|~ 45 ~|~ 47aaee1f0c2b466ebcb0b07636326ca8 ~|~ 1 ~|~ 1
+@@S ~|~ 906 ~|~ zz_ay21_screen ~|~ 1 ~|~ 45 ~|~ a4a82560174843789b5974f7a57be7c7 ~|~ 1 ~|~ 1

@@ -1,0 +1,25 @@
+tag	id	tenant_id	name	datasource_id	table_name	sqlq	dims	mets	deleted
+@@MD	901	1	日销售分析	901	demo_sales_daily	NULL	[{"field":"stat_date","displayName":"统计日期","type":"time","format":"yyyy-MM-dd"},	[{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},	0
+@@MD	902	1	用户行为概览	901	NULL	SELECT event_time, user_id, event_type, page, duration_ms FR	[{"field":"event_time","displayName":"事件时间","type":"time","format":"yyyy-MM-dd H	[{"field":"duration_ms","displayName":"停留时长","aggregation":"avg"},{"field":"user	0
+@@MD	903	1	订单履约分析	902	demo_orders	NULL	[{"field":"region","displayName":"大区","type":"category"},{"field":"status","disp	[{"field":"pay_amount","displayName":"实付金额","aggregation":"sum","format":"#,##0.	0
+@@MD	904	1	已删除的临时数据集	901	demo_sales_daily	NULL	[{"field":"stat_date","displayName":"统计日期","type":"time"}]	[]	1
+@@MD	905	1	zz_ay21_dataset-2	904	sys_user	NULL	[]	[]	1
+tag	id	dataset_id	name	display_name	column_name	datasource_id	table_name	data_type	dimension_type	sort	deleted
+@@DIM	901	901	stat_date	统计日期	stat_date	901	demo_sales_daily	DATE	TIME	1	0
+@@DIM	902	901	region	大区	region	901	demo_sales_daily	VARCHAR	GEO	2	0
+@@DIM	903	901	category	商品类目	category	901	demo_sales_daily	VARCHAR	CATEGORY	3	0
+@@DIM	904	902	event_time	事件时间	event_time	901	demo_user_behavior	DATETIME	TIME	1	0
+@@DIM	905	902	event_type	事件类型	event_type	901	demo_user_behavior	VARCHAR	CATEGORY	2	0
+@@DIM	906	903	region	大区	region	902	demo_orders	VARCHAR	GEO	1	0
+@@DIM	907	903	status	订单状态	status	902	demo_orders	VARCHAR	CATEGORY	2	0
+tag	id	dataset_id	name	display_name	column_name	expression	aggregation_type	agg_function	data_type	format	deleted
+@@MET	901	901	amount	销售额	amount	NULL	SUM	SUM	DECIMAL	#,##0.00	0
+@@MET	902	901	order_count	订单量	order_count	NULL	SUM	SUM	BIGINT	#,##0	0
+@@MET	903	901	avg_ticket	客单价	NULL	SUM(amount) / NULLIF(SUM(order_count), 0)	CUSTOM	CUSTOM	DECIMAL	#,##0.00	0
+@@MET	904	902	duration_ms	平均停留时长	duration_ms	NULL	AVG	AVG	BIGINT	#,##0"ms"	0
+@@MET	905	903	pay_amount	实付金额	pay_amount	NULL	SUM	SUM	DECIMAL	#,##0.00	0
+tag	id	tenant_id	name	dataset_id	datasource_id	is_published	cfg_len	deleted
+@@RPT	901	1	区域销售结构分析	901	901	1	114	0
+@@RPT	902	1	用户行为漏斗概览	902	901	1	118	0
+@@RPT	903	1	订单履约草稿	903	902	0	111	0
+ERROR 1064 (42000) at line 7: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'sql,60) AS sql_, execution_time, duration_ms, row_count, status, create_time FRO' at line 1

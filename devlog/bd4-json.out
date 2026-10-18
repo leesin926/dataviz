@@ -1,0 +1,18 @@
+CONCAT('@@J ', id, ' DIMS ', COALESCE(dimensions,'(null)'))
+@@J 901 DIMS [{"field":"stat_date","displayName":"统计日期","type":"time","format":"yyyy-MM-dd"},{"field":"region","displayName":"大区","type":"category"},{"field":"category","displayName":"商品类目","type":"category"}]
+@@J 902 DIMS [{"field":"event_time","displayName":"事件时间","type":"time","format":"yyyy-MM-dd HH:mm:ss"},{"field":"user_id","displayName":"用户","type":"category"},{"field":"event_type","displayName":"事件类型","type":"category"},{"field":"page","displayName":"页面","type":"category"}]
+@@J 903 DIMS [{"field":"region","displayName":"大区","type":"category"},{"field":"status","displayName":"订单状态","type":"category"},{"field":"created_at","displayName":"下单时间","type":"time","format":"yyyy-MM-dd HH:mm:ss"}]
+CONCAT('@@J ', id, ' METS ', COALESCE(metrics,'(null)'))
+@@J 901 METS [{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum"},{"field":"amount","displayName":"客单价","aggregation":"avg"}]
+@@J 902 METS [{"field":"duration_ms","displayName":"停留时长","aggregation":"avg"},{"field":"user_id","displayName":"去重用户数","aggregation":"count"}]
+@@J 903 METS [{"field":"pay_amount","displayName":"实付金额","aggregation":"sum","format":"#,##0.00"},{"field":"order_id","displayName":"订单数","aggregation":"count"}]
+CONCAT('@@J ', id, ' FILT ', COALESCE(filters,'(null)'))
+@@J 901 FILT []
+@@J 902 FILT [{"field":"event_type","operator":"!=","value":"heartbeat"}]
+@@J 903 FILT []
+CONCAT('@@J ', id, ' SQL ', COALESCE(sql_query,'(null)'))
+@@J 902 SQL SELECT event_time, user_id, event_type, page, duration_ms FROM demo_user_behavior
+CONCAT('@@R ', id, ' CFG ', COALESCE(config,'(null)'))
+@@R 901 CFG {"dimensions":[{"field":"region"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"}],"limit":50}
+@@R 902 CFG {"dimensions":[{"field":"event_type"}],"metrics":[{"field":"duration_ms","aggFunction":"AVG","alias":"avg_duration"}]}
+@@R 903 CFG {"dimensions":[{"field":"status"}],"metrics":[{"field":"pay_amount","aggFunction":"SUM","alias":"pay_amount"}]}

@@ -1,0 +1,114 @@
+s
+== A. db_analysis tables ==
+TABLE_NAME	TABLE_ROWS
+_ay_query_history_bak	9
+ads_hour_heat	12
+ads_member_value	4
+ads_realtime_feed	40
+ads_store_performance	21
+analysis_report	3
+data_perm_rule	0
+demo_orders	NULL
+demo_sales_daily	NULL
+demo_user_behavior	NULL
+dwd_sales_daily	1746
+dws_member_level	4
+dws_store_sales	21
+ods_order_detail	1941
+query_history	10
+s
+== B. layer columns ==
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	COLUMN_KEY
+ads_hour_heat	stat_hour	tinyint	PRI
+ads_hour_heat	orders	int	
+ads_hour_heat	amount	decimal(18,2)	
+ads_hour_heat	avg_amount	decimal(18,2)	
+ads_member_value	member_level	varchar(16)	PRI
+ads_member_value	members	int	
+ads_member_value	amount	decimal(18,2)	
+ads_member_value	avg_amount	decimal(18,2)	
+ads_member_value	order_count	int	
+ads_member_value	repurchase_rate	decimal(8,2)	
+ads_realtime_feed	feed_id	bigint	PRI
+ads_realtime_feed	feed_time	datetime	MUL
+ads_realtime_feed	store_name	varchar(64)	
+ads_realtime_feed	city	varchar(32)	
+ads_realtime_feed	category	varchar(32)	
+ads_realtime_feed	channel	varchar(32)	
+ads_realtime_feed	amount	decimal(18,2)	
+ads_store_performance	store_id	bigint	PRI
+ads_store_performance	store_name	varchar(64)	
+ads_store_performance	region	varchar(32)	MUL
+ads_store_performance	city	varchar(32)	
+ads_store_performance	amount	decimal(18,2)	
+ads_store_performance	profit	decimal(18,2)	
+ads_store_performance	order_count	int	
+ads_store_performance	avg_pay_amount	decimal(18,2)	
+ads_store_performance	target_amount	decimal(18,2)	
+ads_store_performance	achievement_rate	decimal(8,2)	
+ads_store_performance	margin_rate	decimal(8,2)	
+dwd_sales_daily	stat_date	date	PRI
+dwd_sales_daily	region	varchar(32)	PRI
+dwd_sales_daily	category	varchar(32)	PRI
+dwd_sales_daily	channel	varchar(32)	PRI
+dwd_sales_daily	amount	decimal(18,2)	
+dwd_sales_daily	profit	decimal(18,2)	
+dwd_sales_daily	order_count	int	
+dwd_sales_daily	qty	int	
+dwd_sales_daily	updated_at	datetime	
+dws_member_level	member_level	varchar(16)	PRI
+dws_member_level	amount	decimal(18,2)	
+dws_member_level	order_count	int	
+dws_member_level	avg_pay_amount	decimal(18,2)	
+dws_store_sales	store_id	bigint	PRI
+dws_store_sales	store_name	varchar(64)	
+dws_store_sales	region	varchar(32)	
+dws_store_sales	city	varchar(32)	
+dws_store_sales	amount	decimal(18,2)	
+dws_store_sales	profit	decimal(18,2)	
+dws_store_sales	order_count	int	
+dws_store_sales	avg_pay_amount	decimal(18,2)	
+ods_order_detail	order_id	bigint	PRI
+ods_order_detail	stat_date	date	MUL
+ods_order_detail	stat_hour	tinyint	
+ods_order_detail	region	varchar(32)	
+ods_order_detail	city	varchar(32)	
+ods_order_detail	store_id	bigint	
+ods_order_detail	store_name	varchar(64)	
+ods_order_detail	channel	varchar(32)	
+ods_order_detail	category	varchar(32)	MUL
+ods_order_detail	member_id	bigint	
+ods_order_detail	member_level	varchar(16)	
+ods_order_detail	pay_amount	decimal(18,2)	
+ods_order_detail	profit	decimal(18,2)	
+ods_order_detail	qty	int	
+ods_order_detail	order_status	varchar(16)	
+ods_order_detail	created_at	datetime	
+ods_order_detail	loaded_at	datetime	
+s
+== C. db_model tables ==
+TABLE_NAME	TABLE_ROWS
+dataset	0
+demo_members	600
+demo_orders	2286
+demo_sales_daily	135
+demo_stores	21
+demo_user_behavior	500
+model_dataset	5
+model_dimension	7
+model_metric	5
+zz_bak_20261018_demo_orders	125
+s
+== D. demo_orders columns ==
+COLUMN_NAME	COLUMN_TYPE
+order_id	bigint
+user_id	bigint
+region	varchar(32)
+pay_amount	decimal(18,2)
+status	varchar(16)
+created_at	datetime
+channel	varchar(32)
+category	varchar(32)
+store_id	bigint
+qty	int
+profit	decimal(18,2)

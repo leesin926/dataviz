@@ -1,0 +1,31 @@
+section
+== 1. etl_task columns ==
+COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+id	bigint	NO	NULL
+tenant_id	bigint	NO	1
+name	varchar(128)	NO	NULL
+description	varchar(512)	YES	
+source_datasource_id	bigint	YES	NULL
+target_datasource_id	bigint	YES	NULL
+dag_json	json	YES	NULL
+status	varchar(32)	NO	STOPPED
+cron_expression	varchar(64)	YES	NULL
+last_run_time	datetime	YES	NULL
+last_run_status	varchar(16)	YES	NULL
+create_by	bigint	YES	NULL
+create_time	datetime	YES	CURRENT_TIMESTAMP
+update_by	bigint	YES	NULL
+update_time	datetime	YES	CURRENT_TIMESTAMP
+deleted	tinyint	NO	0
+source_table	varchar(256)	YES	NULL
+target_table	varchar(256)	YES	NULL
+transform_config	text	YES	NULL
+schedule_cron	varchar(64)	YES	NULL
+section
+== 2. etl_datasource columns ==
+section
+== 3. db_etl tables ==
+TABLE_NAME	TABLE_ROWS
+etl_task	3
+etl_task_instance	6
+etl_task_log	6

@@ -1,0 +1,22 @@
+CONCAT('@@COUNT screen_demo = ', COUNT(*))
+@@COUNT screen_demo = 2
+CONCAT('@@LEN ', id, ' ~|~ ', JSON_LENGTH(components_json))
+@@LEN 901 ~|~ 27
+@@LEN 911 ~|~ 11
+CONCAT('@@BAD no-chartConfig ', s.id, ' ~|~ ', c.cid, ' ~|~ ', c.type)
+@@BAD no-chartConfig 901 ~|~ comp_bar_region ~|~ chart
+@@BAD no-chartConfig 901 ~|~ comp_line_trend ~|~ chart
+@@BAD no-chartConfig 901 ~|~ comp_pie_category ~|~ chart
+CONCAT('@@BAD empty-static ', s.id, ' ~|~ ', c.cid)
+@@BAD empty-static 901 ~|~ comp_title
+CONCAT(IF(s.id IN (901,911), '@@BAD ', '@@NOTE '), s.id, ' ~|~ preset-only ~|~ ', c.cid, ' ~|~ ', c.preset)
+@@BAD 901 ~|~ preset-only ~|~ comp_bar_region ~|~ bar
+@@BAD 901 ~|~ preset-only ~|~ comp_line_trend ~|~ lineArea
+@@BAD 901 ~|~ preset-only ~|~ comp_pie_category ~|~ donut
+CONCAT(IF(s.id IN (901,911), '@@BAD ', '@@NOTE '), s.id, ' ~|~ statCard-no-props.value ~|~ ', c.cid)
+@@BAD 901 ~|~ statCard-no-props.value ~|~ comp_kpi_1
+@@BAD 901 ~|~ statCard-no-props.value ~|~ comp_kpi_2
+n
+@@NOTE 组件契约核对请跑 node devlog/_ay/bd5-contract.cjs
+@@NEG-END
+@@NEG-END

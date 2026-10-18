@@ -1,0 +1,9 @@
+SET NAMES utf8mb4;
+SELECT '@@T' AS tag, TABLE_SCHEMA, TABLE_NAME FROM information_schema.TABLES
+ WHERE TABLE_SCHEMA IN ('db_model','db_analysis') ORDER BY TABLE_SCHEMA, TABLE_NAME;
+SELECT '@@C' AS tag, TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, IFNULL(COLUMN_DEFAULT,'~N~') AS dflt, COLUMN_COMMENT
+  FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='db_model'
+    AND TABLE_NAME IN ('model_dataset','model_dimension','model_metric','dataset') ORDER BY TABLE_NAME, ORDINAL_POSITION;
+SELECT '@@C' AS tag, TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, IFNULL(COLUMN_DEFAULT,'~N~') AS dflt, COLUMN_COMMENT
+  FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='db_analysis'
+    AND TABLE_NAME IN ('analysis_report','query_history','data_perm_rule') ORDER BY TABLE_NAME, ORDINAL_POSITION;

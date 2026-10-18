@@ -1,0 +1,52 @@
+CONCAT('@@ROWS ~|~ d3 ~|~ ', COUNT(*))
+@@ROWS ~|~ d3 ~|~ 90
+stat_date	sum_amount
+2026-07-21	44589.57
+2026-07-22	39520.28
+2026-07-23	31692.49
+CONCAT('@@ROWS ~|~ d4 ~|~ ', COUNT(*))
+@@ROWS ~|~ d4 ~|~ 6
+region	sum_amount	sum_profit
+华东	1578142.46	298430.15
+华南	1439336.93	256027.21
+华北	1080887.33	206720.99
+CONCAT('@@ROWS ~|~ d5 ~|~ ', COUNT(*))
+@@ROWS ~|~ d5 ~|~ 4
+member_level	sum_amount
+普通	2336638.05
+银卡	828706.09
+钻石	430060.22
+CONCAT('@@ROWS ~|~ d6 ~|~ ', COUNT(*))
+@@ROWS ~|~ d6 ~|~ 12
+stat_hour	sum_amount	sum_orders
+10	292207.91	91
+11	498780.90	156
+12	848516.49	255
+CONCAT('@@ROWS ~|~ d7 ~|~ ', COUNT(*))
+@@ROWS ~|~ d7 ~|~ 20
+channel	category	sum_amount
+门店	数码	1728898.37
+小程序	家居	194556.34
+第三方平台	家居	96128.54
+CONCAT('@@ROWS ~|~ d8 ~|~ ', COUNT(*))
+@@ROWS ~|~ d8 ~|~ 4
+channel	sum_amount
+门店	2491022.11
+小程序	1762415.67
+APP	1097334.86
+CONCAT('@@ROWS ~|~ d9 ~|~ ', COUNT(*))
+@@ROWS ~|~ d9 ~|~ 90
+stat_date	sum_profit
+2026-07-21	7549.24
+2026-07-22	10734.20
+2026-07-23	6717.89
+CONCAT('@@ROWS ~|~ d10 ~|~ ', COUNT(*))
+@@ROWS ~|~ d10 ~|~ 21
+store_name	sum_amount
+优选广州滨江店	558674.38
+优选深圳中心店	487920.89
+优选厦门老城店	392741.66
+CONCAT('@@ROWS ~|~ d11 ~|~ ', COUNT(*))
+@@ROWS ~|~ d11 ~|~ 1
+avg_achievement_rate
+107.581429

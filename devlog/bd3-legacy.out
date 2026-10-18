@@ -1,0 +1,50 @@
+s
+== demo_sales_daily columns (both schemas) ==
+TABLE_SCHEMA	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+db_analysis	stat_date	date	NO	NULL
+db_analysis	region	varchar(32)	NO	NULL
+db_analysis	category	varchar(32)	NO	NULL
+db_analysis	amount	decimal(18,2)	NO	NULL
+db_analysis	order_count	int	NO	NULL
+db_model	stat_date	date	NO	NULL
+db_model	region	varchar(32)	NO	NULL
+db_model	category	varchar(32)	NO	NULL
+db_model	amount	decimal(18,2)	NO	NULL
+db_model	order_count	int	NO	NULL
+s
+== demo_user_behavior columns (both schemas) ==
+TABLE_SCHEMA	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+db_analysis	event_time	datetime	NO	NULL
+db_analysis	user_id	bigint	NO	NULL
+db_analysis	event_type	varchar(32)	NO	NULL
+db_analysis	page	varchar(64)	NO	NULL
+db_analysis	duration_ms	int	NO	NULL
+db_model	event_time	datetime	NO	NULL
+db_model	user_id	bigint	NO	NULL
+db_model	event_type	varchar(32)	NO	NULL
+db_model	page	varchar(64)	NO	NULL
+db_model	duration_ms	int	NO	NULL
+s
+== demo_stores columns ==
+COLUMN_NAME	COLUMN_TYPE
+store_id	bigint
+store_name	varchar(64)
+region	varchar(32)
+city	varchar(32)
+lon	decimal(9,6)
+lat	decimal(9,6)
+open_date	date
+area_sqm	int
+manager	varchar(32)
+monthly_target	decimal(18,2)
+s
+== counts ==
+behavior_model	behavior_analysis	sales_model	sales_analysis	stores
+500	500	135	135	21
+s
+== heartbeat distribution ==
+event_type	c
+export	125
+login	125
+click	125
+view	125

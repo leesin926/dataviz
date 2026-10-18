@@ -1,0 +1,141 @@
+tag	TABLE_SCHEMA	TABLE_NAME
+@@T	db_analysis	_ay_query_history_bak
+@@T	db_analysis	ads_hour_heat
+@@T	db_analysis	ads_member_value
+@@T	db_analysis	ads_realtime_feed
+@@T	db_analysis	ads_store_performance
+@@T	db_analysis	analysis_report
+@@T	db_analysis	data_perm_rule
+@@T	db_analysis	demo_orders
+@@T	db_analysis	demo_sales_daily
+@@T	db_analysis	demo_user_behavior
+@@T	db_analysis	dwd_sales_daily
+@@T	db_analysis	dws_member_level
+@@T	db_analysis	dws_store_sales
+@@T	db_analysis	ods_order_detail
+@@T	db_analysis	query_history
+@@T	db_model	dataset
+@@T	db_model	demo_members
+@@T	db_model	demo_orders
+@@T	db_model	demo_sales_daily
+@@T	db_model	demo_stores
+@@T	db_model	demo_user_behavior
+@@T	db_model	model_dataset
+@@T	db_model	model_dimension
+@@T	db_model	model_metric
+@@T	db_model	zz_bak_20261018_demo_orders
+tag	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	dflt	COLUMN_COMMENT
+@@C	dataset	id	bigint	NO	~N~	
+@@C	dataset	tenant_id	bigint	NO	1	
+@@C	dataset	name	varchar(128)	NO	~N~	
+@@C	dataset	datasource_id	bigint	NO	~N~	
+@@C	dataset	table_name	varchar(256)	NO	~N~	
+@@C	dataset	type	tinyint	NO	~N~	1-ç‰©ç†è¡¨ 2-è‡ªå®šä¹‰SQL 3-å¤šè¡¨å…³è”
+@@C	dataset	sql_content	text	YES	~N~	
+@@C	dataset	join_config	json	YES	~N~	
+@@C	dataset	columns_json	json	YES	~N~	
+@@C	dataset	description	varchar(512)	YES		
+@@C	dataset	create_by	bigint	YES	~N~	
+@@C	dataset	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	dataset	update_by	bigint	YES	~N~	
+@@C	dataset	update_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	dataset	deleted	tinyint	NO	0	
+@@C	model_dataset	id	bigint	NO	~N~	
+@@C	model_dataset	tenant_id	bigint	NO	1	租户ID
+@@C	model_dataset	name	varchar(128)	NO	~N~	数据集名称
+@@C	model_dataset	datasource_id	bigint	YES	~N~	数据源ID
+@@C	model_dataset	table_name	varchar(256)	YES	~N~	物理表名
+@@C	model_dataset	sql_query	text	YES	~N~	自定义SQL查询语句
+@@C	model_dataset	dimensions	text	YES	~N~	维度配置JSON数组
+@@C	model_dataset	metrics	text	YES	~N~	指标配置JSON数组
+@@C	model_dataset	filters	text	YES	~N~	过滤条件JSON数组
+@@C	model_dataset	create_by	varchar(64)	YES	~N~	创建人(用户名)
+@@C	model_dataset	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	model_dataset	update_by	varchar(64)	YES	~N~	更新人(用户名)
+@@C	model_dataset	update_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	model_dataset	deleted	tinyint	NO	0	逻辑删除 0-未删除 1-已删除
+@@C	model_dimension	id	bigint	NO	~N~	
+@@C	model_dimension	tenant_id	bigint	NO	1	
+@@C	model_dimension	dataset_id	bigint	YES	~N~	数据集ID(旧列，可选)
+@@C	model_dimension	name	varchar(128)	NO	~N~	
+@@C	model_dimension	display_name	varchar(128)	YES	~N~	维度显示名称
+@@C	model_dimension	column_name	varchar(256)	NO	~N~	
+@@C	model_dimension	datasource_id	bigint	YES	~N~	数据源ID
+@@C	model_dimension	table_name	varchar(256)	YES	~N~	所属表名
+@@C	model_dimension	data_type	varchar(32)	NO	~N~	
+@@C	model_dimension	dimension_type	varchar(32)	YES	CATEGORICAL	维度类型(旧列，可选)
+@@C	model_dimension	format	varchar(64)	YES		
+@@C	model_dimension	hierarchy_json	json	YES	~N~	
+@@C	model_dimension	sort	int	NO	0	
+@@C	model_dimension	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	model_dimension	update_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	model_dimension	description	varchar(512)	YES	~N~	维度描述
+@@C	model_dimension	create_by	varchar(64)	YES	~N~	创建人(用户名)
+@@C	model_dimension	update_by	varchar(64)	YES	~N~	更新人(用户名)
+@@C	model_dimension	deleted	tinyint	NO	0	逻辑删除 0-未删除 1-已删除
+@@C	model_metric	id	bigint	NO	~N~	
+@@C	model_metric	tenant_id	bigint	NO	1	
+@@C	model_metric	dataset_id	bigint	YES	~N~	数据集ID(旧列，可选)
+@@C	model_metric	name	varchar(128)	NO	~N~	
+@@C	model_metric	display_name	varchar(128)	YES	~N~	指标显示名称
+@@C	model_metric	column_name	varchar(256)	YES	~N~	
+@@C	model_metric	expression	text	YES	~N~	è®¡ç®—è¡¨è¾¾å¼
+@@C	model_metric	aggregation_type	varchar(32)	YES	~N~	聚合类型 SUM/AVG/COUNT/MAX/MIN/CUSTOM
+@@C	model_metric	agg_function	varchar(32)	YES	~N~	聚合函数(旧列，与 aggregation_type 并存)
+@@C	model_metric	data_type	varchar(32)	YES	~N~	数据类型(旧列，可选)
+@@C	model_metric	format	varchar(64)	YES		
+@@C	model_metric	description	varchar(512)	YES		
+@@C	model_metric	sort	int	NO	0	
+@@C	model_metric	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	model_metric	update_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	model_metric	datasource_id	bigint	YES	~N~	数据源ID
+@@C	model_metric	table_name	varchar(256)	YES	~N~	所属表名
+@@C	model_metric	create_by	varchar(64)	YES	~N~	创建人(用户名)
+@@C	model_metric	update_by	varchar(64)	YES	~N~	更新人(用户名)
+@@C	model_metric	deleted	tinyint	NO	0	逻辑删除 0-未删除 1-已删除
+tag	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	dflt	COLUMN_COMMENT
+@@C	analysis_report	id	bigint	NO	~N~	
+@@C	analysis_report	tenant_id	bigint	NO	1	租户ID
+@@C	analysis_report	name	varchar(128)	NO	~N~	报告名称
+@@C	analysis_report	description	varchar(512)	YES	~N~	报告描述
+@@C	analysis_report	datasource_id	bigint	YES	~N~	数据源ID
+@@C	analysis_report	dataset_id	bigint	YES	~N~	数据集ID
+@@C	analysis_report	config	text	YES	~N~	图表配置JSON
+@@C	analysis_report	is_published	tinyint	NO	0	是否已发布 0-未发布 1-已发布
+@@C	analysis_report	create_by	varchar(64)	YES	~N~	创建人(用户名)
+@@C	analysis_report	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	analysis_report	update_by	varchar(64)	YES	~N~	更新人(用户名)
+@@C	analysis_report	update_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	analysis_report	deleted	tinyint	NO	0	逻辑删除 0-未删除 1-已删除
+@@C	data_perm_rule	id	bigint	NO	~N~	
+@@C	data_perm_rule	name	varchar(64)	NO	~N~	规则名（列表与告警文案里引用的就是它）
+@@C	data_perm_rule	dataset_id	bigint	YES	~N~	作用数据集；NULL = 本租户全部数据集
+@@C	data_perm_rule	scope_type	varchar(16)	NO	~N~	命中方式：USER=按用户ID，ROLE=按角色码
+@@C	data_perm_rule	scope_value	varchar(64)	NO	~N~	USER 存用户ID，ROLE 存角色码（如 analyst）
+@@C	data_perm_rule	conditions_json	text	YES	~N~	行条件 [{field,operator,value}]，规则内 AND；值支持 :userId/:tenantId/:username/:deptId 占位
+@@C	data_perm_rule	restricted_columns	varchar(1024)	YES	~N~	列权限：逗号分隔的物理列名，命中即从结果里剔除
+@@C	data_perm_rule	enabled	tinyint	NO	1	0=停用（保留行，规则是审计对象，删掉就说不清谁改过）
+@@C	data_perm_rule	remark	varchar(256)	YES	~N~	备注（为什么要有这条规则）
+@@C	data_perm_rule	tenant_id	bigint	YES	~N~	
+@@C	data_perm_rule	create_by	varchar(64)	YES	~N~	
+@@C	data_perm_rule	update_by	varchar(64)	YES	~N~	
+@@C	data_perm_rule	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	data_perm_rule	update_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	data_perm_rule	deleted	tinyint	NO	0	逻辑删除标记
+@@C	query_history	id	bigint	NO	~N~	
+@@C	query_history	tenant_id	bigint	NO	1	
+@@C	query_history	user_id	varchar(64)	NO	~N~	执行用户(用户名)
+@@C	query_history	dataset_id	bigint	YES	~N~	数据集ID(旧模型遗留，实体不再写入)
+@@C	query_history	datasource_id	bigint	YES	~N~	数据源ID(实体字段，历史数据为NULL)
+@@C	query_history	query_json	json	YES	~N~	查询DSL(旧模型遗留，实体不再写入)
+@@C	query_history	sql_text	text	YES	~N~	
+@@C	query_history	sql	text	YES	~N~	执行的SQL(实体映射列，与 sql_text 并存)
+@@C	query_history	duration_ms	int	YES	~N~	
+@@C	query_history	execution_time	bigint	YES	~N~	执行耗时(ms，实体字段)
+@@C	query_history	row_count	int	YES	~N~	
+@@C	query_history	status	varchar(32)	NO	SUCCESS	执行状态(SUCCESS/FAILED)
+@@C	query_history	create_time	datetime	YES	CURRENT_TIMESTAMP	
+@@C	query_history	deleted	tinyint	NO	0	逻辑删除(0=未删,1=已删)
+@@C	query_history	create_by	varchar(64)	YES	~N~	创建者
+@@C	query_history	update_by	varchar(64)	YES	~N~	更新者
+@@C	query_history	update_time	datetime	YES	~N~	更新时间

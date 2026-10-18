@@ -1,0 +1,341 @@
+--------------
+SET NAMES utf8mb4
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+DELETE FROM model_dataset WHERE id BETWEEN 911 AND 921
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (911, 1, '订单明细（ODS）', 901, 'ods_order_detail', NULL, '[{"field":"stat_date","displayName":"下单日期","type":"time","format":"yyyy-MM-dd"},{"field":"stat_hour","displayName":"下单小时","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"},{"field":"store_name","displayName":"门店","type":"category"},{"field":"channel","displayName":"渠道","type":"category"},{"field":"category","displayName":"商品类目","type":"category"},{"field":"member_level","displayName":"会员等级","type":"category"},{"field":"order_status","displayName":"订单状态","type":"category"},{"field":"created_at","displayName":"下单时间","type":"time","format":"yyyy-MM-dd HH:mm:ss"}]', '[{"field":"pay_amount","displayName":"实付金额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"qty","displayName":"件数","aggregation":"sum","format":"#,##0"},{"field":"order_id","displayName":"订单数","aggregation":"count","format":"#,##0"}]', '[{"field":"order_status","operator":"!=","value":"CANCELLED"}]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (912, 1, '日销售汇总（DWD）', 901, 'dwd_sales_daily', NULL, '[{"field":"stat_date","displayName":"统计日期","type":"time","format":"yyyy-MM-dd"},{"field":"region","displayName":"大区","type":"category"},{"field":"category","displayName":"商品类目","type":"category"},{"field":"channel","displayName":"渠道","type":"category"}]', '[{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"qty","displayName":"件数","aggregation":"sum","format":"#,##0"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (913, 1, '门店销售汇总（DWS）', 901, 'dws_store_sales', NULL, '[{"field":"store_name","displayName":"门店","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"}]', '[{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"avg_pay_amount","displayName":"平均客单价","aggregation":"avg","format":"#,##0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (914, 1, '会员等级汇总（DWS）', 901, 'dws_member_level', NULL, '[{"field":"member_level","displayName":"会员等级","type":"category"}]', '[{"field":"amount","displayName":"消费金额","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"avg_pay_amount","displayName":"平均客单价","aggregation":"avg","format":"#,##0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (915, 1, '门店绩效（ADS）', 901, 'ads_store_performance', NULL, '[{"field":"store_name","displayName":"门店","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"}]', '[{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"target_amount","displayName":"月度目标","aggregation":"sum","format":"#,##0.00"},{"field":"avg_pay_amount","displayName":"平均客单价","aggregation":"avg","format":"#,##0.00"},{"field":"achievement_rate","displayName":"达成率","aggregation":"avg","format":"0.00"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (916, 1, '时段成交分布（ADS）', 901, 'ads_hour_heat', NULL, '[{"field":"stat_hour","displayName":"下单小时","type":"category"}]', '[{"field":"orders","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"avg_amount","displayName":"时段均值","aggregation":"avg","format":"#,##0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (917, 1, '会员价值（ADS）', 901, 'ads_member_value', NULL, '[{"field":"member_level","displayName":"会员等级","type":"category"}]', '[{"field":"members","displayName":"会员数","aggregation":"sum","format":"#,##0"},{"field":"amount","displayName":"消费金额","aggregation":"sum","format":"#,##0.00"},{"field":"avg_amount","displayName":"人均消费","aggregation":"avg","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"repurchase_rate","displayName":"复购率","aggregation":"avg","format":"0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (918, 1, '实时成交流水（ADS）', 901, 'ads_realtime_feed', NULL, '[{"field":"feed_time","displayName":"成交时间","type":"time","format":"yyyy-MM-dd HH:mm:ss"},{"field":"store_name","displayName":"门店","type":"category"},{"field":"city","displayName":"城市","type":"category"},{"field":"category","displayName":"商品类目","type":"category"},{"field":"channel","displayName":"渠道","type":"category"}]', '[{"field":"amount","displayName":"成交金额","aggregation":"sum","format":"#,##0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (919, 1, '门店目标达成（跨库关联）', 901, NULL, 'SELECT s.store_name, s.region, s.city, MAX(s.monthly_target) AS target_amount, SUM(t.amount) AS amount, SUM(t.profit) AS profit, ROUND(SUM(t.amount) / NULLIF(MAX(s.monthly_target), 0) * 100, 2) AS achievement_rate, ROUND(SUM(t.profit) / NULLIF(SUM(t.amount), 0) * 100, 2) AS margin_rate FROM db_model.demo_stores s JOIN db_analysis.dws_store_sales t ON t.store_id = s.store_id GROUP BY s.store_name, s.region, s.city', '[{"field":"store_name","displayName":"门店","type":"category"},{"field":"region","displayName":"大区","type":"category"},{"field":"city","displayName":"城市","type":"category"}]', '[{"field":"target_amount","displayName":"月度目标","aggregation":"sum","format":"#,##0.00"},{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"achievement_rate","displayName":"达成率","aggregation":"avg","format":"0.00"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (920, 1, '渠道品类毛利（自定义SQL）', 901, NULL, 'SELECT channel, category, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY channel, category', '[{"field":"channel","displayName":"渠道","type":"category"},{"field":"category","displayName":"商品类目","type":"category"}]', '[{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO model_dataset (id, tenant_id, name, datasource_id, table_name, sql_query, dimensions, metrics, filters, create_by, deleted) VALUES (921, 1, '每日销售趋势（自定义SQL）', 901, NULL, 'SELECT stat_date, SUM(amount) AS amount, SUM(profit) AS profit, SUM(order_count) AS order_count, SUM(qty) AS qty, ROUND(SUM(profit) / NULLIF(SUM(amount), 0) * 100, 2) AS margin_rate FROM dwd_sales_daily GROUP BY stat_date', '[{"field":"stat_date","displayName":"统计日期","type":"time","format":"yyyy-MM-dd"}]', '[{"field":"amount","displayName":"销售额","aggregation":"sum","format":"#,##0.00"},{"field":"profit","displayName":"毛利","aggregation":"sum","format":"#,##0.00"},{"field":"order_count","displayName":"订单量","aggregation":"sum","format":"#,##0"},{"field":"qty","displayName":"件数","aggregation":"sum","format":"#,##0"},{"field":"margin_rate","displayName":"毛利率","aggregation":"avg","format":"0.00"}]', '[]', 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+DELETE FROM model_dimension WHERE id BETWEEN 911 AND 999
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+DELETE FROM model_metric WHERE id BETWEEN 911 AND 999
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+INSERT INTO model_dimension (id, tenant_id, dataset_id, name, display_name, column_name, datasource_id, table_name, data_type, dimension_type, format, sort, create_by, deleted) VALUES
+  (911, 1, 911, 'stat_date', '下单日期', 'stat_date', 901, 'ods_order_detail', 'DATE', 'TIME', 'yyyy-MM-dd', 1, 'admin', 0),
+  (912, 1, 911, 'stat_hour', '下单小时', 'stat_hour', 901, 'ods_order_detail', 'TINYINT', 'CATEGORY', '', 2, 'admin', 0),
+  (913, 1, 911, 'region', '大区', 'region', 901, 'ods_order_detail', 'VARCHAR', 'GEO', '', 3, 'admin', 0),
+  (914, 1, 911, 'city', '城市', 'city', 901, 'ods_order_detail', 'VARCHAR', 'CATEGORY', '', 4, 'admin', 0),
+  (915, 1, 911, 'store_name', '门店', 'store_name', 901, 'ods_order_detail', 'VARCHAR', 'CATEGORY', '', 5, 'admin', 0),
+  (916, 1, 911, 'channel', '渠道', 'channel', 901, 'ods_order_detail', 'VARCHAR', 'CATEGORY', '', 6, 'admin', 0),
+  (917, 1, 911, 'category', '商品类目', 'category', 901, 'ods_order_detail', 'VARCHAR', 'CATEGORY', '', 7, 'admin', 0),
+  (918, 1, 911, 'member_level', '会员等级', 'member_level', 901, 'ods_order_detail', 'VARCHAR', 'CATEGORY', '', 8, 'admin', 0),
+  (919, 1, 911, 'order_status', '订单状态', 'order_status', 901, 'ods_order_detail', 'VARCHAR', 'CATEGORY', '', 9, 'admin', 0),
+  (920, 1, 911, 'created_at', '下单时间', 'created_at', 901, 'ods_order_detail', 'DATETIME', 'TIME', 'yyyy-MM-dd HH:mm:ss', 10, 'admin', 0),
+  (921, 1, 912, 'stat_date', '统计日期', 'stat_date', 901, 'dwd_sales_daily', 'DATE', 'TIME', 'yyyy-MM-dd', 1, 'admin', 0),
+  (922, 1, 912, 'region', '大区', 'region', 901, 'dwd_sales_daily', 'VARCHAR', 'GEO', '', 2, 'admin', 0),
+  (923, 1, 912, 'category', '商品类目', 'category', 901, 'dwd_sales_daily', 'VARCHAR', 'CATEGORY', '', 3, 'admin', 0),
+  (924, 1, 912, 'channel', '渠道', 'channel', 901, 'dwd_sales_daily', 'VARCHAR', 'CATEGORY', '', 4, 'admin', 0),
+  (925, 1, 913, 'store_name', '门店', 'store_name', 901, 'dws_store_sales', 'VARCHAR', 'CATEGORY', '', 1, 'admin', 0),
+  (926, 1, 913, 'region', '大区', 'region', 901, 'dws_store_sales', 'VARCHAR', 'GEO', '', 2, 'admin', 0),
+  (927, 1, 913, 'city', '城市', 'city', 901, 'dws_store_sales', 'VARCHAR', 'CATEGORY', '', 3, 'admin', 0),
+  (928, 1, 914, 'member_level', '会员等级', 'member_level', 901, 'dws_member_level', 'VARCHAR', 'CATEGORY', '', 1, 'admin', 0),
+  (929, 1, 915, 'store_name', '门店', 'store_name', 901, 'ads_store_performance', 'VARCHAR', 'CATEGORY', '', 1, 'admin', 0),
+  (930, 1, 915, 'region', '大区', 'region', 901, 'ads_store_performance', 'VARCHAR', 'GEO', '', 2, 'admin', 0),
+  (931, 1, 915, 'city', '城市', 'city', 901, 'ads_store_performance', 'VARCHAR', 'CATEGORY', '', 3, 'admin', 0),
+  (932, 1, 916, 'stat_hour', '下单小时', 'stat_hour', 901, 'ads_hour_heat', 'TINYINT', 'CATEGORY', '', 1, 'admin', 0),
+  (933, 1, 917, 'member_level', '会员等级', 'member_level', 901, 'ads_member_value', 'VARCHAR', 'CATEGORY', '', 1, 'admin', 0),
+  (934, 1, 918, 'feed_time', '成交时间', 'feed_time', 901, 'ads_realtime_feed', 'DATETIME', 'TIME', 'yyyy-MM-dd HH:mm:ss', 1, 'admin', 0),
+  (935, 1, 918, 'store_name', '门店', 'store_name', 901, 'ads_realtime_feed', 'VARCHAR', 'CATEGORY', '', 2, 'admin', 0),
+  (936, 1, 918, 'city', '城市', 'city', 901, 'ads_realtime_feed', 'VARCHAR', 'CATEGORY', '', 3, 'admin', 0),
+  (937, 1, 918, 'category', '商品类目', 'category', 901, 'ads_realtime_feed', 'VARCHAR', 'CATEGORY', '', 4, 'admin', 0),
+  (938, 1, 918, 'channel', '渠道', 'channel', 901, 'ads_realtime_feed', 'VARCHAR', 'CATEGORY', '', 5, 'admin', 0),
+  (939, 1, 919, 'store_name', '门店', 'store_name', 901, NULL, 'VARCHAR', 'CATEGORY', '', 1, 'admin', 0),
+  (940, 1, 919, 'region', '大区', 'region', 901, NULL, 'VARCHAR', 'GEO', '', 2, 'admin', 0),
+  (941, 1, 919, 'city', '城市', 'city', 901, NULL, 'VARCHAR', 'CATEGORY', '', 3, 'admin', 0),
+  (942, 1, 920, 'channel', '渠道', 'channel', 901, NULL, 'VARCHAR', 'CATEGORY', '', 1, 'admin', 0),
+  (943, 1, 920, 'category', '商品类目', 'category', 901, NULL, 'VARCHAR', 'CATEGORY', '', 2, 'admin', 0),
+  (944, 1, 921, 'stat_date', '统计日期', 'stat_date', 901, NULL, 'DATE', 'TIME', 'yyyy-MM-dd', 1, 'admin', 0)
+--------------
+
+Query OK, 34 rows affected
+Records: 34  Duplicates: 0  Warnings: 0
+
+--------------
+INSERT INTO model_metric (id, tenant_id, dataset_id, name, display_name, column_name, aggregation_type, agg_function, data_type, format, sort, datasource_id, table_name, create_by, deleted) VALUES
+  (911, 1, 911, 'pay_amount', '实付金额', 'pay_amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, 'ods_order_detail', 'admin', 0),
+  (912, 1, 911, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, 'ods_order_detail', 'admin', 0),
+  (913, 1, 911, 'qty', '件数', 'qty', 'SUM', 'SUM', 'BIGINT', '#,##0', 3, 901, 'ods_order_detail', 'admin', 0),
+  (914, 1, 911, 'order_id', '订单数', 'order_id', 'COUNT', 'COUNT', 'BIGINT', '#,##0', 4, 901, 'ods_order_detail', 'admin', 0),
+  (915, 1, 912, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, 'dwd_sales_daily', 'admin', 0),
+  (916, 1, 912, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, 'dwd_sales_daily', 'admin', 0),
+  (917, 1, 912, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 3, 901, 'dwd_sales_daily', 'admin', 0),
+  (918, 1, 912, 'qty', '件数', 'qty', 'SUM', 'SUM', 'BIGINT', '#,##0', 4, 901, 'dwd_sales_daily', 'admin', 0),
+  (919, 1, 913, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, 'dws_store_sales', 'admin', 0),
+  (920, 1, 913, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, 'dws_store_sales', 'admin', 0),
+  (921, 1, 913, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 3, 901, 'dws_store_sales', 'admin', 0),
+  (922, 1, 913, 'avg_pay_amount', '平均客单价', 'avg_pay_amount', 'AVG', 'AVG', 'DECIMAL', '#,##0.00', 4, 901, 'dws_store_sales', 'admin', 0),
+  (923, 1, 914, 'amount', '消费金额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, 'dws_member_level', 'admin', 0),
+  (924, 1, 914, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 2, 901, 'dws_member_level', 'admin', 0),
+  (925, 1, 914, 'avg_pay_amount', '平均客单价', 'avg_pay_amount', 'AVG', 'AVG', 'DECIMAL', '#,##0.00', 3, 901, 'dws_member_level', 'admin', 0),
+  (926, 1, 915, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, 'ads_store_performance', 'admin', 0),
+  (927, 1, 915, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, 'ads_store_performance', 'admin', 0),
+  (928, 1, 915, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 3, 901, 'ads_store_performance', 'admin', 0),
+  (929, 1, 915, 'target_amount', '月度目标', 'target_amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 4, 901, 'ads_store_performance', 'admin', 0),
+  (930, 1, 915, 'avg_pay_amount', '平均客单价', 'avg_pay_amount', 'AVG', 'AVG', 'DECIMAL', '#,##0.00', 5, 901, 'ads_store_performance', 'admin', 0),
+  (931, 1, 915, 'achievement_rate', '达成率', 'achievement_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 6, 901, 'ads_store_performance', 'admin', 0),
+  (932, 1, 915, 'margin_rate', '毛利率', 'margin_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 7, 901, 'ads_store_performance', 'admin', 0),
+  (933, 1, 916, 'orders', '订单量', 'orders', 'SUM', 'SUM', 'BIGINT', '#,##0', 1, 901, 'ads_hour_heat', 'admin', 0),
+  (934, 1, 916, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, 'ads_hour_heat', 'admin', 0),
+  (935, 1, 916, 'avg_amount', '时段均值', 'avg_amount', 'AVG', 'AVG', 'DECIMAL', '#,##0.00', 3, 901, 'ads_hour_heat', 'admin', 0),
+  (936, 1, 917, 'members', '会员数', 'members', 'SUM', 'SUM', 'BIGINT', '#,##0', 1, 901, 'ads_member_value', 'admin', 0),
+  (937, 1, 917, 'amount', '消费金额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, 'ads_member_value', 'admin', 0),
+  (938, 1, 917, 'avg_amount', '人均消费', 'avg_amount', 'AVG', 'AVG', 'DECIMAL', '#,##0.00', 3, 901, 'ads_member_value', 'admin', 0),
+  (939, 1, 917, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 4, 901, 'ads_member_value', 'admin', 0),
+  (940, 1, 917, 'repurchase_rate', '复购率', 'repurchase_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 5, 901, 'ads_member_value', 'admin', 0),
+  (941, 1, 918, 'amount', '成交金额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, 'ads_realtime_feed', 'admin', 0),
+  (942, 1, 919, 'target_amount', '月度目标', 'target_amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, NULL, 'admin', 0),
+  (943, 1, 919, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, NULL, 'admin', 0),
+  (944, 1, 919, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 3, 901, NULL, 'admin', 0),
+  (945, 1, 919, 'achievement_rate', '达成率', 'achievement_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 4, 901, NULL, 'admin', 0),
+  (946, 1, 919, 'margin_rate', '毛利率', 'margin_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 5, 901, NULL, 'admin', 0),
+  (947, 1, 920, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, NULL, 'admin', 0),
+  (948, 1, 920, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, NULL, 'admin', 0),
+  (949, 1, 920, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 3, 901, NULL, 'admin', 0),
+  (950, 1, 920, 'margin_rate', '毛利率', 'margin_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 4, 901, NULL, 'admin', 0),
+  (951, 1, 921, 'amount', '销售额', 'amount', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 1, 901, NULL, 'admin', 0),
+  (952, 1, 921, 'profit', '毛利', 'profit', 'SUM', 'SUM', 'DECIMAL', '#,##0.00', 2, 901, NULL, 'admin', 0),
+  (953, 1, 921, 'order_count', '订单量', 'order_count', 'SUM', 'SUM', 'BIGINT', '#,##0', 3, 901, NULL, 'admin', 0),
+  (954, 1, 921, 'qty', '件数', 'qty', 'SUM', 'SUM', 'BIGINT', '#,##0', 4, 901, NULL, 'admin', 0),
+  (955, 1, 921, 'margin_rate', '毛利率', 'margin_rate', 'AVG', 'AVG', 'DECIMAL', '0.00', 5, 901, NULL, 'admin', 0)
+--------------
+
+Query OK, 45 rows affected
+Records: 45  Duplicates: 0  Warnings: 0
+
+--------------
+DELETE FROM analysis_report WHERE id BETWEEN 911 AND 917
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (911, 1, '门店绩效排行', '21 家门店的销售额与达成率排行。数据集 915 的 profit/margin_rate 对普通用户遮列，所以报告只用 amount/achievement_rate', 901, 915, '{"dimensions":[{"field":"store_name"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"achievement_rate","aggFunction":"AVG","alias":"achievement_rate"}],"limit":50}', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (912, 1, '会员价值结构', '四个会员等级的消费额与人数结构，环形图/条形图通用', 901, 917, '{"dimensions":[{"field":"member_level"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"members","aggFunction":"SUM","alias":"members"}],"orders":[{"field":"amount","direction":"DESC"}],"limit":20}', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (913, 1, '时段成交曲线', '营业 12 个小时段的订单量与销售额，折线图', 901, 916, '{"dimensions":[{"field":"stat_hour"}],"metrics":[{"field":"orders","aggFunction":"SUM","alias":"orders"},{"field":"amount","aggFunction":"SUM","alias":"amount"}],"orders":[{"field":"stat_hour","direction":"ASC"}],"limit":24}', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (914, 1, '渠道×品类毛利矩阵', '4 渠道 × 5 类目的毛利率，热力图/堆叠柱状；两个维度时前端把最后一个维度当系列', 901, 920, '{"dimensions":[{"field":"channel"},{"field":"category"}],"metrics":[{"field":"margin_rate","aggFunction":"AVG","alias":"margin_rate"}],"limit":50}', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (915, 1, '每日销售趋势', '90 天日粒度趋势线，行数在报告默认 limit 之内', 901, 921, '{"dimensions":[{"field":"stat_date"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"profit","aggFunction":"SUM","alias":"profit"}],"orders":[{"field":"stat_date","direction":"ASC"}],"limit":120}', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (916, 1, '大区目标达成对比', '六个大区的销售额与月度目标对比，来自跨库关联的自定义 SQL 数据集', 901, 919, '{"dimensions":[{"field":"region"}],"metrics":[{"field":"amount","aggFunction":"SUM","alias":"amount"},{"field":"target_amount","aggFunction":"SUM","alias":"target_amount"}],"limit":20}', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO analysis_report (id, tenant_id, name, description, datasource_id, dataset_id, config, is_published, create_by, deleted)
+  VALUES (917, 1, '明细口径草稿（未发布）', '留一条草稿说明边界：明细数据集 911 有 2000 行，报告默认 limit 1000 会截断，所以没发布', 901, 911, '{"dimensions":[{"field":"region"},{"field":"channel"}],"metrics":[{"field":"pay_amount","aggFunction":"SUM","alias":"pay_amount"}],"filters":[{"field":"order_status","operator":"!=","value":"CANCELLED"}],"limit":500}', 0, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+DELETE FROM data_perm_rule WHERE id BETWEEN 911 AND 912
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+INSERT INTO data_perm_rule (id, name, dataset_id, scope_type, scope_value, conditions_json, restricted_columns, enabled, remark, tenant_id, create_by, deleted)
+  VALUES (911, '普通用户只看华东门店', 913, 'ROLE', 'user', '[{"field":"region","operator":"eq","value":"华东"}]', NULL, 1, '演示行级权限。analyst01/designer01/viewer01 都是角色 user ⇒ 只返回华东；admin 是 super_admin，走 RBAC 短路口径不看规则 ⇒ 看全量；ops01 角色 admin 一条都不命中 ⇒ 按 deny-all 返回空，这是 DataPermissionResolver 的设计（配了规则还不命中就放开全表，等于规则白配）', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+INSERT INTO data_perm_rule (id, name, dataset_id, scope_type, scope_value, conditions_json, restricted_columns, enabled, remark, tenant_id, create_by, deleted)
+  VALUES (912, '普通用户隐藏毛利列', 915, 'ROLE', 'user', NULL, 'profit,margin_rate', 1, '演示列级权限：只配遮列不配行条件 ⇒ 命中的人在 SELECT * 回列里看不到 profit/margin_rate；显式点名这两列则直接 403。同数据集的行上没有限制', 1, 'admin', 0)
+--------------
+
+Query OK, 1 row affected
+
+--------------
+SELECT CONCAT('@@COUNT model_dataset    = ', COUNT(*)) FROM db_model.model_dataset WHERE id BETWEEN 911 AND 921 AND deleted = 0
+--------------
+
+CONCAT('@@COUNT model_dataset    = ', COUNT(*))
+@@COUNT model_dataset    = 11
+1 row in set
+
+--------------
+SELECT CONCAT('@@COUNT model_dimension    = ', COUNT(*)) FROM db_model.model_dimension WHERE id BETWEEN 911 AND 999 AND deleted = 0
+--------------
+
+CONCAT('@@COUNT model_dimension    = ', COUNT(*))
+@@COUNT model_dimension    = 34
+1 row in set
+
+--------------
+SELECT CONCAT('@@COUNT model_metric       = ', COUNT(*)) FROM db_model.model_metric WHERE id BETWEEN 911 AND 999 AND deleted = 0
+--------------
+
+CONCAT('@@COUNT model_metric       = ', COUNT(*))
+@@COUNT model_metric       = 45
+1 row in set
+
+--------------
+SELECT CONCAT('@@COUNT analysis_report    = ', COUNT(*)) FROM analysis_report WHERE id BETWEEN 911 AND 917 AND deleted = 0
+--------------
+
+CONCAT('@@COUNT analysis_report    = ', COUNT(*))
+@@COUNT analysis_report    = 7
+1 row in set
+
+--------------
+SELECT CONCAT('@@COUNT data_perm_rule     = ', COUNT(*)) FROM data_perm_rule WHERE id BETWEEN 911 AND 912 AND deleted = 0
+--------------
+
+CONCAT('@@COUNT data_perm_rule     = ', COUNT(*))
+@@COUNT data_perm_rule     = 2
+1 row in set
+
+--------------
+SELECT CONCAT('@@BAD report ', r.id, ' -> ', r.dataset_id) FROM analysis_report r
+  LEFT JOIN db_model.model_dataset d ON d.id = r.dataset_id AND d.deleted = 0
+  WHERE r.deleted = 0 AND d.id IS NULL
+--------------
+
+Empty set
+
+--------------
+SELECT CONCAT('@@BAD rule ', p.id, ' -> ', p.dataset_id) FROM data_perm_rule p
+  LEFT JOIN db_model.model_dataset d ON d.id = p.dataset_id AND d.deleted = 0
+  WHERE p.deleted = 0 AND d.id IS NULL
+--------------
+
+Empty set
+
+--------------
+SELECT CONCAT('@@BAD dataset ', d.id, ' 绑了不可用数据源 ', d.datasource_id)
+  FROM db_model.model_dataset d JOIN db_datasource.datasource s ON s.id = d.datasource_id
+  WHERE d.deleted = 0 AND s.status <> 1
+--------------
+
+Empty set
+
+--------------
+SELECT CONCAT('@@BAD dataset ', d.id, ' 找不到表 ', d.table_name)
+  FROM db_model.model_dataset d
+  WHERE d.deleted = 0 AND d.table_name IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS c
+      WHERE c.TABLE_SCHEMA = 'db_analysis' AND c.TABLE_NAME = d.table_name)
+--------------
+
+Empty set
+
+--------------
+SELECT CONCAT('@@NOTE 报告字段核对请跑 node devlog/_ay/bd4-contract.cjs') AS n
+--------------
+
+n
+@@NOTE 报告字段核对请跑 node devlog/_ay/bd4-contract.cjs
+1 row in set
+
+Bye

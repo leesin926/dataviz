@@ -1,0 +1,66 @@
+[
+  {
+    "taskId": 911,
+    "taskName": "ODS 订单明细入仓",
+    "nodeId": "i1",
+    "nodeName": "订单明细(业务库)",
+    "datasourceId": 902,
+    "sql": "SELECT o.order_id AS order_id, DATE(o.created_at) AS stat_date, HOUR(o.created_at) AS stat_hour, o.region AS region, s.city AS city, o.store_id AS store_id, s.store_name AS store_name, o.channel AS channel, o.category AS category, o.user_id AS member_id, IFNULL(m.level, '散客') AS member_level, o.pay_amount AS pay_amount, o.profit AS profit, o.qty AS qty, o.status AS order_status, o.created_at AS created_at FROM demo_orders o JOIN demo_stores s ON s.store_id = o.store_id LEFT JOIN demo_members m ON m.member_id = o.user_id WHERE o.status IN ('PAID', 'SHIPPED')"
+  },
+  {
+    "taskId": 912,
+    "taskName": "DWD 日销售汇总",
+    "nodeId": "i3",
+    "nodeName": "ODS 明细",
+    "datasourceId": 901,
+    "sql": "SELECT stat_date, region, category, channel, pay_amount, profit, order_id, qty FROM ods_order_detail"
+  },
+  {
+    "taskId": 913,
+    "taskName": "DWS 门店销售汇总",
+    "nodeId": "i6",
+    "nodeName": "ODS 明细",
+    "datasourceId": 901,
+    "sql": "SELECT store_id, store_name, region, city, pay_amount, profit, order_id FROM ods_order_detail"
+  },
+  {
+    "taskId": 914,
+    "taskName": "DWS 会员等级汇总",
+    "nodeId": "i9",
+    "nodeName": "ODS 明细",
+    "datasourceId": 901,
+    "sql": "SELECT member_id, member_level, pay_amount, order_id FROM ods_order_detail"
+  },
+  {
+    "taskId": 915,
+    "taskName": "ADS 门店绩效（关联月度目标）",
+    "nodeId": "i13",
+    "nodeName": "门店汇总×月度目标",
+    "datasourceId": 901,
+    "sql": "SELECT d.store_id AS store_id, d.store_name AS store_name, d.region AS region, d.city AS city, d.amount AS amount, d.profit AS profit, d.order_count AS order_count, d.avg_pay_amount AS avg_pay_amount, s.monthly_target AS target_amount, ROUND(d.amount / NULLIF(s.monthly_target, 0) * 100, 2) AS achievement_rate, ROUND(d.profit / NULLIF(d.amount, 0) * 100, 2) AS margin_rate FROM dws_store_sales d JOIN db_model.demo_stores s ON s.store_id = d.store_id"
+  },
+  {
+    "taskId": 916,
+    "taskName": "ADS 时段热力",
+    "nodeId": "i15",
+    "nodeName": "ODS 明细",
+    "datasourceId": 901,
+    "sql": "SELECT stat_hour, order_id, pay_amount FROM ods_order_detail"
+  },
+  {
+    "taskId": 917,
+    "taskName": "ADS 会员价值分层",
+    "nodeId": "i18",
+    "nodeName": "会员分层去重",
+    "datasourceId": 901,
+    "sql": "SELECT t.member_level AS member_level, t.members AS members, t.amount AS amount, ROUND(t.amount / NULLIF(t.members, 0), 2) AS avg_amount, t.order_count AS order_count, ROUND(t.repeat_members / NULLIF(t.members, 0) * 100, 2) AS repurchase_rate FROM (SELECT o.member_level AS member_level, COUNT(DISTINCT o.member_id) AS members, COUNT(DISTINCT CASE WHEN o.cnt >= 2 THEN o.member_id END) AS repeat_members, SUM(o.amount) AS amount, SUM(o.cnt) AS order_count FROM (SELECT member_level, member_id, SUM(pay_amount) AS amount, COUNT(order_id) AS cnt FROM ods_order_detail WHERE member_id > 0 GROUP BY member_level, member_id) o GROUP BY o.member_level) t"
+  },
+  {
+    "taskId": 918,
+    "taskName": "ADS 实时成交流水",
+    "nodeId": "i20",
+    "nodeName": "最近 40 笔成交",
+    "datasourceId": 901,
+    "sql": "SELECT order_id AS feed_id, created_at AS feed_time, store_name AS store_name, city AS city, category AS category, channel AS channel, pay_amount AS amount FROM ods_order_detail ORDER BY created_at DESC LIMIT 40"
+  }
+]

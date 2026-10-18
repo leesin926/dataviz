@@ -1,0 +1,156 @@
+section
+--- 1. schemas ---
+SCHEMA_NAME
+_tmp_wordchk
+db_admin
+db_ai
+db_alert
+db_analysis
+db_auth
+db_collab
+db_dashboard
+db_datasource
+db_etl
+db_file
+db_model
+db_monitor
+db_openapi
+db_schedule
+db_screen
+db_user
+information_schema
+mysql
+nacos_config
+performance_schema
+sys
+section
+--- 2. demo chain row counts ---
+tbl	rows_cnt
+datasource	4
+etl_task	3
+model_dataset	5
+model_dimension	7
+model_metric	5
+analysis_report	3
+query_history	10
+dashboard	13
+dashboard_widget	5
+screen	12
+screen_component	8
+section
+--- 3. demo_* tables/views by schema ---
+TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	TABLE_ROWS
+db_analysis	demo_orders	VIEW	NULL
+db_analysis	demo_sales_daily	VIEW	NULL
+db_analysis	demo_user_behavior	VIEW	NULL
+db_model	demo_orders	BASE TABLE	125
+db_model	demo_sales_daily	BASE TABLE	135
+db_model	demo_user_behavior	BASE TABLE	500
+section
+--- 4. datasource rows (id,name,type,status,config head) ---
+id	name	type	status	deleted	config_head
+901	分析库（演示）	mysql	1	0	{"host":"localhost","port":3306,"database":"db_analysis","username":"root","password":"root123456","maxPoolSize":4,"minI
+902	订单业务库	mysql	1	0	{"host":"localhost","port":3306,"database":"db_model","username":"root","password":"root123456","maxPoolSize":4,"minIdle
+903	行为日志集群	clickhouse	1	0	{"host":"172.18.0.1","port":8123,"database":"dwh","username":"default","cluster":"ch-single","replica":1}
+904	指标开放接口	api	0	0	{"endpoint":"https://api.example.com/metrics","authType":"bearer","cacheSeconds":300}
+section
+--- 5. screens (id,name,status,adapt_mode,share,canvas) ---
+id	name	status	adapt_mode	view_count	w	h	amode	comp_cnt	deleted
+1	冒烟-三端变体	0	scale	10	1920	1080	scale	1	0
+2	冒烟-改名	0	scale	4	1920	1080	scale	2	1
+3	冒烟-克隆	0	scale	0	1920	1080	scale	2	1
+4	编辑器验证-三端	0	scale	7	1920	1080	scale	2	1
+5	编辑器反馈验证-临时	0	scale	1	1920	1080	scale	1	1
+6	回归-拖拽缩放测试	1	scale	41	1920	1080	scale	1	0
+901	销售实时监控大屏	1	scale	150	1920	1080	scale	6	0
+902	三端适配演示大屏	0	scale	8	1920	1080	scale	2	0
+903	地图与飞线演示	2	fixed-width	3	1920	1080	fixed-width	1	0
+904	逻辑删除的待验证大屏	0	scale	0	1920	1080	scale	0	1
+905	zz_ay20_screen-renamed	0	scale	1	1920	1080	NULL	0	1
+906	zz_ay21_screen	1	scale	1	1920	1080	NULL	0	1
+section
+--- 6. chartConfig presence per screen (autowild NULL => at least one component lacks it) ---
+screen_id	name	comps	chartcfg_len	all_have_cc
+1	冒烟-三端变体	1	NULL	0
+2	冒烟-改名	2	NULL	0
+3	冒烟-克隆	2	NULL	0
+4	编辑器验证-三端	2	NULL	0
+5	编辑器反馈验证-临时	1	1	1
+6	回归-拖拽缩放测试	1	NULL	0
+901	销售实时监控大屏	6	NULL	0
+902	三端适配演示大屏	2	NULL	0
+903	地图与飞线演示	1	NULL	0
+904	逻辑删除的待验证大屏	0	NULL	0
+905	zz_ay20_screen-renamed	0	NULL	0
+906	zz_ay21_screen	0	NULL	0
+section
+--- 7. screen columns live ---
+COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+id	bigint	NO	NULL
+tenant_id	bigint	NO	1
+name	varchar(128)	NO	NULL
+description	varchar(512)	YES	
+config_json	json	NO	NULL
+components_json	json	NO	NULL
+variants_json	json	YES	NULL
+cover_url	varchar(512)	YES	
+status	tinyint	NO	0
+adapt_mode	varchar(16)	NO	SCALE
+view_count	int	NO	0
+share_token	varchar(64)	YES	NULL
+share_expire_time	datetime	YES	NULL
+create_by	bigint	YES	NULL
+create_time	datetime	YES	CURRENT_TIMESTAMP
+update_by	bigint	YES	NULL
+update_time	datetime	YES	CURRENT_TIMESTAMP
+deleted	tinyint	NO	0
+section
+--- 8. model_dataset rows ---
+id	name	datasource_id	table_name	sqlq	deleted
+901	日销售分析	901	demo_sales_daily	NULL	0
+902	用户行为概览	901	NULL	SELECT event_time, user_id, event_type, page, duration_ms FR	0
+903	订单履约分析	902	demo_orders	NULL	0
+904	已删除的临时数据集	901	demo_sales_daily	NULL	1
+905	zz_ay21_dataset-2	904	sys_user	NULL	1
+section
+--- 9. etl_task rows ---
+id	name	src	tgt	source_table	target_table	status	deleted
+901	销售日汇总入仓	902	901	demo_orders	demo_sales_daily	RUNNING	0
+902	用户行为清洗	901	901	demo_user_behavior	demo_user_behavior	RUNNING	0
+903	门店主数据同步	904	901	/stores	demo_sales_daily	STOPPED	0
+section
+--- 10. analysis rows ---
+id	name	datasource_id	dataset_id	is_published	deleted
+901	区域销售结构分析	901	901	1	0
+902	用户行为漏斗概览	901	902	1	0
+903	订单履约草稿	902	903	0	0
+id	user_id	datasource_id	dataset_id	status
+901	admin	901	901	SUCCESS
+902	admin	901	901	SUCCESS
+903	analyst	901	902	SUCCESS
+904	analyst	902	903	FAILED
+905	admin	901	901	SUCCESS
+906	1	903	NULL	SUCCESS
+907	1	903	NULL	SUCCESS
+908	1	903	NULL	SUCCESS
+909	901	903	NULL	SUCCESS
+911	1	903	NULL	SUCCESS
+section
+--- 11. dashboards ---
+id	name	status	deleted
+901	经营总览	1	0
+902	供应链监控	1	0
+903	市场活动复盘	0	0
+904	通用经营看板模板	1	0
+905	zz_ay20_dash-renamed	0	1
+906	zz_ay21_viewer	0	1
+907	zz_ba1_dashA	0	1
+908	zz_ba1_dashA	0	1
+909	zz_ba1_dashB	0	1
+910	zz_ba1_dashA	0	1
+911	zz_ba1_dashB	0	1
+912	zz_ba1_dashA	0	1
+913	zz_ba1_dashB	0	1
+section
+--- 12. sys_user admin + tenant ---
+ERROR 1054 (42S22) at line 62: Unknown column 'real_name' in 'field list'

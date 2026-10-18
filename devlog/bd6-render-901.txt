@@ -1,0 +1,42 @@
+BD6 免登渲染取证（901 静态屏）
+URL: http://localhost:5174/s/smoke0921aaaa
+时间: 2026-10-19 00:52（本地）
+取法: Qoder 内置浏览器 navigate_page + evaluate_script（截图被拒：hidden tab 无可见 surface，
+      NATIVE_BROWSER_VIEWPORT_UNAVAILABLE；所以这一份是 DOM/像素读数，不是图像）
+
+读数（evaluate_script 原样回传）：
+  document.title        = 销售实时监控大屏          ← 库里 name 直出，证明取的是 901 这条记录
+  .screen-engine 子节点  = 27                        ← 与声明的 27 个组件一比一
+  画布尺寸              = 1920x1080
+  画布底色              = rgb(255,255,255)           ← CANVAS_BG_COLOR，白底锁定
+  前景取样(.sc-value)   = rgb(22,32,47)              ← #16202f 未被 normalizeScreenInk 改写
+  ScreenUnknown 个数    = 0                          ← 没有灰块（type 全部命中注册表）
+  chart-placeholder 个数 = 0                          ← 没有"未配置图表"占位框
+  canvas 像素覆盖率      = 4.5 / 3.8 / 2.4 / 5.9 / 5.4 / 11.5 (%)  ← 6 张 ECharts 真画出东西
+  控制台                = 只有 vite connected 两条 debug，无 error/warn
+
+文本层读数（body.innerText 前 600 字，证明数是真的落到了屏面）：
+  销售实时监控中心
+  演示数据 · 统计窗口 2026-07-21 ~ 2026-10-18（90 天）· 口径 DWD 日汇总
+  门店 21 家 / 订单 2000 笔 · 覆盖 6 大区 · 4 渠道 · 5 类目
+  目标达成率 105.6% · 毛利率 18.7% · 数据窗口 90 天
+  00:52:48 / 2026-10-19                          ← clock 组件（时间在走，日期今天）
+  累计销售额 5,973,361 元 ▲7.4%
+  订单总量   2,000 单   ▼6.2%                     ← 负增长，不是全绿
+  累计毛利   1,118,504 元 ▼0.8%
+  客单价     2,987 元
+  目标达成率 105.6 %  ▲5.6%
+  排行 1~10：优选广州滨江店 558674 … 优选重庆新城店 281718
+  实时流水：20:41:43 优选北京新城1店 数码 2611.28 …
+
+进度条（本轮顺手改了 ScreenProgress 的钳位口径，见下）：
+  华东 100.3% / 华南 108.3% / 华北 116.4% / 西南 107.8% / 东北 91.8% / 西北 112.3%
+  填充宽度 = 100/100/100/100/91.8/100 (%)
+  ← 数字与宽度分开：条子封顶 100%，数字照实报超额。改前数字也被钳成 100%，
+    等于把"华北 116.4%"显示成"100%"，那是把亮点数据抹平。
+
+组件类名清单（27 个，顺序即 zIndex）：
+  decoration, text, text, marquee, clock,
+  statCard x5, areaChart, barChart, donutChart, stackBarChart, ranking,
+  barChart, gaugeChart, scrollBoard, table, text, decoration, progress x6
+  （canvas 只有 6 张 = area/bar/donut/stackBar/bar/gauge，与图表组件数一致）

@@ -1,0 +1,14 @@
+check_name	value
+编码自检(应为中文而非 ?)	优选上海滨江1店
+check_name	value
+业务库订单行数	2286
+check_name	value
+ODS 行数	2000
+check_name	value
+DWD 行数	1746
+check_name	value
+对账 DWD-ODS 销售额差(必须 0.00)	0.00
+check_name	value
+对账 DWS-ODS 销售额差(必须 0.00)	0.00
+check_name	value
+门店达成率区间	83.94% ~ 134.40%

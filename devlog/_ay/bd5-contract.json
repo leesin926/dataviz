@@ -1,0 +1,2390 @@
+{
+  "screens": [
+    {
+      "id": 901,
+      "name": "销售实时监控大屏",
+      "width": 1920,
+      "height": 1080,
+      "status": 1,
+      "shareToken": "smoke0921aaaa",
+      "layers": [
+        {
+          "id": "ly_1",
+          "name": "头部",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5"
+          ]
+        },
+        {
+          "id": "ly_2",
+          "name": "指标卡",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "c6",
+            "c7",
+            "c8",
+            "c9",
+            "c10"
+          ]
+        },
+        {
+          "id": "ly_3",
+          "name": "趋势对比",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "c11",
+            "c12"
+          ]
+        },
+        {
+          "id": "ly_4",
+          "name": "结构排行",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "c13",
+            "c14",
+            "c15"
+          ]
+        },
+        {
+          "id": "ly_5",
+          "name": "明细实时",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "c16",
+            "c17",
+            "c18",
+            "c19"
+          ]
+        },
+        {
+          "id": "ly_6",
+          "name": "页脚",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "c20",
+            "c21",
+            "c22",
+            "c23",
+            "c24",
+            "c25",
+            "c26",
+            "c27"
+          ]
+        }
+      ],
+      "components": [
+        {
+          "id": "c1",
+          "type": "decoration",
+          "name": "顶部流动线",
+          "x": 30,
+          "y": 104,
+          "w": 1860,
+          "h": 8,
+          "zIndex": 1,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "variant": "flow",
+            "color": "#2f7cff",
+            "colorSecond": "#0f8a5f"
+          }
+        },
+        {
+          "id": "c2",
+          "type": "text",
+          "name": "主标题",
+          "x": 30,
+          "y": 22,
+          "w": 640,
+          "h": 46,
+          "zIndex": 2,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "text": "销售实时监控中心",
+            "fontSize": "32px",
+            "fontWeight": "700",
+            "color": "#16202f",
+            "textAlign": "left",
+            "lineHeight": "1.2"
+          }
+        },
+        {
+          "id": "c3",
+          "type": "text",
+          "name": "副标题",
+          "x": 30,
+          "y": 66,
+          "w": 640,
+          "h": 28,
+          "zIndex": 3,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "text": "演示数据 · 统计窗口 2026-07-21 ~ 2026-10-18（90 天）· 口径 DWD 日汇总",
+            "fontSize": "13px",
+            "color": "#5b6a80",
+            "textAlign": "left",
+            "lineHeight": "1.2"
+          }
+        },
+        {
+          "id": "c4",
+          "type": "marquee",
+          "name": "运行状态滚动",
+          "x": 700,
+          "y": 30,
+          "w": 630,
+          "h": 40,
+          "zIndex": 4,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "texts": [
+              "门店 21 家 / 订单 2000 笔",
+              "覆盖 6 大区 · 4 渠道 · 5 类目",
+              "目标达成率 105.6%",
+              "毛利率 18.7%",
+              "数据窗口 90 天"
+            ],
+            "speed": 32,
+            "color": "#2f7cff",
+            "textColor": "#263243",
+            "fontSize": "15px"
+          }
+        },
+        {
+          "id": "c5",
+          "type": "clock",
+          "name": "时钟",
+          "x": 1490,
+          "y": 20,
+          "w": 400,
+          "h": 72,
+          "zIndex": 5,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "fontSize": "26px",
+            "color": "#263243",
+            "dateFormat": "YYYY-MM-DD"
+          }
+        },
+        {
+          "id": "c6",
+          "type": "statCard",
+          "name": "累计销售额",
+          "x": 30,
+          "y": 118,
+          "w": 360,
+          "h": 96,
+          "zIndex": 6,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "title": "累计销售额",
+            "value": 5973361,
+            "unit": "元",
+            "color": "#16202f",
+            "accent": "#2f7cff",
+            "bgColor": "rgba(22,32,47,0.06)",
+            "fontSize": "28px",
+            "trend": 7.4
+          }
+        },
+        {
+          "id": "c7",
+          "type": "statCard",
+          "name": "订单总量",
+          "x": 405,
+          "y": 118,
+          "w": 360,
+          "h": 96,
+          "zIndex": 7,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "title": "订单总量",
+            "value": 2000,
+            "unit": "单",
+            "color": "#16202f",
+            "accent": "#0f8a5f",
+            "bgColor": "rgba(22,32,47,0.06)",
+            "fontSize": "28px",
+            "trend": -6.2
+          }
+        },
+        {
+          "id": "c8",
+          "type": "statCard",
+          "name": "累计毛利",
+          "x": 780,
+          "y": 118,
+          "w": 360,
+          "h": 96,
+          "zIndex": 8,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "title": "累计毛利",
+            "value": 1118504,
+            "unit": "元",
+            "color": "#16202f",
+            "accent": "#7a5af8",
+            "bgColor": "rgba(22,32,47,0.06)",
+            "fontSize": "28px",
+            "trend": -0.8
+          }
+        },
+        {
+          "id": "c9",
+          "type": "statCard",
+          "name": "客单价",
+          "x": 1155,
+          "y": 118,
+          "w": 360,
+          "h": 96,
+          "zIndex": 9,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "title": "客单价",
+            "value": 2987,
+            "unit": "元",
+            "color": "#16202f",
+            "accent": "#e8590c",
+            "bgColor": "rgba(22,32,47,0.06)",
+            "fontSize": "28px"
+          }
+        },
+        {
+          "id": "c10",
+          "type": "statCard",
+          "name": "目标达成率",
+          "x": 1530,
+          "y": 118,
+          "w": 360,
+          "h": 96,
+          "zIndex": 10,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "title": "目标达成率",
+            "value": 105.6,
+            "unit": "%",
+            "color": "#16202f",
+            "accent": "#b7791f",
+            "bgColor": "rgba(22,32,47,0.06)",
+            "fontSize": "28px",
+            "trend": 5.6
+          }
+        },
+        {
+          "id": "c11",
+          "type": "areaChart",
+          "name": "近 14 日销售额与毛利",
+          "x": 30,
+          "y": 228,
+          "w": 920,
+          "h": 296,
+          "zIndex": 11,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "precision": 0
+          },
+          "chartConfig": {
+            "chartType": "line",
+            "datasetId": null,
+            "dimensions": [
+              {
+                "field": "stat_date",
+                "type": "time"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              },
+              {
+                "field": "profit",
+                "aggregation": "sum"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "近 14 日销售额与毛利",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "area": true,
+              "smooth": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "static",
+            "staticData": {
+              "columns": [
+                {
+                  "field": "stat_date",
+                  "type": "date"
+                },
+                {
+                  "field": "amount",
+                  "type": "number"
+                },
+                {
+                  "field": "profit",
+                  "type": "number"
+                }
+              ],
+              "rows": [
+                {
+                  "stat_date": "10-05",
+                  "amount": 56453,
+                  "profit": 8985
+                },
+                {
+                  "stat_date": "10-06",
+                  "amount": 66548,
+                  "profit": 11025
+                },
+                {
+                  "stat_date": "10-07",
+                  "amount": 78754,
+                  "profit": 14274
+                },
+                {
+                  "stat_date": "10-08",
+                  "amount": 41729,
+                  "profit": 8553
+                },
+                {
+                  "stat_date": "10-09",
+                  "amount": 55482,
+                  "profit": 12941
+                },
+                {
+                  "stat_date": "10-10",
+                  "amount": 69711,
+                  "profit": 15262
+                },
+                {
+                  "stat_date": "10-11",
+                  "amount": 103577,
+                  "profit": 22972
+                },
+                {
+                  "stat_date": "10-12",
+                  "amount": 61321,
+                  "profit": 10994
+                },
+                {
+                  "stat_date": "10-13",
+                  "amount": 50614,
+                  "profit": 8560
+                },
+                {
+                  "stat_date": "10-14",
+                  "amount": 65562,
+                  "profit": 13614
+                },
+                {
+                  "stat_date": "10-15",
+                  "amount": 63904,
+                  "profit": 13310
+                },
+                {
+                  "stat_date": "10-16",
+                  "amount": 68158,
+                  "profit": 12220
+                },
+                {
+                  "stat_date": "10-17",
+                  "amount": 114658,
+                  "profit": 19597
+                },
+                {
+                  "stat_date": "10-18",
+                  "amount": 83006,
+                  "profit": 14977
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "c12",
+          "type": "barChart",
+          "name": "大区销售额与毛利",
+          "x": 970,
+          "y": 228,
+          "w": 920,
+          "h": 296,
+          "zIndex": 12,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": null,
+            "dimensions": [
+              {
+                "field": "region"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              },
+              {
+                "field": "profit",
+                "aggregation": "sum"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "大区销售额与毛利",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              }
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "static",
+            "staticData": {
+              "columns": [
+                {
+                  "field": "region",
+                  "type": "string"
+                },
+                {
+                  "field": "amount",
+                  "type": "number"
+                },
+                {
+                  "field": "profit",
+                  "type": "number"
+                }
+              ],
+              "rows": [
+                {
+                  "region": "华东",
+                  "amount": 1578142,
+                  "profit": 298430
+                },
+                {
+                  "region": "华南",
+                  "amount": 1439337,
+                  "profit": 256027
+                },
+                {
+                  "region": "华北",
+                  "amount": 1080887,
+                  "profit": 206721
+                },
+                {
+                  "region": "西南",
+                  "amount": 870331,
+                  "profit": 163899
+                },
+                {
+                  "region": "东北",
+                  "amount": 624400,
+                  "profit": 116813
+                },
+                {
+                  "region": "西北",
+                  "amount": 380263,
+                  "profit": 76613
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "c13",
+          "type": "donutChart",
+          "name": "类目销售额结构",
+          "x": 30,
+          "y": 538,
+          "w": 520,
+          "h": 288,
+          "zIndex": 13,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "pie",
+            "datasetId": null,
+            "dimensions": [
+              {
+                "field": "category"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "类目销售额结构",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "donut": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "static",
+            "staticData": {
+              "columns": [
+                {
+                  "field": "category",
+                  "type": "string"
+                },
+                {
+                  "field": "amount",
+                  "type": "number"
+                }
+              ],
+              "rows": [
+                {
+                  "category": "数码",
+                  "amount": 4125791
+                },
+                {
+                  "category": "家居",
+                  "amount": 696620
+                },
+                {
+                  "category": "服饰",
+                  "amount": 505103
+                },
+                {
+                  "category": "生鲜",
+                  "amount": 345822
+                },
+                {
+                  "category": "美妆",
+                  "amount": 300024
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "c14",
+          "type": "stackBarChart",
+          "name": "渠道 × 类目销售额",
+          "x": 565,
+          "y": 538,
+          "w": 640,
+          "h": 288,
+          "zIndex": 14,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": null,
+            "dimensions": [
+              {
+                "field": "channel"
+              },
+              {
+                "field": "category"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "渠道 × 类目销售额",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "stack": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "static",
+            "staticData": {
+              "columns": [
+                {
+                  "field": "channel",
+                  "type": "string"
+                },
+                {
+                  "field": "category",
+                  "type": "string"
+                },
+                {
+                  "field": "amount",
+                  "type": "number"
+                }
+              ],
+              "rows": [
+                {
+                  "channel": "APP",
+                  "category": "家居",
+                  "amount": 109657
+                },
+                {
+                  "channel": "APP",
+                  "category": "数码",
+                  "amount": 798418
+                },
+                {
+                  "channel": "APP",
+                  "category": "服饰",
+                  "amount": 73629
+                },
+                {
+                  "channel": "APP",
+                  "category": "生鲜",
+                  "amount": 62479
+                },
+                {
+                  "channel": "APP",
+                  "category": "美妆",
+                  "amount": 53152
+                },
+                {
+                  "channel": "小程序",
+                  "category": "家居",
+                  "amount": 194556
+                },
+                {
+                  "channel": "小程序",
+                  "category": "数码",
+                  "amount": 1206626
+                },
+                {
+                  "channel": "小程序",
+                  "category": "服饰",
+                  "amount": 162366
+                },
+                {
+                  "channel": "小程序",
+                  "category": "生鲜",
+                  "amount": 108984
+                },
+                {
+                  "channel": "小程序",
+                  "category": "美妆",
+                  "amount": 89883
+                },
+                {
+                  "channel": "第三方平台",
+                  "category": "家居",
+                  "amount": 96129
+                },
+                {
+                  "channel": "第三方平台",
+                  "category": "数码",
+                  "amount": 391849
+                },
+                {
+                  "channel": "第三方平台",
+                  "category": "服饰",
+                  "amount": 59368
+                },
+                {
+                  "channel": "第三方平台",
+                  "category": "生鲜",
+                  "amount": 41796
+                },
+                {
+                  "channel": "第三方平台",
+                  "category": "美妆",
+                  "amount": 33447
+                },
+                {
+                  "channel": "门店",
+                  "category": "家居",
+                  "amount": 296278
+                },
+                {
+                  "channel": "门店",
+                  "category": "数码",
+                  "amount": 1728898
+                },
+                {
+                  "channel": "门店",
+                  "category": "服饰",
+                  "amount": 209740
+                },
+                {
+                  "channel": "门店",
+                  "category": "生鲜",
+                  "amount": 132564
+                },
+                {
+                  "channel": "门店",
+                  "category": "美妆",
+                  "amount": 123542
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "c15",
+          "type": "ranking",
+          "name": "门店销售额 TOP10",
+          "x": 1220,
+          "y": 538,
+          "w": 670,
+          "h": 288,
+          "zIndex": 15,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "items": [
+              {
+                "name": "优选广州滨江店",
+                "value": 558674
+              },
+              {
+                "name": "优选深圳中心店",
+                "value": 487921
+              },
+              {
+                "name": "优选厦门老城店",
+                "value": 392742
+              },
+              {
+                "name": "优选苏州滨江店",
+                "value": 385553
+              },
+              {
+                "name": "优选北京新城1店",
+                "value": 377076
+              },
+              {
+                "name": "优选杭州中心店",
+                "value": 334800
+              },
+              {
+                "name": "优选成都滨江店",
+                "value": 308611
+              },
+              {
+                "name": "优选上海滨江1店",
+                "value": 307236
+              },
+              {
+                "name": "优选南京中心店",
+                "value": 291164
+              },
+              {
+                "name": "优选重庆新城店",
+                "value": 281718
+              }
+            ],
+            "color": "#263243",
+            "barColor": "#2f7cff",
+            "showValue": true,
+            "fontSize": "13px"
+          }
+        },
+        {
+          "id": "c16",
+          "type": "barChart",
+          "name": "时段订单分布",
+          "x": 30,
+          "y": 840,
+          "w": 470,
+          "h": 204,
+          "zIndex": 16,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": null,
+            "dimensions": [
+              {
+                "field": "stat_hour"
+              }
+            ],
+            "measures": [
+              {
+                "field": "orders",
+                "aggregation": "sum"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "时段订单分布",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              }
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "static",
+            "staticData": {
+              "columns": [
+                {
+                  "field": "stat_hour",
+                  "type": "string"
+                },
+                {
+                  "field": "orders",
+                  "type": "number"
+                }
+              ],
+              "rows": [
+                {
+                  "stat_hour": "10",
+                  "orders": 91
+                },
+                {
+                  "stat_hour": "11",
+                  "orders": 156
+                },
+                {
+                  "stat_hour": "12",
+                  "orders": 255
+                },
+                {
+                  "stat_hour": "13",
+                  "orders": 166
+                },
+                {
+                  "stat_hour": "14",
+                  "orders": 116
+                },
+                {
+                  "stat_hour": "15",
+                  "orders": 104
+                },
+                {
+                  "stat_hour": "16",
+                  "orders": 144
+                },
+                {
+                  "stat_hour": "17",
+                  "orders": 164
+                },
+                {
+                  "stat_hour": "18",
+                  "orders": 188
+                },
+                {
+                  "stat_hour": "19",
+                  "orders": 259
+                },
+                {
+                  "stat_hour": "20",
+                  "orders": 214
+                },
+                {
+                  "stat_hour": "21",
+                  "orders": 143
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "c17",
+          "type": "gaugeChart",
+          "name": "门店平均达成率",
+          "x": 515,
+          "y": 840,
+          "w": 300,
+          "h": 204,
+          "zIndex": 17,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "gauge",
+            "datasetId": null,
+            "title": "达成率 %",
+            "dimensions": [
+              {
+                "field": "name"
+              }
+            ],
+            "measures": [
+              {
+                "field": "value",
+                "aggregation": "sum"
+              }
+            ],
+            "options": {
+              "max": 150,
+              "min": 0
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "static",
+            "staticData": {
+              "columns": [
+                {
+                  "field": "name",
+                  "type": "string"
+                },
+                {
+                  "field": "value",
+                  "type": "number"
+                }
+              ],
+              "rows": [
+                {
+                  "name": "达成率",
+                  "value": 107.6
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "c18",
+          "type": "scrollBoard",
+          "name": "实时成交流水",
+          "x": 830,
+          "y": 840,
+          "w": 470,
+          "h": 204,
+          "zIndex": 18,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "columns": [
+              "时间",
+              "门店",
+              "类目",
+              "金额"
+            ],
+            "rows": [
+              [
+                "20:41:43",
+                "优选北京新城1店",
+                "数码",
+                "2611.28"
+              ],
+              [
+                "20:32:45",
+                "优选石家庄经开店",
+                "美妆",
+                "948.48"
+              ],
+              [
+                "20:31:42",
+                "优选上海滨江1店",
+                "美妆",
+                "651.29"
+              ],
+              [
+                "20:30:36",
+                "优选广州滨江店",
+                "家居",
+                "1037.08"
+              ],
+              [
+                "20:14:03",
+                "优选重庆新城店",
+                "生鲜",
+                "1449.53"
+              ],
+              [
+                "20:13:42",
+                "优选厦门老城店",
+                "美妆",
+                "576.47"
+              ],
+              [
+                "20:03:44",
+                "优选成都滨江店",
+                "生鲜",
+                "959.74"
+              ],
+              [
+                "20:01:50",
+                "优选大连高新店",
+                "生鲜",
+                "908.41"
+              ],
+              [
+                "19:24:57",
+                "优选沈阳老城店",
+                "美妆",
+                "1594.93"
+              ],
+              [
+                "19:15:25",
+                "优选大连高新店",
+                "生鲜",
+                "332.54"
+              ]
+            ],
+            "interval": 2,
+            "fontSize": "13px",
+            "color": "#263243"
+          }
+        },
+        {
+          "id": "c19",
+          "type": "table",
+          "name": "会员等级价值",
+          "x": 1315,
+          "y": 840,
+          "w": 575,
+          "h": 204,
+          "zIndex": 19,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "columns": [
+              "等级",
+              "消费额",
+              "人数",
+              "复购率%"
+            ],
+            "rows": [
+              [
+                "普通",
+                "2336638",
+                "313",
+                "68.37"
+              ],
+              [
+                "银卡",
+                "828706",
+                "114",
+                "71.05"
+              ],
+              [
+                "钻石",
+                "430060",
+                "35",
+                "65.71"
+              ],
+              [
+                "金卡",
+                "410232",
+                "65",
+                "70.77"
+              ]
+            ],
+            "fontSize": "13px",
+            "color": "#263243"
+          }
+        },
+        {
+          "id": "c20",
+          "type": "text",
+          "name": "页脚血缘",
+          "x": 30,
+          "y": 1052,
+          "w": 1560,
+          "h": 24,
+          "zIndex": 20,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "text": "血缘：db_model.demo_orders → ods_order_detail → dwd_sales_daily → ads_*（BD2 造数 / BD3 ETL 装载）→ 数据集 912·915·916·917·918 → 本大屏静态回读",
+            "fontSize": "13px",
+            "color": "#5b6a80",
+            "textAlign": "left",
+            "lineHeight": "1.2"
+          }
+        },
+        {
+          "id": "c21",
+          "type": "decoration",
+          "name": "右下角律动柱",
+          "x": 1620,
+          "y": 1044,
+          "w": 270,
+          "h": 30,
+          "zIndex": 21,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "variant": "bars",
+            "color": "#2f7cff",
+            "colorSecond": "#0f8a5f"
+          }
+        },
+        {
+          "id": "c22",
+          "type": "progress",
+          "name": "华东目标达成",
+          "x": 30,
+          "y": 1000,
+          "w": 300,
+          "h": 40,
+          "zIndex": 22,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "label": "华东 达成",
+            "percent": 100.3,
+            "color": "#0f8a5f",
+            "trackColor": "rgba(22,32,47,0.06)",
+            "textColor": "#263243",
+            "height": 10,
+            "showValue": true
+          }
+        },
+        {
+          "id": "c23",
+          "type": "progress",
+          "name": "华南目标达成",
+          "x": 342,
+          "y": 1000,
+          "w": 300,
+          "h": 40,
+          "zIndex": 23,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "label": "华南 达成",
+            "percent": 108.3,
+            "color": "#0f8a5f",
+            "trackColor": "rgba(22,32,47,0.06)",
+            "textColor": "#263243",
+            "height": 10,
+            "showValue": true
+          }
+        },
+        {
+          "id": "c24",
+          "type": "progress",
+          "name": "华北目标达成",
+          "x": 654,
+          "y": 1000,
+          "w": 300,
+          "h": 40,
+          "zIndex": 24,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "label": "华北 达成",
+            "percent": 116.4,
+            "color": "#0f8a5f",
+            "trackColor": "rgba(22,32,47,0.06)",
+            "textColor": "#263243",
+            "height": 10,
+            "showValue": true
+          }
+        },
+        {
+          "id": "c25",
+          "type": "progress",
+          "name": "西南目标达成",
+          "x": 966,
+          "y": 1000,
+          "w": 300,
+          "h": 40,
+          "zIndex": 25,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "label": "西南 达成",
+            "percent": 107.8,
+            "color": "#0f8a5f",
+            "trackColor": "rgba(22,32,47,0.06)",
+            "textColor": "#263243",
+            "height": 10,
+            "showValue": true
+          }
+        },
+        {
+          "id": "c26",
+          "type": "progress",
+          "name": "东北目标达成",
+          "x": 1278,
+          "y": 1000,
+          "w": 300,
+          "h": 40,
+          "zIndex": 26,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "label": "东北 达成",
+            "percent": 91.8,
+            "color": "#b7791f",
+            "trackColor": "rgba(22,32,47,0.06)",
+            "textColor": "#263243",
+            "height": 10,
+            "showValue": true
+          }
+        },
+        {
+          "id": "c27",
+          "type": "progress",
+          "name": "西北目标达成",
+          "x": 1590,
+          "y": 1000,
+          "w": 300,
+          "h": 40,
+          "zIndex": 27,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "label": "西北 达成",
+            "percent": 112.3,
+            "color": "#0f8a5f",
+            "trackColor": "rgba(22,32,47,0.06)",
+            "textColor": "#263243",
+            "height": 10,
+            "showValue": true
+          }
+        }
+      ],
+      "variants": {
+        "mobile": {
+          "width": 390,
+          "height": 1064,
+          "config": {
+            "width": 390,
+            "height": 1064,
+            "layers": [
+              {
+                "id": "ly_m1",
+                "name": "移动一组",
+                "visible": true,
+                "locked": false,
+                "componentIds": [
+                  "c2",
+                  "c5",
+                  "c11",
+                  "c12",
+                  "c13",
+                  "c18"
+                ]
+              }
+            ],
+            "adaptationMode": "scale",
+            "backgroundColor": "#ffffff",
+            "backgroundSize": "cover",
+            "backgroundRepeat": "no-repeat",
+            "gridSnap": true,
+            "gridSize": 10,
+            "globalRefreshInterval": 0
+          },
+          "components": [
+            {
+              "id": "c2",
+              "type": "text",
+              "name": "主标题",
+              "x": 12,
+              "y": 16,
+              "w": 366,
+              "h": 34,
+              "zIndex": 1,
+              "visible": true,
+              "locked": false,
+              "props": {
+                "text": "销售监控（移动版）",
+                "fontSize": "20px",
+                "fontWeight": "700",
+                "color": "#16202f",
+                "textAlign": "left",
+                "lineHeight": "1.2"
+              }
+            },
+            {
+              "id": "c5",
+              "type": "clock",
+              "name": "时钟",
+              "x": 12,
+              "y": 54,
+              "w": 366,
+              "h": 40,
+              "zIndex": 2,
+              "visible": true,
+              "locked": false,
+              "props": {
+                "fontSize": "16px",
+                "color": "#263243",
+                "dateFormat": "YYYY-MM-DD"
+              }
+            },
+            {
+              "id": "c11",
+              "type": "areaChart",
+              "name": "近 14 日销售额与毛利",
+              "x": 12,
+              "y": 104,
+              "w": 366,
+              "h": 240,
+              "zIndex": 3,
+              "visible": true,
+              "locked": false,
+              "props": {
+                "precision": 0
+              },
+              "chartConfig": {
+                "chartType": "line",
+                "datasetId": null,
+                "dimensions": [
+                  {
+                    "field": "stat_date",
+                    "type": "time"
+                  }
+                ],
+                "measures": [
+                  {
+                    "field": "amount",
+                    "aggregation": "sum"
+                  },
+                  {
+                    "field": "profit",
+                    "aggregation": "sum"
+                  }
+                ],
+                "options": {
+                  "title": {
+                    "text": "近 14 日销售额与毛利",
+                    "left": 14,
+                    "top": 8,
+                    "textStyle": {
+                      "color": "#16202f",
+                      "fontSize": 15,
+                      "fontWeight": 600
+                    }
+                  },
+                  "area": true,
+                  "smooth": true
+                },
+                "theme": "brand",
+                "animation": true
+              },
+              "request": {
+                "sourceType": "static",
+                "staticData": {
+                  "columns": [
+                    {
+                      "field": "stat_date",
+                      "type": "date"
+                    },
+                    {
+                      "field": "amount",
+                      "type": "number"
+                    },
+                    {
+                      "field": "profit",
+                      "type": "number"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "stat_date": "10-05",
+                      "amount": 56453,
+                      "profit": 8985
+                    },
+                    {
+                      "stat_date": "10-06",
+                      "amount": 66548,
+                      "profit": 11025
+                    },
+                    {
+                      "stat_date": "10-07",
+                      "amount": 78754,
+                      "profit": 14274
+                    },
+                    {
+                      "stat_date": "10-08",
+                      "amount": 41729,
+                      "profit": 8553
+                    },
+                    {
+                      "stat_date": "10-09",
+                      "amount": 55482,
+                      "profit": 12941
+                    },
+                    {
+                      "stat_date": "10-10",
+                      "amount": 69711,
+                      "profit": 15262
+                    },
+                    {
+                      "stat_date": "10-11",
+                      "amount": 103577,
+                      "profit": 22972
+                    },
+                    {
+                      "stat_date": "10-12",
+                      "amount": 61321,
+                      "profit": 10994
+                    },
+                    {
+                      "stat_date": "10-13",
+                      "amount": 50614,
+                      "profit": 8560
+                    },
+                    {
+                      "stat_date": "10-14",
+                      "amount": 65562,
+                      "profit": 13614
+                    },
+                    {
+                      "stat_date": "10-15",
+                      "amount": 63904,
+                      "profit": 13310
+                    },
+                    {
+                      "stat_date": "10-16",
+                      "amount": 68158,
+                      "profit": 12220
+                    },
+                    {
+                      "stat_date": "10-17",
+                      "amount": 114658,
+                      "profit": 19597
+                    },
+                    {
+                      "stat_date": "10-18",
+                      "amount": 83006,
+                      "profit": 14977
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "c12",
+              "type": "barChart",
+              "name": "大区销售额与毛利",
+              "x": 12,
+              "y": 354,
+              "w": 366,
+              "h": 240,
+              "zIndex": 4,
+              "visible": true,
+              "locked": false,
+              "props": {},
+              "chartConfig": {
+                "chartType": "bar",
+                "datasetId": null,
+                "dimensions": [
+                  {
+                    "field": "region"
+                  }
+                ],
+                "measures": [
+                  {
+                    "field": "amount",
+                    "aggregation": "sum"
+                  },
+                  {
+                    "field": "profit",
+                    "aggregation": "sum"
+                  }
+                ],
+                "options": {
+                  "title": {
+                    "text": "大区销售额与毛利",
+                    "left": 14,
+                    "top": 8,
+                    "textStyle": {
+                      "color": "#16202f",
+                      "fontSize": 15,
+                      "fontWeight": 600
+                    }
+                  }
+                },
+                "theme": "brand",
+                "animation": true
+              },
+              "request": {
+                "sourceType": "static",
+                "staticData": {
+                  "columns": [
+                    {
+                      "field": "region",
+                      "type": "string"
+                    },
+                    {
+                      "field": "amount",
+                      "type": "number"
+                    },
+                    {
+                      "field": "profit",
+                      "type": "number"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "region": "华东",
+                      "amount": 1578142,
+                      "profit": 298430
+                    },
+                    {
+                      "region": "华南",
+                      "amount": 1439337,
+                      "profit": 256027
+                    },
+                    {
+                      "region": "华北",
+                      "amount": 1080887,
+                      "profit": 206721
+                    },
+                    {
+                      "region": "西南",
+                      "amount": 870331,
+                      "profit": 163899
+                    },
+                    {
+                      "region": "东北",
+                      "amount": 624400,
+                      "profit": 116813
+                    },
+                    {
+                      "region": "西北",
+                      "amount": 380263,
+                      "profit": 76613
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "c13",
+              "type": "donutChart",
+              "name": "类目销售额结构",
+              "x": 12,
+              "y": 604,
+              "w": 366,
+              "h": 220,
+              "zIndex": 5,
+              "visible": true,
+              "locked": false,
+              "props": {},
+              "chartConfig": {
+                "chartType": "pie",
+                "datasetId": null,
+                "dimensions": [
+                  {
+                    "field": "category"
+                  }
+                ],
+                "measures": [
+                  {
+                    "field": "amount",
+                    "aggregation": "sum"
+                  }
+                ],
+                "options": {
+                  "title": {
+                    "text": "类目销售额结构",
+                    "left": 14,
+                    "top": 8,
+                    "textStyle": {
+                      "color": "#16202f",
+                      "fontSize": 15,
+                      "fontWeight": 600
+                    }
+                  },
+                  "donut": true
+                },
+                "theme": "brand",
+                "animation": true
+              },
+              "request": {
+                "sourceType": "static",
+                "staticData": {
+                  "columns": [
+                    {
+                      "field": "category",
+                      "type": "string"
+                    },
+                    {
+                      "field": "amount",
+                      "type": "number"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "category": "数码",
+                      "amount": 4125791
+                    },
+                    {
+                      "category": "家居",
+                      "amount": 696620
+                    },
+                    {
+                      "category": "服饰",
+                      "amount": 505103
+                    },
+                    {
+                      "category": "生鲜",
+                      "amount": 345822
+                    },
+                    {
+                      "category": "美妆",
+                      "amount": 300024
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "c18",
+              "type": "scrollBoard",
+              "name": "实时成交流水",
+              "x": 12,
+              "y": 834,
+              "w": 366,
+              "h": 220,
+              "zIndex": 6,
+              "visible": true,
+              "locked": false,
+              "props": {
+                "columns": [
+                  "时间",
+                  "门店",
+                  "类目",
+                  "金额"
+                ],
+                "rows": [
+                  [
+                    "20:41:43",
+                    "优选北京新城1店",
+                    "数码",
+                    "2611.28"
+                  ],
+                  [
+                    "20:32:45",
+                    "优选石家庄经开店",
+                    "美妆",
+                    "948.48"
+                  ],
+                  [
+                    "20:31:42",
+                    "优选上海滨江1店",
+                    "美妆",
+                    "651.29"
+                  ],
+                  [
+                    "20:30:36",
+                    "优选广州滨江店",
+                    "家居",
+                    "1037.08"
+                  ],
+                  [
+                    "20:14:03",
+                    "优选重庆新城店",
+                    "生鲜",
+                    "1449.53"
+                  ],
+                  [
+                    "20:13:42",
+                    "优选厦门老城店",
+                    "美妆",
+                    "576.47"
+                  ],
+                  [
+                    "20:03:44",
+                    "优选成都滨江店",
+                    "生鲜",
+                    "959.74"
+                  ],
+                  [
+                    "20:01:50",
+                    "优选大连高新店",
+                    "生鲜",
+                    "908.41"
+                  ],
+                  [
+                    "19:24:57",
+                    "优选沈阳老城店",
+                    "美妆",
+                    "1594.93"
+                  ],
+                  [
+                    "19:15:25",
+                    "优选大连高新店",
+                    "生鲜",
+                    "332.54"
+                  ]
+                ],
+                "interval": 2,
+                "fontSize": "13px",
+                "color": "#263243"
+              }
+            }
+          ],
+          "layers": [
+            {
+              "id": "ly_m1",
+              "name": "移动一组",
+              "visible": true,
+              "locked": false,
+              "componentIds": [
+                "c2",
+                "c5",
+                "c11",
+                "c12",
+                "c13",
+                "c18"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 911,
+      "name": "经营分析看板（数据集直连）",
+      "width": 1920,
+      "height": 1080,
+      "status": 1,
+      "shareToken": "2436790b215920ed79f812db07c38ddd",
+      "layers": [
+        {
+          "id": "ly_1",
+          "name": "标题与说明",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "d1",
+            "d2"
+          ]
+        },
+        {
+          "id": "ly_2",
+          "name": "趋势与结构",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "d3",
+            "d4",
+            "d5"
+          ]
+        },
+        {
+          "id": "ly_3",
+          "name": "渠道与品类",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "d6",
+            "d7"
+          ]
+        },
+        {
+          "id": "ly_4",
+          "name": "门店与达成",
+          "visible": true,
+          "locked": false,
+          "componentIds": [
+            "d8",
+            "d9",
+            "d10",
+            "d11"
+          ]
+        }
+      ],
+      "components": [
+        {
+          "id": "d1",
+          "type": "text",
+          "name": "主标题",
+          "x": 30,
+          "y": 20,
+          "w": 900,
+          "h": 42,
+          "zIndex": 1,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "text": "经营分析看板（数据集直连）",
+            "fontSize": "30px",
+            "fontWeight": "700",
+            "color": "#16202f",
+            "textAlign": "left",
+            "lineHeight": "1.2"
+          }
+        },
+        {
+          "id": "d2",
+          "type": "text",
+          "name": "链路说明",
+          "x": 30,
+          "y": 64,
+          "w": 1860,
+          "h": 26,
+          "zIndex": 2,
+          "visible": true,
+          "locked": false,
+          "props": {
+            "text": "本屏 8 个图表组件只绑 model_dataset（912/915/916/917/919/920/921），渲染时经 ScreenChart → executeQuery → POST /api/analysis/query/execute 现取现画；该查询接口需登录，免登链接打开时组件会显式报\"取数失败\"（不再是静默空屏），登录态下同一链接出真数据 —— 这一屏的验收必须在登录态下做。",
+            "fontSize": "13px",
+            "color": "#5b6a80",
+            "textAlign": "left",
+            "lineHeight": "1.2"
+          }
+        },
+        {
+          "id": "d3",
+          "type": "areaChart",
+          "name": "每日销售趋势（数据集 921）",
+          "x": 30,
+          "y": 104,
+          "w": 600,
+          "h": 292,
+          "zIndex": 3,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "line",
+            "datasetId": 921,
+            "dimensions": [
+              {
+                "field": "stat_date",
+                "type": "time"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "stat_date",
+                "order": "asc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "每日销售趋势（数据集 921）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "area": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d4",
+          "type": "barChart",
+          "name": "大区销售与毛利（数据集 912）",
+          "x": 650,
+          "y": 104,
+          "w": 600,
+          "h": 292,
+          "zIndex": 4,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": 912,
+            "dimensions": [
+              {
+                "field": "region"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              },
+              {
+                "field": "profit",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "amount",
+                "order": "desc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "大区销售与毛利（数据集 912）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              }
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d5",
+          "type": "donutChart",
+          "name": "会员等级价值（数据集 917）",
+          "x": 1270,
+          "y": 104,
+          "w": 620,
+          "h": 292,
+          "zIndex": 5,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "pie",
+            "datasetId": 917,
+            "dimensions": [
+              {
+                "field": "member_level"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "amount",
+                "order": "desc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "会员等级价值（数据集 917）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "donut": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d6",
+          "type": "barChart",
+          "name": "时段成交分布（数据集 916）",
+          "x": 30,
+          "y": 412,
+          "w": 600,
+          "h": 292,
+          "zIndex": 6,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": 916,
+            "dimensions": [
+              {
+                "field": "stat_hour"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              },
+              {
+                "field": "orders",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "stat_hour",
+                "order": "asc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "时段成交分布（数据集 916）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              }
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d7",
+          "type": "stackBarChart",
+          "name": "渠道×品类毛利矩阵（数据集 920）",
+          "x": 650,
+          "y": 412,
+          "w": 600,
+          "h": 292,
+          "zIndex": 7,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": 920,
+            "dimensions": [
+              {
+                "field": "channel"
+              },
+              {
+                "field": "category"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [],
+            "options": {
+              "title": {
+                "text": "渠道×品类毛利矩阵（数据集 920）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "stack": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d8",
+          "type": "pieChart",
+          "name": "渠道销售额占比（数据集 912）",
+          "x": 1270,
+          "y": 412,
+          "w": 620,
+          "h": 292,
+          "zIndex": 8,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "pie",
+            "datasetId": 912,
+            "dimensions": [
+              {
+                "field": "channel"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "amount",
+                "order": "desc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "渠道销售额占比（数据集 912）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              }
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d9",
+          "type": "lineChart",
+          "name": "每日毛利趋势（数据集 921）",
+          "x": 30,
+          "y": 720,
+          "w": 600,
+          "h": 292,
+          "zIndex": 9,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "line",
+            "datasetId": 921,
+            "dimensions": [
+              {
+                "field": "stat_date",
+                "type": "time"
+              }
+            ],
+            "measures": [
+              {
+                "field": "profit",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "stat_date",
+                "order": "asc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "每日毛利趋势（数据集 921）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              }
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d10",
+          "type": "hBarChart",
+          "name": "门店销售额排行（数据集 919 跨库SQL）",
+          "x": 650,
+          "y": 720,
+          "w": 600,
+          "h": 292,
+          "zIndex": 10,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "bar",
+            "datasetId": 919,
+            "dimensions": [
+              {
+                "field": "store_name"
+              }
+            ],
+            "measures": [
+              {
+                "field": "amount",
+                "aggregation": "sum"
+              }
+            ],
+            "sorts": [
+              {
+                "field": "amount",
+                "order": "desc"
+              }
+            ],
+            "options": {
+              "title": {
+                "text": "门店销售额排行（数据集 919 跨库SQL）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "horizontal": true
+            },
+            "theme": "brand",
+            "animation": true
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        },
+        {
+          "id": "d11",
+          "type": "gaugeChart",
+          "name": "门店平均达成率（数据集 915 未受限列）",
+          "x": 1270,
+          "y": 720,
+          "w": 620,
+          "h": 292,
+          "zIndex": 11,
+          "visible": true,
+          "locked": false,
+          "props": {},
+          "chartConfig": {
+            "chartType": "gauge",
+            "datasetId": 915,
+            "dimensions": [],
+            "measures": [
+              {
+                "field": "achievement_rate",
+                "aggregation": "avg"
+              }
+            ],
+            "sorts": [],
+            "options": {
+              "title": {
+                "text": "门店平均达成率（数据集 915 未受限列）",
+                "left": 14,
+                "top": 8,
+                "textStyle": {
+                  "color": "#16202f",
+                  "fontSize": 15,
+                  "fontWeight": 600
+                }
+              },
+              "max": 160,
+              "min": 0
+            },
+            "theme": "brand",
+            "animation": true,
+            "title": "平均达成率 %"
+          },
+          "request": {
+            "sourceType": "dataset"
+          }
+        }
+      ],
+      "variants": null
+    }
+  ],
+  "meta": {
+    "window": [
+      "2026-07-21",
+      "2026-10-18",
+      "90"
+    ],
+    "kpi": {
+      "amount": "5973360.78",
+      "orders": "2000",
+      "profit": "1118503.57",
+      "avgPay": "2986.68",
+      "achievement": "105.6",
+      "margin": "18.7",
+      "stores": "21"
+    },
+    "wow": {
+      "amount": 7.4,
+      "orders": -6.2,
+      "profit": -0.8
+    },
+    "rate": {
+      "avg": "107.6",
+      "stores": "21"
+    },
+    "rowCount": {
+      "TREND": 14,
+      "REGION": 6,
+      "CAT": 5,
+      "CC": 20,
+      "STORE": 10,
+      "HOUR": 12,
+      "MEMBER": 4,
+      "FEED": 10,
+      "PROG": 6
+    }
+  }
+}
