@@ -88,7 +88,7 @@
   import { ElMessage, ElMessageBox } from 'element-plus'
   import type { Datasource, DatasourceType } from '@dataviz/shared-types'
   import { rowsOf } from '@dataviz/shared-types'
-  import { createDatasource, deleteDatasource, listDatasources, testConnection, updateDatasource } from '@dataviz/api-client'
+  import { createDatasource, deleteDatasource, getDatasource, listDatasources, testConnection, testExistingConnection, updateDatasource } from '@dataviz/api-client'
   import { useI18n } from 'vue-i18n'
 
   const { t } = useI18n()
@@ -99,15 +99,16 @@
   const list = ref<Datasource[]>([])
   const dialogVisible = ref(false)
   const editingId = ref<string | number>('')
+  // 与后端 DatasourceType 枚举的 code 一一对应：传清单外的类型服务端 fromCode 会抛，落到兜底 handler 变 500
   const types: DatasourceType[] = [
     'mysql',
     'postgresql',
     'oracle',
     'sqlserver',
     'clickhouse',
-    'hive',
+    'elasticsearch',
     'mongodb',
-    'restapi',
+    'api',
     'csv',
     'excel',
   ]
@@ -125,20 +126,19 @@
 
   function endpoint(row: Datasource): string {
     const cfg = row.config ?? {}
-    if (cfg.host) return `${cfg.host}:${cfg.port ?? '-'}/${cfg.database ?? '-'}`
-    return cfg.url || '-'
+    // 列表接口(DatasourceListVO)不返回 config，此处只能留空；详情接口有，编辑时会取回
+    if (!cfg.host) return '-'
+    return `${cfg.host}:${cfg.port ?? '-'}/${cfg.database ?? '-'}`
   }
 
-  function statusLabel(status: string): string {
+  // status 是「启用/禁用」这个管理开关，不是健康状态，所以禁用给中性色
+  function statusLabel(status: Datasource['status']): string {
     if (status === 'active') return t('common.online')
-    if (status === 'error') return t('common.offline')
-    return t('common.unknown')
+    return t('common.offline')
   }
 
-  function statusTag(status: string): 'success' | 'danger' | 'info' {
-    if (status === 'active') return 'success'
-    if (status === 'error') return 'danger'
-    return 'info'
+  function statusTag(status: Datasource['status']): 'success' | 'info' {
+    return status === 'active' ? 'success' : 'info'
   }
 
   async function loadData() {
@@ -158,9 +158,17 @@
     dialogVisible.value = true
   }
 
-  function handleEdit(row: Datasource) {
-    editingId.value = row.id
-    Object.assign(form, emptyForm(), row, { config: { ...emptyForm().config, ...(row.config ?? {}) } })
+  /** 列表 VO 不带 config，必须按 id 取详情，否则保存时会把空配置写回去覆盖真凭据 */
+  async function handleEdit(row: Datasource) {
+    let full: Datasource
+    try {
+      full = await getDatasource(row.id)
+    } catch (e) {
+      ElMessage.error((e as Error).message)
+      return
+    }
+    editingId.value = full.id
+    Object.assign(form, emptyForm(), full, { config: { ...emptyForm().config, ...full.config } })
     dialogVisible.value = true
   }
 
@@ -178,11 +186,11 @@
     }
   }
 
+  /** 行级测试：让服务端按 id 读库中配置，前端不回传口令 */
   async function handleTest(row: Datasource) {
     try {
-      const r = await testConnection(row)
-      if (r.success) ElMessage.success(t('datasource.testOkWithLatency', { ms: r.latency ?? 0 }))
-      else ElMessage.error(r.message || t('datasource.testFail'))
+      if (await testExistingConnection(row.id)) ElMessage.success(t('datasource.testOk'))
+      else ElMessage.error(t('datasource.testFail'))
     } catch (e) {
       ElMessage.error((e as Error).message)
     }
@@ -191,9 +199,8 @@
   async function handleTestDialog() {
     testing.value = true
     try {
-      const r = await testConnection(form)
-      if (r.success) ElMessage.success(t('datasource.testOk'))
-      else ElMessage.error(r.message || t('datasource.testFail'))
+      if (await testConnection(form)) ElMessage.success(t('datasource.testOk'))
+      else ElMessage.error(t('datasource.testFail'))
     } catch (e) {
       ElMessage.error((e as Error).message)
     } finally {

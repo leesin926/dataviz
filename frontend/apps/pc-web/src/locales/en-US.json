@@ -351,7 +351,6 @@
     "password": "Password",
     "testConnection": "Test connection",
     "testOk": "Connection OK",
-    "testOkWithLatency": "Connection OK, {ms}ms",
     "testFail": "Connection failed",
     "saved": "Data source saved",
     "deleted": "Data source deleted"

@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 const AY = 'E:/wowowo/devlog/_ay';
+// 快照目录与产物名走 argv，默认仍是 AY2 那一轮：复跑不该覆盖上一轮已入账的证据
+const DOCS = path.join(AY, process.argv[2] || 'docs');
+const OUT = path.join(AY, process.argv[3] || 'ay2-path-diff.json');
 
 // 1) 后端真实端点：来自 /v3/api-docs 的活读数
 const live = new Map(); // "GET /ai/status" -> port
 const livePaths = new Map(); // "/ai/status" -> Set<method>
-for (const f of fs.readdirSync(path.join(AY, 'docs'))) {
+for (const f of fs.readdirSync(DOCS)) {
   const port = f.slice(0, 4);
-  const doc = JSON.parse(fs.readFileSync(path.join(AY, 'docs', f), 'utf8'));
+  const doc = JSON.parse(fs.readFileSync(path.join(DOCS, f), 'utf8'));
   // 网关只有 auth / user 两条路由带 StripPrefix=1，这两个服务不带 /api 上下文；其余服务自带 /api
   const needApi = port === '8081' || port === '8082';
   for (const [p0, ops] of Object.entries(doc.paths || {})) {
@@ -28,8 +31,11 @@ const roots = [
   'E:/wowowo/frontend/apps/pc-web/src',
   'E:/wowowo/frontend/apps/pc-desktop/src',
 ];
-const callReBt = /\.(get|post|put|delete|patch|download|upload)\s*(?:<[^>]*>)?\s*\(\s*`([^`]*)`/g;
-const callReQ = /\.(get|post|put|delete|patch|download|upload)\s*(?:<[^>]*>)?\s*\(\s*['"]([^'"]*)['"]/g;
+// BA4 更正：旧写法 (?:<[^>]*>)? 匹配不到嵌套泛型实参 .post<R<Foo>>('...')，整条调用被跳过，
+// 于是 AY2 的 client=113 只覆盖了一半出调用点（192），orphanClient=0 是弱读数——API-106 就是这样漏掉的。
+// 泛型实参里允许再嵌一层 <>（只要不含右括号即可），TS 的 request 调用形式都落在这个子集里。
+const callReBt = /\.(get|post|put|delete|patch|download|upload)\s*(?:<[^)]*>)?\s*\(\s*`([^`]*)`/g;
+const callReQ = /\.(get|post|put|delete|patch|download|upload)\s*(?:<[^)]*>)?\s*\(\s*['"]([^'"]*)['"]/g;
 const hits = new Map(); // "GET /ai/status" -> [files]
 function walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -97,7 +103,7 @@ const out = {
     return acc;
   }, {}),
 };
-fs.writeFileSync(path.join(AY, 'ay2-path-diff.json'), JSON.stringify(out, null, 1));
+fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
 console.log(`live=${live.size} client=${hits.size} orphanClient=${orphanClient.length} methodMismatch=${methodMismatch.length} noClient=${noClient.length}`);
 console.log('--- 前端在调但后端文档没有：');
 orphanClient.forEach(o => console.log('  ' + o.call + '  <- ' + o.files[0] + (o.files.length > 1 ? ` (+${o.files.length - 1})` : '')));

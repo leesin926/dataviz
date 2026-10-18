@@ -1,0 +1,6 @@
+HEAD 前端调用点(新正则可见)=193 文件数=101
+--- 孤儿(后端无此路径) 3 条：
+  GET /api/datasource/:x/tables/:x  (候选路径=无)  <- frontend/packages/api-client/src/modules/datasource.ts
+  GET /api/datasource/:x/tables/:x/preview  (候选路径=无)  <- frontend/packages/api-client/src/modules/datasource.ts
+  POST /api/datasource/test  <- frontend/packages/api-client/src/modules/datasource.ts
+--- 方法错配 0 条：

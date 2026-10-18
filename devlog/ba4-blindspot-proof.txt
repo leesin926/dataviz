@@ -1,0 +1,4 @@
+HEAD(修复前) × 旧正则 -> ["get","put","delete"]
+HEAD(修复前) × 新正则 -> ["get","get","post","put","delete","post","get","get","get"]
+工作区(修复后) × 旧正则 -> ["get","put","delete"]
+工作区(修复后) × 新正则 -> ["get","get","post","put","delete","post","post","get","get"]

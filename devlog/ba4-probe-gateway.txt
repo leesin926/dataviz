@@ -1,0 +1,2 @@
+POST /api/datasource/test-connection -> HTTP 401 | {"code":401,"message":"Missing or invalid Authorization header","data":null}
+POST /api/datasource/1/test-connection -> HTTP 401 | {"code":401,"message":"Missing or invalid Authorization header","data":null}

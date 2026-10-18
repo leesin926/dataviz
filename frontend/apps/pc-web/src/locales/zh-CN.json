@@ -351,7 +351,6 @@
     "password": "密码",
     "testConnection": "测试连接",
     "testOk": "连接成功",
-    "testOkWithLatency": "连接成功，延迟 {ms}ms",
     "testFail": "连接失败",
     "saved": "数据源已保存",
     "deleted": "数据源已删除"
