@@ -5,6 +5,7 @@ import com.dataviz.common.core.result.R;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -79,6 +80,18 @@ public class GlobalExceptionHandler {
     public R<Void> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
         log.warn("参数类型不匹配: {}={}", e.getName(), e.getValue());
         return R.fail(ErrorCode.BAD_REQUEST.getCode(), "参数格式不正确: " + e.getName());
+    }
+
+    /**
+     * 请求体反序列化失败（字段类型传错、body 不是合法 JSON）：
+     * 与类型不匹配同族，不单独处理会落到"其他未知异常"变成 500 + 整栈，掩盖掉"输入非法"这一真实原因。
+     * 详情只进日志，不回显给客户端（Jackson 原文含类名与内部结构）。
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public R<Void> handleNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("请求体不可读 [{}]: {}", request.getRequestURI(), e.getMostSpecificCause().getMessage());
+        return R.fail(ErrorCode.BAD_REQUEST.getCode(), "请求体格式不正确");
     }
 
     /**

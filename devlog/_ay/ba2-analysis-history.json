@@ -1,0 +1,39 @@
+{
+  "rows": [
+    {
+      "name": "A1 GET /api/analysis/history",
+      "req": "GET /api/analysis/history?page=1&size=5",
+      "read": "200/0",
+      "msg": "操作成功",
+      "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":{\"records\":[{\"id\":908,\"userId\":\"1\",\"datasourceId\":903,\"sql\":\"{\\\"datasetId\\\":903,\\\"dimensions\\\":[{\\\"field\\\":\\\"region\\\",\\\"dateFormat\\\":null},{\\\"field\\\":\\\"status\\\",\\\"dateFormat\\\":null},{\\\"field\\\":\\\"created_at\\\",\\\"dateFormat\\\":null}],\\\"metrics\\\":[{\\\"field\\\":\\\"pay_amount\\\",\\\"aggFunction\\\":\\\"sum\\\",\\\"alias\\\":null},{\\\"field\\\":\\\"order_id\\\",\\\"aggFunction\\\":\\\"sum\\\",\\\"alias\\\"…"
+    },
+    {
+      "name": "A2 GET /api/analysis/query/history",
+      "req": "GET /api/analysis/query/history?page=1&size=5",
+      "read": "200/0",
+      "msg": "操作成功",
+      "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":{\"records\":[{\"id\":908,\"datasourceId\":903,\"sql\":\"{\\\"datasetId\\\":903,\\\"dimensions\\\":[{\\\"field\\\":\\\"region\\\",\\\"dateFormat\\\":null},{\\\"field\\\":\\\"status\\\",\\\"dateFormat\\\":null},{\\\"field\\\":\\\"created_at\\\",\\\"dateFormat\\\":null}],\\\"metrics\\\":[{\\\"field\\\":\\\"pay_amount\\\",\\\"aggFunction\\\":\\\"sum\\\",\\\"alias\\\":null},{\\\"field\\\":\\\"order_id\\\",\\\"aggFunction\\\":\\\"sum\\\",\\\"alias\\\":null}],\\\"fil…"
+    },
+    {
+      "name": "A3 POST /api/analysis/query/save",
+      "req": "POST /api/analysis/query/save {\"datasetId\":1,\"dimensions\":[],\"metrics\":[],\"limit\":10}",
+      "read": "200/0",
+      "msg": "操作成功",
+      "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":910,\"timestamp\":1792327070545,\"success\":true}"
+    },
+    {
+      "name": "A4 GET /api/analysis/query/history 复读",
+      "req": "GET /api/analysis/query/history?page=1&size=5",
+      "read": "200/0",
+      "msg": "操作成功",
+      "body": "{\"code\":0,\"message\":\"操作成功\",\"data\":{\"records\":[{\"id\":910,\"datasourceId\":1,\"sql\":\"{\\\"datasetId\\\":1,\\\"dimensions\\\":[],\\\"metrics\\\":[],\\\"filters\\\":null,\\\"metricFilters\\\":null,\\\"orders\\\":null,\\\"limit\\\":10}\",\"executionTime\":0,\"createTime\":\"2026-10-18T20:37:50\"},{\"id\":908,\"datasourceId\":903,\"sql\":\"{\\\"datasetId\\\":903,\\\"dimensions\\\":[{\\\"field\\\":\\\"region\\\",\\\"dateFormat\\\":null},{\\\"field\\\":\\\"status\\\",\\\"dateFor…"
+    }
+  ],
+  "verdict": {
+    "A1 history 不再 500": true,
+    "A2 query/history 不再 500": true,
+    "A3 save 落库拿到 id": true,
+    "A4 新行能读回（deleted 过滤没误杀）": true
+  },
+  "savedId": 910
+}

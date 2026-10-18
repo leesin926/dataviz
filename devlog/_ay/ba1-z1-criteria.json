@@ -1,0 +1,181 @@
+{
+  "rows": [
+    {
+      "name": "S1 建仪表盘 A",
+      "req": "POST /api/dashboard {\"name\":\"zz_ba1_dashA\",\"description\":\"Z1 判据用\"}",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": "912"
+    },
+    {
+      "name": "S2 在 A 下建组件",
+      "req": "POST /api/dashboard/widget {\"dashboardId\":912,\"widgetType\":\"bar\",\"title\":\"zz_ba1_widget\",\"configJson\":\"{}\",\"dataConfigJson\":\"{}\",\"positionJson\":\"{\\\"x\\\":0,\\\"y\\\":0,\\\"w\\\":4,\\\"h\\\":4}\",\"sort\":1}",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": "911"
+    },
+    {
+      "name": "S3 只改 title",
+      "req": "PUT /api/dashboard/widget {\"id\":911,\"title\":\"zz_ba1_widget-renamed\"}",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": ""
+    },
+    {
+      "name": "S4 读回组件",
+      "req": "GET /api/dashboard/widget/911",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": "{\"id\":911,\"dashboardId\":912,\"widgetType\":\"bar\",\"title\":\"zz_ba1_widget-renamed\",\"configJson\":\"{}\",\"dataConfigJson\":\"{}\",\"positionJson\":\"{\\\"h\\\": 4, \\\"w\\\": 4, \\\"x\\\": 0, \\\"y\\\": 0}\",\"sort\":1}"
+    },
+    {
+      "name": "S5 PUT 里带 dashboardId=999999999（旧 DTO 的字段）",
+      "req": "PUT /api/dashboard/widget {\"id\":911,\"dashboardId\":999999999,\"title\":\"zz_ba1_widget-hijack\"}",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": ""
+    },
+    {
+      "name": "S6 再读回",
+      "req": "GET /api/dashboard/widget/911",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": "{\"id\":911,\"dashboardId\":912,\"widgetType\":\"bar\",\"title\":\"zz_ba1_widget-hijack\",\"configJson\":\"{}\",\"dataConfigJson\":\"{}\",\"positionJson\":\"{\\\"h\\\": 4, \\\"w\\\": 4, \\\"x\\\": 0, \\\"y\\\": 0}\",\"sort\":1}"
+    },
+    {
+      "name": "S7 PUT 不带 id",
+      "req": "PUT /api/dashboard/widget {\"title\":\"zz_ba1_noId\"}",
+      "read": "200/400",
+      "msg": "组件 id 不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"组件 id 不能为空\",\"data\":null,\"timestamp\":1792327179106,\"success\":false}"
+    },
+    {
+      "name": "S7b 建组件 缺 configJson",
+      "req": "POST /api/dashboard/widget {\"dashboardId\":912,\"widgetType\":\"bar\",\"title\":\"zz_ba1_noconfig\",\"sort\":1}",
+      "read": "200/400",
+      "msg": "configJson 不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"configJson 不能为空\",\"data\":null,\"timestamp\":1792327180436,\"success\":false}"
+    },
+    {
+      "name": "S7c PUT 的 id 传成对象（畸形 body）",
+      "req": "PUT /api/dashboard/widget {\"id\":{\"a\":1},\"title\":\"zz_ba1_badbody\"}",
+      "read": "400/400",
+      "msg": "请求体格式不正确",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"请求体格式不正确\",\"data\":null,\"timestamp\":1792327181768,\"success\":false}"
+    },
+    {
+      "name": "S8 建仪表盘 空 body",
+      "req": "POST /api/dashboard {}",
+      "read": "200/400",
+      "msg": "仪表盘名称不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"仪表盘名称不能为空\",\"data\":null,\"timestamp\":1792327183100,\"success\":false}"
+    },
+    {
+      "name": "S9 建仪表盘 name 为空白",
+      "req": "POST /api/dashboard {\"name\":\"   \"}",
+      "read": "200/400",
+      "msg": "仪表盘名称不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"仪表盘名称不能为空\",\"data\":null,\"timestamp\":1792327184417,\"success\":false}"
+    },
+    {
+      "name": "S10 PUT 仪表盘 不带 id",
+      "req": "PUT /api/dashboard {\"name\":\"zz_ba1_noId\"}",
+      "read": "200/400",
+      "msg": "仪表盘 id 不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"仪表盘 id 不能为空\",\"data\":null,\"timestamp\":1792327185748,\"success\":false}"
+    },
+    {
+      "name": "S11 建组件 父级不存在",
+      "req": "POST /api/dashboard/widget {\"dashboardId\":999999999,\"widgetType\":\"bar\",\"title\":\"zz_ba1_orphan\",\"configJson\":\"{}\",\"dataConfigJson\":\"{}\",\"positionJson\":\"{}\",\"sort\":1}",
+      "read": "200/404",
+      "msg": "仪表盘不存在: 999999999",
+      "expect": "-",
+      "body": "{\"code\":404,\"message\":\"仪表盘不存在: 999999999\",\"data\":null,\"timestamp\":1792327187088,\"success\":false}"
+    },
+    {
+      "name": "S11b 建组件 缺 configJson",
+      "req": "POST /api/dashboard/widget {\"dashboardId\":912,\"widgetType\":\"bar\",\"title\":\"zz_ba1_noconfig2\",\"sort\":1}",
+      "read": "200/400",
+      "msg": "configJson 不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"configJson 不能为空\",\"data\":null,\"timestamp\":1792327188416,\"success\":false}"
+    },
+    {
+      "name": "S11c 更新时把 configJson 传空串（探针，未修）",
+      "req": "PUT /api/dashboard/widget {\"id\":911,\"configJson\":\"\"}",
+      "read": "200/400",
+      "msg": "configJson 不能为空",
+      "expect": "-",
+      "body": "{\"code\":400,\"message\":\"configJson 不能为空\",\"data\":null,\"timestamp\":1792327189748,\"success\":false}"
+    },
+    {
+      "name": "S12 建仪表盘 B",
+      "req": "POST /api/dashboard {\"name\":\"zz_ba1_dashB\"}",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": "913"
+    },
+    {
+      "name": "S13 软删 B",
+      "req": "DELETE /api/dashboard/913",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": ""
+    },
+    {
+      "name": "S14 读软删的 B",
+      "req": "GET /api/dashboard/913",
+      "read": "200/404",
+      "msg": "Dashboard not found: 913",
+      "expect": "-",
+      "body": "{\"code\":404,\"message\":\"Dashboard not found: 913\",\"data\":null,\"timestamp\":1792327193775,\"success\":false}"
+    },
+    {
+      "name": "S15 A 的组件列表（确认没多出孤儿）",
+      "req": "GET /api/dashboard/widget/list/912",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": "[{\"id\":911,\"dashboardId\":912,\"widgetType\":\"bar\",\"title\":\"zz_ba1_widget-hijack\",\"configJson\":\"{}\",\"dataConfigJson\":\"{}\",\"positionJson\":\"{\\\"h\\\": 4, \\\"w\\\": 4, \\\"x\\\": 0, \\\"y\\\": 0}\",\"sort\":1}]"
+    },
+    {
+      "name": "S16 软删 A",
+      "req": "DELETE /api/dashboard/912",
+      "read": "200/-",
+      "msg": "",
+      "expect": "-",
+      "body": ""
+    }
+  ],
+  "verdict": {
+    "API-100 title 生效": true,
+    "API-100 父级不变（S4）": true,
+    "API-100 父级不被 dashboardId 改写（S6）": true,
+    "API-100 缺 id 回 400": true,
+    "API-101 空 body 回 400": true,
+    "API-101 空白名回 400": true,
+    "API-101 PUT 缺 id 回 400": true,
+    "API-102 父级不存在回 404": true,
+    "软删读取回 404（不是 500）": true,
+    "API-103 缺 configJson 回 400（修后期望）": true,
+    "API-104 畸形 body 回 400（修后期望）": true,
+    "API-103 父级合法但缺 configJson 也回 400": true,
+    "S11c 更新传空 configJson（读数，不判）": "200/400",
+    "A 下组件数=1（无孤儿）": true
+  },
+  "hijackRead": "200/-"
+}

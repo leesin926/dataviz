@@ -103,4 +103,32 @@ class WidgetServiceImplUpdateTest {
         assertEquals(ErrorCode.NOT_FOUND.getCode(), ex.getCode());
         verify(widgetMapper, never()).updateById(any());
     }
+
+    @Test
+    @DisplayName("更新 - configJson 传空白串时报 400，一行都不写")
+    void update_whenConfigJsonBlank_throwsBadRequestAndWritesNothing() {
+        when(widgetMapper.selectById(907L)).thenReturn(storedWidget());
+        WidgetUpdateDTO dto = new WidgetUpdateDTO();
+        dto.setId(907L);
+        dto.setConfigJson("  ");
+
+        BizException ex = assertThrows(BizException.class, () -> widgetService.update(dto));
+
+        assertEquals(ErrorCode.BAD_REQUEST.getCode(), ex.getCode());
+        assertEquals("configJson 不能为空", ex.getMessage());
+        verify(widgetMapper, never()).updateById(any());
+    }
+
+    @Test
+    @DisplayName("更新 - configJson 为 null 是「不改动」，不该被空白校验拦下")
+    void update_whenConfigJsonNull_stillWrites() {
+        when(widgetMapper.selectById(907L)).thenReturn(storedWidget());
+        WidgetUpdateDTO dto = new WidgetUpdateDTO();
+        dto.setId(907L);
+        dto.setTitle("zz_ay20_widget-renamed");
+
+        widgetService.update(dto);
+
+        verify(widgetMapper).updateById(any());
+    }
 }

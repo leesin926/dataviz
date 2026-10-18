@@ -73,6 +73,33 @@ class WidgetServiceImplCreateTest {
     }
 
     @Test
+    @DisplayName("创建 - 缺 configJson 时报 400（这四列在库里 NOT NULL 且无默认值，放到 SQL 层就是 500 + 整栈）")
+    void create_whenConfigJsonMissing_throwsBadRequestAndWritesNothing() {
+        when(dashboardMapper.selectById(905L)).thenReturn(new Dashboard());
+        WidgetCreateDTO dto = dto(905L);
+        dto.setConfigJson("  ");
+
+        BizException ex = assertThrows(BizException.class, () -> widgetService.create(dto));
+
+        assertEquals(ErrorCode.BAD_REQUEST.getCode(), ex.getCode());
+        assertEquals("configJson 不能为空", ex.getMessage());
+        verify(widgetMapper, never()).insert(any(DashboardWidget.class));
+    }
+
+    @Test
+    @DisplayName("创建 - 缺 widgetType 时报 400")
+    void create_whenWidgetTypeMissing_throwsBadRequest() {
+        when(dashboardMapper.selectById(905L)).thenReturn(new Dashboard());
+        WidgetCreateDTO dto = dto(905L);
+        dto.setWidgetType(null);
+
+        BizException ex = assertThrows(BizException.class, () -> widgetService.create(dto));
+
+        assertEquals(ErrorCode.BAD_REQUEST.getCode(), ex.getCode());
+        verify(widgetMapper, never()).insert(any(DashboardWidget.class));
+    }
+
+    @Test
     @DisplayName("创建 - 不带 dashboardId 时报 400，连父级查询都不发")
     void create_whenDashboardIdMissing_throwsBadRequest() {
         BizException ex = assertThrows(BizException.class, () -> widgetService.create(dto(null)));

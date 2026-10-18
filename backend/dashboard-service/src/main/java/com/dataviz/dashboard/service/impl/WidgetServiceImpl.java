@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -37,6 +38,11 @@ public class WidgetServiceImpl implements WidgetService {
         if (dashboardMapper.selectById(dto.getDashboardId()) == null) {
             throw new BizException(ErrorCode.NOT_FOUND, "仪表盘不存在: " + dto.getDashboardId());
         }
+        // 这四列在 dashboard_widget 上是 NOT NULL 且无默认值，缺一个就是 SQLException → HTTP 500 + 整栈
+        requireText(dto.getWidgetType(), "widgetType");
+        requireText(dto.getConfigJson(), "configJson");
+        requireText(dto.getDataConfigJson(), "dataConfigJson");
+        requireText(dto.getPositionJson(), "positionJson");
         DashboardWidget widget = new DashboardWidget();
         BeanUtils.copyProperties(dto, widget);
         widgetMapper.insert(widget);
@@ -54,6 +60,11 @@ public class WidgetServiceImpl implements WidgetService {
         if (widget == null) {
             throw new BizException(ErrorCode.NOT_FOUND, "Widget not found: " + dto.getId());
         }
+        // null 表示"这一列不改动"（MyBatis-Plus updateById 的 NOT_NULL 字段策略会跳过），但空白串会真写进 JSON 列 → SQLException → 500
+        requireTextIfPresent(dto.getWidgetType(), "widgetType");
+        requireTextIfPresent(dto.getConfigJson(), "configJson");
+        requireTextIfPresent(dto.getDataConfigJson(), "dataConfigJson");
+        requireTextIfPresent(dto.getPositionJson(), "positionJson");
         BeanUtils.copyProperties(dto, widget, "id");
         widgetMapper.updateById(widget);
         log.info("Updated widget: id={}", widget.getId());
@@ -88,5 +99,17 @@ public class WidgetServiceImpl implements WidgetService {
             BeanUtils.copyProperties(w, vo);
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    private void requireText(String value, String field) {
+        if (!StringUtils.hasText(value)) {
+            throw new BizException(ErrorCode.BAD_REQUEST, field + " 不能为空");
+        }
+    }
+
+    private void requireTextIfPresent(String value, String field) {
+        if (value != null && !StringUtils.hasText(value)) {
+            throw new BizException(ErrorCode.BAD_REQUEST, field + " 不能为空");
+        }
     }
 }
