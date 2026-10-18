@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -294,15 +295,38 @@ public class SqlBuilder {
         if (queryDTO.getOrders() == null || queryDTO.getOrders().isEmpty()) {
             return "";
         }
+        Map<String, String> metricAliases = metricAliases(queryDTO);
         return queryDTO.getOrders().stream()
                 .map(o -> {
                     String direction = o.getDirection() == null ? "ASC" : o.getDirection().trim().toUpperCase();
                     if (!"ASC".equals(direction) && !"DESC".equals(direction)) {
                         throw new BizException(ErrorCode.BAD_REQUEST, "不支持的排序方向: " + o.getDirection());
                     }
-                    return column(o.getField(), "排序字段") + " " + direction;
+                    // 排序命中指标时必须换成投影别名：裸列名在 GROUP BY 之后不是聚合值，
+                    // only_full_group_by 下直接报错（只有维度恰好是唯一键时才侥幸通过，换一个数据集就崩）
+                    String alias = o.getField() == null ? null : metricAliases.get(o.getField().trim().toLowerCase());
+                    return (alias != null ? alias : column(o.getField(), "排序字段")) + " " + direction;
                 })
                 .collect(Collectors.joining(", "));
+    }
+
+    /** 字段名（小写）→ SELECT 中该指标的投影别名；同字段多聚合取第一个，与 SELECT 里的先后一致 */
+    private Map<String, String> metricAliases(AnalysisQueryDTO queryDTO) {
+        Map<String, String> aliases = new LinkedHashMap<>();
+        if (queryDTO.getMetrics() == null) {
+            return aliases;
+        }
+        for (AnalysisQueryDTO.MetricConfig m : queryDTO.getMetrics()) {
+            if (m.getField() == null || m.getField().trim().isEmpty()) {
+                continue;
+            }
+            String func = m.getAggFunction() == null ? "SUM" : m.getAggFunction().trim().toUpperCase();
+            String key = m.getField().trim().toLowerCase();
+            if (!aliases.containsKey(key)) {
+                aliases.put(key, aliasColumn(m.getAlias(), m.getField(), func));
+            }
+        }
+        return aliases;
     }
 
     /**

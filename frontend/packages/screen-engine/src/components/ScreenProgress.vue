@@ -2,7 +2,7 @@
   <div class="screen-progress">
     <div class="sp-head">
       <span class="sp-label" :style="{ color: textColor }">{{ label }}</span>
-      <span v-if="showValue" class="sp-pct" :style="{ color }">{{ percent }}%</span>
+      <span v-if="showValue" class="sp-pct" :style="{ color }">{{ display }}%</span>
     </div>
     <div class="sp-track" :style="trackStyle">
       <div class="sp-fill" :style="fillStyle" />
@@ -25,6 +25,8 @@
   const color = computed(() => strOf(p.value.color, CANVAS_INK.accent))
   const showValue = computed(() => boolOf(p.value.showValue, true))
   const percent = computed(() => Math.max(0, Math.min(100, numOf(p.value.percent, 0))))
+  /** 条宽封顶 100%，但数字要如实：达成率类指标会 >100%，跟着钳到 100 就是报错数 */
+  const display = computed(() => Math.max(0, numOf(p.value.percent, 0)))
   const textColor = computed(() => strOf(p.value.textColor, CANVAS_INK.normal))
 
   const trackStyle = computed(() => ({
