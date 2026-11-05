@@ -2599,6 +2599,7 @@ BA 轮刚踩过"mtime 把被写坏的产物读成刚打好"，所以这次判"�
 | SQL 补丁 | `deploy/sql/patch/2026-11-06-be-file-storage.sql`（幂等判存 + 回填 + `@@` 自检读回）—— **只落盘未执行**，库停 |
 | 进程 | **零重启、零数据写面**（库不可达）；用户侧进程一个没动 |
 | 台账 | docs/10 新增 **D88** + 变更记录 **BE** 行；docs/12 新增 **19.38**（七小节）+ 清单头弹；EDIT_LOG 本章 |
+| 提交 | **2** 次：代码 + 测试 + 补列补丁 + 归档 = **`268eff6`**（`git show --stat` = **37 文件 / +6,394 / −74**，含 `AlertCheckEngine` 的 rename 进 `_archive`）；三本台账 + `devlog/_be` 探针与日志 = **`f8fca42`**；两条 hash 由本章这条读回补记（属第三次提交的内容），**未推送远端** |
 | 依赖 | `common-core`/`common-security`/`file-service` 三处 pom 加 **test 作用域** `spring-boot-starter-test`；**未引入任何新第三方依赖**（`mockito-inline` 不在本仓依赖集 ⇒ 静态方法一律"真调 + 反射"，不 mock） |
 
 ### 一、API-111：两条同名实现里，默认跑着的是假的那条
