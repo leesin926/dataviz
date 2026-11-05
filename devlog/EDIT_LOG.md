@@ -2580,3 +2580,60 @@ BA 轮刚踩过"mtime 把被写坏的产物读成刚打好"，所以这次判"�
 4. 本批 **2 次提交未推送远端**，要不要推、以什么节奏推由你定。
 
 未闭合项状态不变：Z2 对外信封、Z3/API-95 错误码口径、API-97/API-34、AA6/AB6/AF4/AG5/AM5 那批登录态判据、其余 12 个服务的写面同族、API-104 的其余 16 个进程。
+
+---
+
+## 2026-11-06 · 阶段 BE：补全功能 + 单测开荒 —— 跑着的告警引擎是随机数那一份，而"真取数"默认关着（任务 **#191~#199**，决策 **D88** / 报告 **19.38**，新立 **API-111~API-125** 十四条、当场修 2 条）
+
+**驱动指令**：用户一句"**补全所有功能，并做好单元测试**"。**开工时的环境事实先写在最前面**：Docker 已停（`dataviz-mysql` 不可达），除 8090 外所有服务端口都不在听，距阶段 BD 已两周多 ⇒ **本批一条运行时正证都没有**，全部结论停在"源码 + 单测"这一档；我没有替用户启动 Docker Desktop（那是用户机器上的服务）。
+
+### 〇、本轮计数
+
+| 面 | 读数 |
+|---|---|
+| 新立缺陷 | **14 条**：**API-111 / API-112 当场修**，**API-113~API-125 登记不修** ⇒ 累计 **125** |
+| 功能补全 | **3 项**（告警 DERIVATIVE / OpenAPI 代理真转发 / file-service 存储策略可选）+ **1 项只补了一半**（调用日志只写不读 ⇒ 另开 **#199**）+ **1 项刻意不做**（COMPOSITE 规则，但拒绝文案点名缺什么） |
+| 被推翻的结论 | **1 条我自己的侦察结论**（BE4：`elasticsearch` 的含糊失败 —— 服务层 7 处早已显式拒绝 ⇒ 一行代码没改） |
+| Java 改动 | 生产：**7** 个文件（`AlertCheckEngine` 退场、`AlertCheckServiceImpl` 两档化、`AlertEvaluator` 加 DERIVATIVE、`OpenApiController` + 新 `OpenApiProxyService`/`OpenApiProxyProperties`/`ProxyForwardResult`、`FileServiceImpl`/`FileInfo`/`FileInfoVO`/`StorageType` + 新 `StorageStrategyRouter`）；测试：**12** 个新文件（alert 3 / openapi 2 / analysis 2 / file 2 / common-core 3 / common-security 4 中按模块计） |
+| 单测读数 | 后端全量 `mvn -o test` = **14 个有测试的模块汇总 623 通过 / 0 失败 / 0 错误 / BUILD SUCCESS**（上一轮台账 **362**）；分模块 alert **55→82**、openapi **42→61**、analysis **39→79**、**file 0→21**（此前无 `src/test/java`）、**common-core 0→63**、**common-security 0→81** |
+| SQL 补丁 | `deploy/sql/patch/2026-11-06-be-file-storage.sql`（幂等判存 + 回填 + `@@` 自检读回）—— **只落盘未执行**，库停 |
+| 进程 | **零重启、零数据写面**（库不可达）；用户侧进程一个没动 |
+| 台账 | docs/10 新增 **D88** + 变更记录 **BE** 行；docs/12 新增 **19.38**（七小节）+ 清单头弹；EDIT_LOG 本章 |
+| 依赖 | `common-core`/`common-security`/`file-service` 三处 pom 加 **test 作用域** `spring-boot-starter-test`；**未引入任何新第三方依赖**（`mockito-inline` 不在本仓依赖集 ⇒ 静态方法一律"真调 + 反射"，不 mock） |
+
+### 一、API-111：两条同名实现里，默认跑着的是假的那条
+
+`engine/AlertCheckEngine.java` 的 `fetchCurrentValue` 是 `Math.random() * 100`、阈值硬编码 `80.0`，`@Scheduled(fixedDelay = 60000)` **不受任何属性门控**；而 AA3 交付的真实现 `AlertCheckServiceImpl` 由 `@Value("${alert.check.enabled:false}")` 关着（`application.yml` 末段也明写默认关）。⇒ 台账说"真取数 + 持续时长 + 抑制"，**进程里执行的是"随机数 > 80 就写事件并真发通知"**。运行时正证不是本轮取的，是 §19.31 那行已入账的活体日志栈：`OutboundUrlGuard.reject(:89) → requireAllowed(:52) → WebhookNotifier.urlOf(:101) → NotifyDispatcher.dispatch(:71) → AlertCheckEngine.evaluateRule(:62)` —— 那次只是被 SSRF 闸门拦下才没发出去。
+
+处置与判据：归档 `backend/_archive/alert-fake-engine-20261106/`（README 写明退场依据与没取到的读数）后从 `src/main` 删除；`grep -rn "AlertCheckEngine" backend --include=*.java` 除自身外 **0 命中**是"删了不影响任何调用面"的证据。**看门测试** `AlertCheckEngineRetirementTest` 用 `ClassPathScanningCandidateComponentProvider` 扫 `com.dataviz.alert` 的 bean，断言"带 `@Scheduled` 的方法**有且只有** `AlertCheckServiceImpl#checkAllRules`"且该类门控 `@Value` 的默认值必须是 `:false` —— 以后谁再加一个不分开关的调度器，这条会红。
+
+**同族的另一面（本轮只登记不修）**：`common-kafka` 被 9 个服务的 pom 引了、6 份 yml 配了 `bootstrap-servers`，但**零**处 Java 引用、**零**个 `@KafkaListener` ⇒ "依赖在"不等于"功能在"。
+
+### 二、API-112：这条是测试逼出来的，不是我看出来的
+
+我给 `AlertCheckServiceImpl` 写"空窗不该清计时"的断言，**测试红了** —— 生产代码是 `if (result.getValue() == null || !result.isTriggered()) delete(breachKey)`，把"无法判定"和"未越界"并成一档；而 `AlertEvaluator:47-51` 自己的注释写着"查询成功但没有结果行是'无法判定'，**不能算成'未越界'**"。⇒ 同一概念两个口径，后果是一条要求"连续越界 10 分钟"的规则只要中途有一轮空集就从头再计，**永远不触发**。修法：`value == null` 保留已累计状态并只记日志；"确实回到阈值内"才清。
+
+**方法论记下来**：补测试时如果照着现有行为写断言，测试就永远只能证明"代码和昨天一样"；**先写应有的语义，红了再判是谁错**。本轮我自己也错两条：`ReflectionUtils.doWithMethods` 忘了过滤注解（把 `Object` 的 `clone/equals/wait` 全收进断言）、`@Component` 从 `context.annotation` 而不是 `stereotype` 导 —— 两条都由测试/编译器当场抓住。
+
+### 三、Maven 的第三个"看着对了"陷阱（与 API-110 同族）
+
+`mvn -o -pl alert-service test` **不带 `clean`** 时，被删掉的 `AlertCheckEngine.class` **仍然留在 `target/classes`** ⇒ "它已经不在了"这类判据拿到的是假读数（本轮表现为一项假失败与一项真假混杂）。而 `clean` 在这台机器会 `Failed to delete .../target/surefire-reports`（句柄占用，与 BA 轮 `Device or resource busy` 同一族）。本轮取的是最小干预：只 `rm` 那一个 class 再跑，并写进报告。**判据：凡断言"某制品已不存在"的测试，跑法必须能真正清空输出目录；清不掉就手工删并把删过什么记进台账。**
+
+### 四、三项功能补全的口径
+
+**DERIVATIVE** —— `metric_expression` 放 `{"current":"SELECT …","previous":"SELECT …"}`，判 `(本期-上期)/|上期| × 100` 的**百分数**，所以阈值读作百分点（`LT -10` = 比上期跌超 10%）。四档边界各有读数：上期为 0 ⇒ 无法判定（除零，不抛）；本期/上期空结果 ⇒ 无法判定并**点名是哪一期**；缺 `current`/`previous` ⇒ 400 点名缺哪个键；非法 JSON ⇒ 400。**为什么是两条标量 SQL**：`DatasourceQueryClient.queryScalar` 是本服务唯一取数口，多列形状要在 datasource-service 侧另开契约。**COMPOSITE 本轮刻意不做**，但拒绝文案从"当前只实现 THRESHOLD"改成点名"需要子规则引用校验与环检测，未随本轮交付" —— 拒绝也要可执行。
+
+**OpenAPI 代理** —— 写死的 `"Request routed successfully. Internal service integration pending."` 删除，新增 `OpenApiProxyService`：base-url 只来自配置（`openapi.proxy.services.<code>.base-url`）、路径必须 `/api/` 开头（绝对 URL 因此进不来）且命中 `…paths` 白名单（Ant 匹配）、只放 GET/POST、带 `X-Internal-Token`、**上游 4xx/5xx 原样上抛**、每次调用落一行 `openapi_log`；`getClientIp` → `resolveClientIp`，`openapi.proxy.trusted-proxy-hops` 默认 **0 = 只信 TCP peer**（与 API-31 那次网关同口径），原实现把可伪造的 XFF 最左值直接写进审计列。白名单只放 `datasource`/`model` 两个**真有 `/internal/` 只读端点**的服务 —— 代理去打注定 401 的路径，等于把错误藏进"开放平台"。**只补了写侧**：全仓没有日志读端点、api-client 零调用 ⇒ 管理端「开放接口调用日志」仍然空，另开 **#199**。
+
+**file-service 存储策略** —— 构造器不再写死 `@Qualifier("localStorageStrategy")`，由 `StorageStrategyRouter` 按 `file.storage.type`（默认 `local`）选；选 `minio` 而 `minio.endpoint/bucket/access-key/secret-key` 缺任一项 ⇒ **启动即抛并点名缺哪个键，绝不打印值**（与 `SmsNotifier`/`LlmClient` 的"拿不到凭据就明说"同族）。**读侧按每行自己记录的 `storage_type` 路由**，空白/未知/无该 bean ⇒ 拒绝而不回落 local —— 回落等于让老行"明明在本地盘却按 minio 去读"，正是这一列存在的理由。⚠️ **顺序警告**：`FileInfo`/`FileInfoVO` 新增了 `storageType` 字段而库里**还没有这一列** ⇒ **必须先跑 `2026-11-06-be-file-storage.sql` 再重启 8094**，反了会让文件类查询整体失败。补丁本轮只落盘。
+
+### 五、登记不修的 12 条，以及我推翻的那一条
+
+`SqlBuilder` 六条（113~118）与 `common/*` 七条（119~125）的完整表格在 **§19.38.4 / §19.38.6**，这里只记取舍标准：**改法要么需要活栈复验（本轮库停），要么是破坏性变更（改鉴权会话键、换 JWT 密钥注入会让全部在册会话失效），要么与前端共用同一份口径需要两侧同改**（权限通配 `sys:*`）。最重的一条是 **API-119**：`AuthInterceptor.java:55-59` 只用 JWT subject 拼 `LoginSessionCache.key(username)`、**不比对 tenantId**，而用户名只在租户内唯一（`uk_tenant_username`）⇒ 跨租户同名账号可能绑到对方的快照（含 super_admin 角色）。我自己读了那三行确认，不是照抄侦察结论。
+
+**推翻的一条要单独记**：侦察报"选 `elasticsearch` 只会得到含糊失败"，实测 `DatasourceServiceImpl` 在 **7 处**（`:49/:133/:149/:169/:209/:262/:353`）已用 `isJdbcSupported()` 显式抛「非JDBC数据源类型不支持连接测试: elasticsearch」，工厂里的 `default:` 分支经服务层不可达 ⇒ **BE4 一行代码没改**，也不为一句文案重启 8083。**判据：侦察报"缺守卫"时，先枚举同名判断在分层里的每一处；`枚举字段为 null` 不等于 `用户看到含糊失败`。**
+
+### 六、交回用户的四件 + 我自己下一轮的两件
+
+**归用户**：① 起库后**先跑 file-service 的补列补丁再重启 8094**；② 重启 8090 让假引擎退场真正生效（**你自己起的进程我不动**）；③ 演示若要自动巡检，设 `ALERT_CHECK_ENABLED=true` 并先把 `notify_channel` 的地址换成可信目标；④ **API-119/120** 的破坏性修法（会话键加 tenantId、JWT 密钥改配置注入）何时做由你拍。
+**下一轮我继续**：#197 后端第二批单测（`NotifyChannelServiceImpl` 58 分支、`ScreenServiceImpl` 53、`DatasourceServiceImpl` 45、`QueryEngine` 26、导出写出器、user/model/gateway 三个零测试服务）、#198 前端 vitest 基建（全仓零测试文件、`pnpm-lock` 里 vitest 零命中 ⇒ 要装依赖，属用户机器上的变更，先问）、#199 调用日志读端点。
