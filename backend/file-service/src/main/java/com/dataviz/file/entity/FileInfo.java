@@ -34,6 +34,9 @@ public class FileInfo {
 
     private String bucket;
 
+    /** 实际处理本文件的存储策略 code（local/minio/...），落库以便日后切换配置时老行仍知道自己存在哪 */
+    private String storageType;
+
     @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 

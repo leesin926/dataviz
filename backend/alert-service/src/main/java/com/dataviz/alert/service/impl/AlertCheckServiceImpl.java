@@ -80,7 +80,14 @@ public class AlertCheckServiceImpl implements AlertCheckService {
     private void checkRule(AlertRule rule) {
         AlertEvaluator.Result result = alertEvaluator.evaluate(rule);
 
-        if (result.getValue() == null || !result.isTriggered()) {
+        if (result.getValue() == null) {
+            // 无法判定（取数成功但没有结果行）：既不算越界，也**不能**清掉首次越界时刻 ——
+            // 否则一次空窗就把 duration 的累计清零，一条要"连续越界 10 分钟"的规则永远差一次取数失败的时间。
+            // 这与 AlertEvaluator 自己的口径一致："无法判定"不等于"未越界"（API-112）。
+            log.info("规则 {} 本轮无法判定，保留已累计的越界状态", rule.getId());
+            return;
+        }
+        if (!result.isTriggered()) {
             // 越界状态被打断，计时重新开始
             cacheHelper.delete(breachKey(rule.getId()));
             return;

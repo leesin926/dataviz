@@ -40,6 +40,9 @@ minio:
 # 本地存储根目录：大屏背景图等静态资源落盘位置，浏览器经 /api/file/view/{id} 免登读取
 file:
   storage:
+    # 写侧存储策略选择：local（默认）| minio。留空不静默默认，会启动即报错（见 StorageStrategyRouter）。
+    # 每条 file_info 落库时记录实际处理的策略（storage_type），切换配置后老行仍按自己记录的类型读。
+    type: ${FILE_STORAGE_TYPE:local}
     local:
       base-path: ${FILE_LOCAL_BASE_PATH:./uploads}
       url-prefix: ${FILE_LOCAL_URL_PREFIX:http://localhost:8094/files/}

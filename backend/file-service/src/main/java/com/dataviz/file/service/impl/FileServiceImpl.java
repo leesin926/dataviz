@@ -11,11 +11,11 @@ import com.dataviz.file.entity.FileInfo;
 import com.dataviz.file.mapper.FileMapper;
 import com.dataviz.file.service.FileService;
 import com.dataviz.file.service.strategy.StorageStrategy;
+import com.dataviz.file.service.strategy.StorageStrategyRouter;
 import com.dataviz.file.vo.FileInfoVO;
 import com.dataviz.file.vo.FileUploadResultVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,15 +42,14 @@ public class FileServiceImpl implements FileService {
     private static final String DOWNLOAD_URL_PREFIX = "/api/file/download/";
 
     private final FileMapper fileMapper;
-    private final StorageStrategy storageStrategy;
+    private final StorageStrategyRouter storageStrategyRouter;
 
     @Value("${minio.bucket:dataviz}")
     private String bucket;
 
-    public FileServiceImpl(FileMapper fileMapper,
-                           @Qualifier("localStorageStrategy") StorageStrategy storageStrategy) {
+    public FileServiceImpl(FileMapper fileMapper, StorageStrategyRouter storageStrategyRouter) {
         this.fileMapper = fileMapper;
-        this.storageStrategy = storageStrategy;
+        this.storageStrategyRouter = storageStrategyRouter;
     }
 
     @Override
@@ -59,12 +58,15 @@ public class FileServiceImpl implements FileService {
         if (file == null || file.isEmpty()) {
             throw new BizException(ErrorCode.FILE_UPLOAD_FAILED);
         }
+        // 写侧策略由配置选定（file.storage.type），并在选定阶段完成 minio 必填项校验；
+        // 校验不过会在这里抛出，落库与策略写入都还没发生，不会留下"记了 local 其实没存"的假行。
+        StorageStrategyRouter.WriteRoute route = storageStrategyRouter.routeForWrite();
         String originalFilename = file.getOriginalFilename();
         String storedName = buildObjectName(originalFilename);
         String bk = (uploadDTO != null && uploadDTO.getBucketName() != null && !uploadDTO.getBucketName().isEmpty())
                 ? uploadDTO.getBucketName() : bucket;
 
-        storageStrategy.upload(file, bk, storedName);
+        route.getStrategy().upload(file, bk, storedName);
 
         FileInfo fileInfo = FileInfo.builder()
                 .fileName(originalFilename)
@@ -72,11 +74,14 @@ public class FileServiceImpl implements FileService {
                 .fileSize(file.getSize())
                 .fileType(file.getContentType())
                 .bucket(bk)
+                // 落"真正处理过它的那个策略"，而不是当前配置值：日后切配置，老行仍知道自己在哪
+                .storageType(route.getStorageType())
                 .createTime(LocalDateTime.now())
                 .build();
         fileMapper.insert(fileInfo);
 
-        log.info("Uploaded file: id={}, name={}, path={}", fileInfo.getId(), originalFilename, storedName);
+        log.info("Uploaded file: id={}, name={}, path={}, storageType={}",
+                fileInfo.getId(), originalFilename, storedName, route.getStorageType());
 
         return FileUploadResultVO.builder()
                 .id(fileInfo.getId())
@@ -85,7 +90,7 @@ public class FileServiceImpl implements FileService {
                 .fileUrl(urlOf(fileInfo))
                 .fileSize(file.getSize())
                 .contentType(file.getContentType())
-                .storageType("local")
+                .storageType(route.getStorageType())
                 .createTime(fileInfo.getCreateTime())
                 .build();
     }
@@ -132,9 +137,13 @@ public class FileServiceImpl implements FileService {
     @Transactional
     public void deleteFile(Long id) {
         FileInfo fileInfo = requireFile(id);
-        storageStrategy.delete(fileInfo.getBucket(), fileInfo.getFilePath());
+        // 按行记录的 storage_type 去删：切了配置也不该拿当前策略去删一个不属于自己的对象。
+        // 路由不过就地拒绝，DB 行保留（宁可留一条看得见的不一致，也不能悄悄删掉指针、留对象在盘上失联）
+        StorageStrategy strategy = storageStrategyRouter.routeForRead(fileInfo.getStorageType());
+        strategy.delete(fileInfo.getBucket(), fileInfo.getFilePath());
         fileMapper.deleteById(id);
-        log.info("Deleted file: id={}, path={}", id, fileInfo.getFilePath());
+        log.info("Deleted file: id={}, path={}, storageType={}",
+                id, fileInfo.getFilePath(), fileInfo.getStorageType());
     }
 
     @Override
@@ -171,7 +180,10 @@ public class FileServiceImpl implements FileService {
     }
 
     private void writeTo(HttpServletResponse response, FileInfo fileInfo, boolean asAttachment) {
-        try (InputStream in = storageStrategy.download(fileInfo.getBucket(), fileInfo.getFilePath())) {
+        // 读侧路由放在 try 之外：拒绝（类型缺失/未接入）是"路由不成立"，
+        // 若塞进 try 会被下面的兜底改写成语义错误的 404 "File content unavailable"
+        StorageStrategy strategy = storageStrategyRouter.routeForRead(fileInfo.getStorageType());
+        try (InputStream in = strategy.download(fileInfo.getBucket(), fileInfo.getFilePath())) {
             String contentType = fileInfo.getFileType() == null ? "application/octet-stream" : fileInfo.getFileType();
             response.setContentType(contentType);
             response.setContentLengthLong(fileInfo.getFileSize() == null ? -1 : fileInfo.getFileSize());

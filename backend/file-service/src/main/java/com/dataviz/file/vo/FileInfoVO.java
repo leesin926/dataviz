@@ -25,6 +25,9 @@ public class FileInfoVO {
 
     private String bucket;
 
+    /** 落库时记录的实际存储策略 code（local/minio/...），供前端与排障定位文件真实所在 */
+    private String storageType;
+
     private Long createBy;
 
     private LocalDateTime createTime;

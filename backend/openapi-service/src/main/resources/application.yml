@@ -30,6 +30,42 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
 
+# 服务间内部口令：与 InternalApiInterceptor（各兄弟服务的 /**/internal/**）同一值，两边必须一致。
+# 留空 = 代理拒绝一切转发（fail-closed），绝不拿空口令去换上游 403。
+internal:
+  api:
+    token: ${INTERNAL_API_TOKEN:dataviz-internal-dev-token}
+
+openapi:
+  # 与网关 gateway.rate-limit.trusted-proxy-hops、本服务 OpenApiAuthFilter 同口径的客户端地址判据：
+  # 默认 0 只信 TCP 对端（审计字段 openapi_log.ip 不能建立在客户端可自写的 XFF 最左值上）；
+  # 只有确实前置了 N 层可信反代、每层往 XFF 末尾追加对端时才配 N。
+  proxy:
+    trusted-proxy-hops: ${OPENAPI_TRUSTED_PROXY_HOPS:0}
+    # 代理直连的超时必须有界：转发发生在用户请求线程上，不沿用共享 RestTemplate 的 15s 口径
+    connect-timeout-ms: 3000
+    read-timeout-ms: 10000
+    # ===== 可调用目标白名单（SSRF 判据：地址只来自这里，不来自请求体；对齐 OutboundUrlGuard 的立场）=====
+    # 只列「验证过存在 /internal/ 内部端点」的服务与其中的只读路径；paths 为空表示该服务没暴露
+    # 内部端点，代理会点名拒绝而不是去打一条注定 401/403 的请求。放开新目标=在这里加条目（或 Nacos 覆盖），
+    # 端口映射见 gateway-service 的 application.yml 路由表。
+    services:
+      # 只读 SQL 查询：控制器映射在 /api/datasource/internal，网关未剥前缀，直连同路径。
+      # 读不读由 datasource-service 的白名单/行数/超时兜底（见 InternalDatasourceController）。
+      datasource:
+        base-url: http://localhost:8083
+        strip-api-prefix: false
+        paths:
+          - /api/datasource/internal/query
+      # 数据集元数据（GET /api/model/internal/dataset/{id}）
+      model:
+        base-url: http://localhost:8085
+        strip-api-prefix: false
+        paths:
+          - /api/model/internal/dataset/{id}
+      # user/alert/ai/schedule 的内部端点返回的是鉴权与运维数据，刻意不放进对外开放口径；
+      # 需要放开时在此加条目，并在安全评审里确认该端点可被外部应用读取。
+
 logging:
   level:
     com.dataviz.openapi: debug
