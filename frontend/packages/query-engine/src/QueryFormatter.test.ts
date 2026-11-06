@@ -70,12 +70,19 @@ describe('query-engine/QueryFormatter.summarize / toPercent —— 汇总口径'
     expect(out).toEqual({ amt: { sum: 15, avg: 7.5, max: 10, min: 5 } })
   })
 
-  it('summarize 把 null 当成 0 计入均值、把非数字串剔掉（缺陷：均值被 null 拉低，按实际行为钉住）', () => {
+  it('null/undefined/空串不进均值分母，非数字串剔除（API-143）', () => {
     // given：后端把缺失指标回成 null 是常态
     const fmt = new QueryFormatter()
     const out = fmt.summarize(result([{ field: 'amt', type: 'number' }], [{ amt: 10 }, { amt: null }, { amt: 'abc' }, { amt: 5 }]))
 
-    expect(out.amt).toEqual({ sum: 15, avg: 5, max: 10, min: 0 })
+    expect(out.amt).toEqual({ sum: 15, avg: 7.5, max: 10, min: 5 })
+  })
+
+  it('整列都是缺失值时 avg 给 null 而不是 0——没有数和等于 0 是两件事（API-143）', () => {
+    const fmt = new QueryFormatter()
+    const out = fmt.summarize(result([{ field: 'amt', type: 'number' }], [{ amt: null }, { amt: undefined }, { amt: '' }]))
+
+    expect(out.amt).toEqual({ sum: null, avg: null, max: null, min: null })
   })
 
   it('数值列一行都没有时不产出该键，调用方不能假定每个 number 列都在汇总里', () => {
@@ -84,19 +91,22 @@ describe('query-engine/QueryFormatter.summarize / toPercent —— 汇总口径'
     expect(fmt.summarize(result([{ field: 'amt', type: 'number' }], []))).toEqual({})
   })
 
-  it('toPercent 返回的是带百分号的字符串数组（签名写的是 number[]，类型与实际不符）', () => {
+  it('toPercent 返回数字（百分点），toPercentLabel 才给带百分号的展示串（API-144）', () => {
     const fmt = new QueryFormatter()
+    const r = result([{ field: 'amt', type: 'number' }], [{ amt: 1 }, { amt: 3 }])
 
-    expect(fmt.toPercent(result([{ field: 'amt', type: 'number' }], [{ amt: 1 }, { amt: 3 }]), 'amt')).toEqual([
-      '25.00%',
-      '75.00%',
-    ])
+    expect(fmt.toPercent(r, 'amt')).toEqual([25, 75])
+    expect(fmt.toPercentLabel(r, 'amt')).toEqual(['25.00%', '75.00%'])
   })
 
-  it('toPercent 在总和为 0 时整列给 0.00%，不产生 NaN；字段不在行里时同样按 0 处理', () => {
+  it('toPercent 在总和为 0 时整列给数字 0，不产生 NaN；字段不在行里时同样按 0 处理', () => {
     const fmt = new QueryFormatter()
 
-    expect(fmt.toPercent(result([{ field: 'amt', type: 'number' }], [{ amt: 0 }, { amt: 0 }]), 'amt')).toEqual(['0.00%', '0.00%'])
-    expect(fmt.toPercent(result([{ field: 'amt', type: 'number' }], [{ other: 1 }]), 'amt')).toEqual(['0.00%'])
+    expect(fmt.toPercent(result([{ field: 'amt', type: 'number' }], [{ amt: 0 }, { amt: 0 }]), 'amt')).toEqual([0, 0])
+    expect(fmt.toPercent(result([{ field: 'amt', type: 'number' }], [{ other: 1 }]), 'amt')).toEqual([0])
+    expect(fmt.toPercentLabel(result([{ field: 'amt', type: 'number' }], [{ amt: 0 }, { amt: 0 }]), 'amt')).toEqual([
+      '0.00%',
+      '0.00%',
+    ])
   })
 })

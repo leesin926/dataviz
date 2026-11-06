@@ -90,9 +90,20 @@ describe('shared-utils/date —— 区间、差值与合法性', () => {
     expect(isValidDate(new Date(2026, 2, 15).getTime())).toBe(true)
   })
 
-  it('isValidDate 对越界月份/日期返回 true：dayjs 直接进位成 2027-02-14（缺陷，按实际行为钉住）', () => {
+  it('isValidDate 按分量校验，越界月份/日期判 false 而不是被 dayjs 进位蒙混（API-150）', () => {
     // given：'2026-13-45' 不可能是一个真实日期
-    expect(isValidDate('2026-13-45')).toBe(true)
+    expect(isValidDate('2026-13-45')).toBe(false)
+    expect(isValidDate('2026-02-30')).toBe(false)
+    expect(isValidDate('2026-04-31')).toBe(false)
+    // 闰年 2/29 合法、平年 2/29 非法
+    expect(isValidDate('2024-02-29')).toBe(true)
+    expect(isValidDate('2023-02-29')).toBe(false)
+    // 时间分量越界同样拒绝
+    expect(isValidDate('2026-03-15 24:00:00')).toBe(false)
+    expect(isValidDate('2026-03-15 10:60:00')).toBe(false)
+    // 合法值仍放行
+    expect(isValidDate('2026-03-15 10:20:30')).toBe(true)
+    // dayjs 的进位行为本身没变，只是 isValidDate 不再采信它
     expect(formatDate('2026-13-45', 'YYYY-MM-DD')).toBe('2027-02-14')
   })
 })

@@ -9,10 +9,14 @@ import { QueryParser } from './QueryParser'
 export class QueryEngine {
   private cache: QueryCache
   private parser: QueryParser
+  /** 在途请求表：按 (datasetId + 序列化查询) 建键，并发同参调用共享同一个 promise（API-142）。
+   *  这是"在途"的去重、不是结果缓存 —— 结算即移除，之后的同参调用会重新打后端。 */
+  private inflight: Map<string, Promise<QueryResult>>
 
   constructor(cacheSize = 50) {
     this.cache = new QueryCache(cacheSize)
     this.parser = new QueryParser()
+    this.inflight = new Map()
   }
 
   /**
@@ -23,12 +27,27 @@ export class QueryEngine {
     if (useCache) {
       const cached = this.cache.get(cacheKey)
       if (cached) return cached
+      const pending = this.inflight.get(cacheKey)
+      if (pending) return pending
     }
-    const result = await executeQuery(query)
+
+    const promise = (async () => {
+      const result = await executeQuery(query)
+      if (useCache) {
+        this.cache.set(cacheKey, result)
+      }
+      return result
+    })()
+
     if (useCache) {
-      this.cache.set(cacheKey, result)
+      this.inflight.set(cacheKey, promise)
+      const release = () => {
+        // 只清自己这一条：结算期间可能已有新的同 key 请求挂上，不能把它误删
+        if (this.inflight.get(cacheKey) === promise) this.inflight.delete(cacheKey)
+      }
+      void promise.then(release, release)
     }
-    return result
+    return promise
   }
 
   /**

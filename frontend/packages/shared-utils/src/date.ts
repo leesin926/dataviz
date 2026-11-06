@@ -58,11 +58,48 @@ export function diffDays(a: Date | string | number, b: Date | string | number): 
   return Math.abs(dayjs(a).diff(dayjs(b), 'day'))
 }
 
+/** 某年某月的天数，含闰年二月判定（API-150） */
+function daysInMonth(year: number, month: number): number {
+  const lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  if (month === 2 && ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0)) return 29
+  return lengths[month - 1]
+}
+
 /**
  * 判断是否是合法日期
+ * dayjs 会把 '2026-13-45' 这类越界串直接进位成 2027-02-14 并判为有效（API-150）。
+ * 对完整日期串改为按分量校验：月 1-12、日落在当月天数（含闰年）、时分秒在各自范围内。
  */
 export function isValidDate(date: unknown): boolean {
-  return dayjs(date as string).isValid()
+  if (typeof date === 'string') return isValidDateString(date)
+  if (typeof date === 'number') return Number.isFinite(date) && dayjs(date).isValid()
+  if (date instanceof Date) return !Number.isNaN(date.getTime())
+  if (date === null || date === undefined) return false
+  return dayjs(date as never).isValid()
+}
+
+function isValidDateString(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  const m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/.exec(trimmed)
+  if (!m) {
+    // 非"完整日期[时间]"形态（如纯时间串、相对串）仍交回 dayjs 宽松判定，避免过度收窄合法入参
+    return dayjs(trimmed).isValid()
+  }
+  const year = Number(m[1])
+  const month = Number(m[2])
+  const day = Number(m[3])
+  if (month < 1 || month > 12) return false
+  if (day < 1 || day > daysInMonth(year, month)) return false
+  if (m[4] !== undefined) {
+    const hour = Number(m[4])
+    const minute = Number(m[5])
+    const second = m[6] === undefined ? 0 : Number(m[6])
+    if (hour < 0 || hour > 23) return false
+    if (minute < 0 || minute > 59) return false
+    if (second < 0 || second > 59) return false
+  }
+  return true
 }
 
 export { dayjs }

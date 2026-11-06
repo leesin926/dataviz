@@ -91,11 +91,11 @@ describe('shared-utils/storage —— localStorage 读写', () => {
     expect(getLocal('broken')).toBeNull()
   })
 
-  it('裸值（不带 value 信封）的历史数据读出来是 undefined 而不是 null，判空分支会漏（缺陷，按实际行为钉住）', () => {
+  it('裸值（不带 value 信封）的历史数据按 corrupt 处理返回 null，而不是 undefined（API-149）', () => {
     // given：老版本或其他系统直接 setItem('dataviz_x', '"abc"')
     local.store.set('dataviz_legacy', JSON.stringify('abc'))
 
-    expect(getLocal('legacy')).toBeUndefined()
+    expect(getLocal('legacy')).toBeNull()
   })
 
   it('setItem 抛异常（配额超限）时 setLocal 只打一条 console.error，读回来仍是 null', () => {

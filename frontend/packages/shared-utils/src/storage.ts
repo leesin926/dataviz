@@ -35,12 +35,16 @@ export function getLocal<T>(key: string): T | null {
   try {
     const raw = window.localStorage.getItem(makeKey(key))
     if (!raw) return null
-    const item: StorageItem<T> = JSON.parse(raw)
-    if (item.expireAt && Date.now() > item.expireAt) {
+    const item = JSON.parse(raw) as unknown
+    // 契约：setLocal 永远落 { value, expireAt? } 信封。所谓"corrupt" = 顶层不是带 value 字段的信封对象
+    // （裸值历史数据如 "abc"/0/数组、或解析出的标量），一律按缺失处理返回 null，而不是把 undefined 漏给调用方（API-149）。
+    if (item === null || typeof item !== 'object' || !('value' in item)) return null
+    const env = item as StorageItem<T>
+    if (env.expireAt && Date.now() > env.expireAt) {
       window.localStorage.removeItem(makeKey(key))
       return null
     }
-    return item.value
+    return env.value
   } catch (e) {
     return null
   }

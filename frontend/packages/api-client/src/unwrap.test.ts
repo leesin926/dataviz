@@ -3,8 +3,10 @@ import { asPage, mapPage, unwrap } from './unwrap'
 
 /**
  * 后端信封 R 的口径：`{ code, message, data }`，成功码是 0 和 200 两种；
- * 另有 dashboard-service 直接回裸对象/裸 Page。unwrap 只看"是不是信封形状"，
- * 不看 code 的取值 —— 业务错误码的拦截责任在 request.ts 的响应拦截器（第 60 行）。
+ * 另有 dashboard-service 直接回裸对象/裸 Page。unwrap 现在既是信封拆包器，也是 code 的权威判据：
+ * 认到信封形状且 code ∉ {0, 200} 就直接抛 Error(message)（API-151）。
+ * request.ts 的响应拦截器仍保留对 code 的检查，负责"经 axios 发出"的请求出口；
+ * 两层各拦一段——拦截器管网络出口，unwrap 管任何信封的入口，避免半个检查在两处都能漏。
  */
 describe('api-client/unwrap —— 信封拆包', () => {
   it('code=0 与 code=200 都只取 data，业务对象原样返回', () => {
@@ -30,10 +32,12 @@ describe('api-client/unwrap —— 信封拆包', () => {
     expect(unwrap(payload)).toBe(payload)
   })
 
-  it('非 0/200 的业务错误码不看：只要带 data 键就照样把 data 当业务数据返回（缺陷，按实际行为钉住）', () => {
+  it('非 0/200 的业务错误码一律抛 Error(message)，即便带 data 也不算成功（API-151）', () => {
     // given：SQL 报错时后端仍可能带一个空 data 壳，绕过拦截器直连的服务会走到这里
-    expect(unwrap({ code: 5000, message: 'SQL 执行失败', data: { rows: [] } })).toEqual({ rows: [] })
-    expect(unwrap({ code: 500, message: '内部错误', data: null })).toBeNull()
+    expect(() => unwrap({ code: 5000, message: 'SQL 执行失败', data: { rows: [] } })).toThrow('SQL 执行失败')
+    expect(() => unwrap({ code: 500, message: '内部错误', data: null })).toThrow('内部错误')
+    // message 缺失时抛出兜底文案，而不是悄悄返回坏 data
+    expect(() => unwrap({ code: -1, data: { rows: [] } })).toThrow('请求失败')
   })
 
   it('非 JSON 响应体（字符串/数字）与 null / undefined 一律原样透传', () => {

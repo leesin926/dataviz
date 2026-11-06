@@ -25,13 +25,25 @@ describe('query-engine/SqlParser.validate —— 只读语句的结构检查', (
     expect(SqlParser.validate('SELECT id, is_deleted FROM sys_user')).toEqual({ valid: true, errors: [] })
   })
 
-  it('分号多语句不做任何提示（检测分支是空的，只能靠后端拦）', () => {
-    // given：注入面最需要拦的写法，前端只因为 DROP 才报错
+  it('分号多语句被拒绝并报出语句条数，字符串/注释里的分号不算分隔符（API-141）', () => {
+    // given：注入面最需要拦的写法，前端现在与后端 resolveFrom 同一套语义（先掩字面量/注释）
     const out = SqlParser.validate('SELECT id FROM sys_user; DROP TABLE sys_user')
 
-    expect(out.errors).toEqual(['警告: SQL 包含危险操作 "DROP"'])
-    expect(SqlParser.validate('SELECT 1 FROM t; SELECT 2 FROM d').valid).toBe(true)
-    expect(SqlParser.validate('SELECT 1 FROM t; SELECT 2 FROM d').errors).toEqual([])
+    expect(out.valid).toBe(false)
+    expect(out.errors).toEqual([
+      'SQL 包含 2 条语句，禁止一次执行多条',
+      '警告: SQL 包含危险操作 "DROP"',
+    ])
+
+    // 纯多读语句此前会 pass，现在按语义拒绝并给出条数
+    const twoReads = SqlParser.validate('SELECT 1 FROM t; SELECT 2 FROM d')
+    expect(twoReads.valid).toBe(false)
+    expect(twoReads.errors).toEqual(['SQL 包含 2 条语句，禁止一次执行多条'])
+
+    // 但字符串字面量与注释里的 ';' 不是分隔符，只读单语句照常放行（尾部单个 ';' 也不算多语句）
+    expect(SqlParser.validate("SELECT 'a;b' AS k FROM t")).toEqual({ valid: true, errors: [] })
+    expect(SqlParser.validate('SELECT 1 FROM t -- x;y\n')).toEqual({ valid: true, errors: [] })
+    expect(SqlParser.validate('SELECT 1 FROM t;')).toEqual({ valid: true, errors: [] })
   })
 })
 
@@ -54,16 +66,17 @@ describe('query-engine/SqlParser.format / extractTableNames / getCompletions', (
     ])
   })
 
-  it('extractTableNames 漏掉逗号连接的第二张表（缺陷，按实际行为钉住）', () => {
-    // given：隐式笛卡尔积写法，表确实出现在 SQL 里
+  it('extractTableNames 收全逗号连接的两张表（API-145）', () => {
+    // given：隐式笛卡尔积写法，两张表都真实出现在 SQL 里
     expect(SqlParser.extractTableNames('SELECT * FROM sys_user, sys_dept WHERE sys_user.dept_id = sys_dept.id')).toEqual([
       'sys_user',
+      'sys_dept',
     ])
   })
 
-  it('getCompletions 前缀大小写不敏感，但关键字表与函数表的重名项会重复给出（缺陷）', () => {
+  it('getCompletions 前缀大小写不敏感，关键字/函数同名项去重且关键字优先（API-146）', () => {
     expect(SqlParser.getCompletions('sel')).toEqual(['SELECT'])
-    expect(SqlParser.getCompletions('SUM')).toEqual(['SUM', 'SUM'])
-    expect(SqlParser.getCompletions('max')).toEqual(['MAX', 'MAX'])
+    expect(SqlParser.getCompletions('SUM')).toEqual(['SUM'])
+    expect(SqlParser.getCompletions('max')).toEqual(['MAX'])
   })
 })

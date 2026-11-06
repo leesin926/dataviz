@@ -52,9 +52,11 @@ describe('shared-utils/color —— 渐变色带与取色', () => {
     ])
   })
 
-  it('generateGradient 的 steps=1 会除以零算出 NaN，色值退化成字符串 #NaNNaNNaN（缺陷，按实际行为钉住）', () => {
+  it('generateGradient 的 steps=1 返回起始色端点本身，不再除以零算出 #NaNNaNNaN（API-148）', () => {
     // given：单点图例/单色系列是最常见的 steps=1 场景
-    expect(generateGradient('#000000', '#ffffff', 1)).toEqual(['#NaNNaNNaN'])
+    expect(generateGradient('#000000', '#ffffff', 1)).toEqual(['#000000'])
+    // steps<=0 没有可生成的色
+    expect(generateGradient('#000000', '#ffffff', 0)).toEqual([])
   })
 
   it('getColorByIndex 超出调色板长度时回绕，而不是越界取空', () => {
@@ -64,7 +66,11 @@ describe('shared-utils/color —— 渐变色带与取色', () => {
     expect(getColorByIndex(11)).toBe('#fac858')
   })
 
-  it('getColorByIndex 传负索引时返回 undefined（取色方会拿到 undefined 色值）', () => {
-    expect(getColorByIndex(-1)).toBeUndefined()
+  it('getColorByIndex 负索引按长度回绕（Python 风格），不再返回 undefined（API-148）', () => {
+    expect(getColorByIndex(-1)).toBe('#ea7ccc')
+    expect(getColorByIndex(-9)).toBe('#5470c6')
+    expect(getColorByIndex(-10)).toBe('#ea7ccc')
+    // 空调色板维持既有语义：越界/空表仍取到 undefined
+    expect(getColorByIndex(0, [])).toBeUndefined()
   })
 })

@@ -24,6 +24,9 @@ export function debounce<T extends Fn>(fn: T, delay = 300): (...args: Parameters
 export function throttle<T extends Fn>(fn: T, interval = 200): (...args: Parameters<T>) => void {
   let last = 0
   let timer: ReturnType<typeof setTimeout> | null = null
+  // 记录静默期内最后一次收到的入参，补发定时器触发时用它，而不是挂定时器那一次的（API-147）。
+  let pendingArgs: Parameters<T> | null = null
+  let pendingThis: unknown
   return function (this: unknown, ...args: Parameters<T>) {
     const now = Date.now()
     const remaining = interval - (now - last)
@@ -31,15 +34,24 @@ export function throttle<T extends Fn>(fn: T, interval = 200): (...args: Paramet
       if (timer) {
         clearTimeout(timer)
         timer = null
+        pendingArgs = null
       }
       last = now
       fn.apply(this, args)
-    } else if (!timer) {
-      timer = setTimeout(() => {
-        last = Date.now()
-        timer = null
-        fn.apply(this, args)
-      }, remaining)
+    } else {
+      pendingArgs = args
+      pendingThis = this
+      if (!timer) {
+        timer = setTimeout(() => {
+          last = Date.now()
+          timer = null
+          const trailing = pendingArgs ?? args
+          const trailingThis = pendingThis
+          pendingArgs = null
+          pendingThis = undefined
+          fn.apply(trailingThis, trailing)
+        }, remaining)
+      }
     }
   }
 }

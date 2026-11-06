@@ -76,7 +76,7 @@ describe('shared-utils/debounce —— 节流与延时', () => {
     vi.useRealTimers()
   })
 
-  it('throttle 静默期内只有第一次调用能挂上补发定时器，后续入参被丢弃（缺陷，按实际行为钉住）', () => {
+  it('throttle 静默期内的多次调用，补发定时器触发时用最后一次入参（API-147）', () => {
     const spy = vi.fn()
     const run = throttle(spy, 200)
 
@@ -84,7 +84,7 @@ describe('shared-utils/debounce —— 节流与延时', () => {
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0]).toEqual(['first'])
 
-    // when：50ms 后来的两次，第二次挂不上定时器
+    // when：50ms 后来的两次，挂上补发定时器；'third' 是最后一次收到的入参
     vi.advanceTimersByTime(50)
     run('second')
     run('third')
@@ -92,8 +92,8 @@ describe('shared-utils/debounce —— 节流与延时', () => {
 
     vi.advanceTimersByTime(150)
     expect(spy).toHaveBeenCalledTimes(2)
-    // then：补发的是 second 而不是最后一次的 third —— 与 debounce 的尾部语义相反
-    expect(spy.mock.calls[1]).toEqual(['second'])
+    // then：补发的是最后一次入参 third，与 debounce 的尾部语义一致
+    expect(spy.mock.calls[1]).toEqual(['third'])
   })
 
   it('throttle 超过间隔后再次调用会立刻执行，不排队', () => {

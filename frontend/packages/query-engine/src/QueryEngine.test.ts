@@ -71,15 +71,16 @@ describe('query-engine/QueryEngine —— 缓存与后端调用的对应关系',
     expect(query).toHaveBeenCalledTimes(2)
   })
 
-  it('executeBatch 里同参查询不做 in-flight 去重，几条并发就打后端几次（缺陷，按实际行为钉住）', async () => {
+  it('executeBatch 里同参并发查询按 key 去重，只打后端一次（API-142）', async () => {
     query.mockResolvedValue(res('A'))
     const engine = new QueryEngine()
 
     const out = await engine.executeBatch([q(), q(), q({ datasetId: 2 })])
 
-    // then：缓存要等首次请求 resolve 后才写入，并发批次全部落到后端
-    expect(query).toHaveBeenCalledTimes(3)
+    // then：两条同参的 q() 共享一个在途 promise，datasetId=2 是不同的 key 另发一次
+    expect(query).toHaveBeenCalledTimes(2)
     expect(out).toHaveLength(3)
+    expect(out[0]).toBe(out[1])
   })
 
   it('串行执行完一次的查询再进批次时能命中缓存，批次只补打未缓存的那条', async () => {

@@ -92,6 +92,10 @@ export function adjustBrightness(hex: string, amount: number): string {
 export function generateGradient(startHex: string, endHex: string, steps: number): string[] {
   const start = hexToRgba(startHex)
   const end = hexToRgba(endHex)
+  // steps<=0：没有可生成的色；steps===1：单点即端点，返回起始色本身，
+  // 不能再除以 (steps-1)=0 算出 NaN（API-148）。
+  if (steps <= 0) return []
+  if (steps === 1) return [rgbaToHex(start)]
   const result: string[] = []
   for (let i = 0; i < steps; i++) {
     const t = i / (steps - 1)
@@ -125,5 +129,9 @@ export const DEFAULT_PALETTE = [
  * 按索引取色 (循环)
  */
 export function getColorByIndex(index: number, palette: string[] = DEFAULT_PALETTE): string {
-  return palette[index % palette.length]
+  const len = palette.length
+  // 空调色板保持既有语义：palette[NaN] === undefined（越界索引 → undefined）。
+  if (len === 0) return palette[index % len]
+  // 非空调色板按长度取模回绕，负索引走 Python 风格回绕，绝不返回 undefined（API-148）。
+  return palette[((index % len) + len) % len]
 }

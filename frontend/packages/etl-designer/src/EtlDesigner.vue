@@ -6,6 +6,7 @@
     <div class="etl-canvas" ref="canvasRef"></div>
     <div class="etl-property-panel">
       <PropertyPanel v-if="selectedNode" :node="selectedNode" @update="handleUpdateNode" />
+      <div v-else-if="multiCount > 1" class="empty-hint">已选 {{ multiCount }} 个节点（多选，暂不支持批量编辑）</div>
       <div v-else class="empty-hint">请选择节点查看属性</div>
     </div>
     <div class="etl-minimap">
@@ -45,13 +46,23 @@
 
   const canvasRef = ref<HTMLDivElement | null>(null)
   const selectedNode = ref<EtlNode | null>(null)
+  const multiCount = ref(0)
   const manager = new GraphManager()
 
   onMounted(() => {
     if (canvasRef.value) {
       manager.init(canvasRef.value)
       manager.onNodeSelect((node) => {
+        // 单选：node:click 精确命中一个节点，直接展示其属性
         selectedNode.value = node
+        multiCount.value = 1
+      })
+      // 多选/框选：selection:changed 给出选中节点集合。多选时不假装能编辑其中一个，
+      // 清空属性面板并显示“已选 N 个节点”，避免误导（本仓既定规则）。
+      manager.onSelectionChange((nodes) => {
+        multiCount.value = nodes.length
+        if (nodes.length === 1) selectedNode.value = nodes[0]
+        else selectedNode.value = null
       })
       if (props.task?.dag) {
         manager.loadDag(props.task.dag)
@@ -102,6 +113,7 @@
   function handleClear() {
     manager.clear()
     selectedNode.value = null
+    multiCount.value = 0
   }
 
   function validateDag(dag: { nodes: EtlNode[]; edges: EtlEdge[] }): string[] {

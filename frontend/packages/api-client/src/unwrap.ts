@@ -24,7 +24,19 @@ interface LoosePage<T> {
 /** 取出业务数据：兼容 R 信封与裸响应 */
 export function unwrap<T>(payload: unknown): T {
   const p = payload as (Partial<R<T>> & Record<string, unknown>) | null | undefined
-  if (p && typeof p === 'object' && typeof p.code === 'number' && 'data' in p) return p.data as T
+  if (p && typeof p === 'object' && typeof p.code === 'number' && 'data' in p) {
+    // 拆包层是信封成败的权威判据（API-151）：code ∉ {0, 200} 时即使带 data 也当业务错误抛出，
+    // 否则后端把空壳 data（如 SQL 报错时 data:{rows:[]}）连同非 0 code 一起返回，就会被静默当成成功。
+    //
+    // 与 request.ts 响应拦截器的分工：拦截器只对"经 axios 发出"的请求生效，命中非 0 code 会先 reject；
+    // 这里保留对 code 的判定，是因为 unwrap 还被直接调用在缓存/内部拼装等旁路响应上，那些没经过拦截器。
+    // 两层不是重复造轮子——拦截器管网络出口，unwrap 管"任何信封的入口"，各拦一段才能杜绝半个检查。
+    if (p.code !== 0 && p.code !== 200) {
+      const message = typeof p.message === 'string' && p.message ? p.message : '请求失败'
+      throw new Error(message)
+    }
+    return p.data as T
+  }
   return payload as T
 }
 
