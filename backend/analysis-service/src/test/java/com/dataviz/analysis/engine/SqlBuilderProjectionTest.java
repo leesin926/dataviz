@@ -258,16 +258,26 @@ class SqlBuilderProjectionTest {
     }
 
     @Test
-    @DisplayName("同一维度配两次 - 不去重，投影和 GROUP BY 各出现两次")
-    void should_repeatGroupByItem_when_sameDimensionConfiguredTwice() {
+    @DisplayName("同一维度配两次 - 合并成一条，投影与 GROUP BY 都只出现一次")
+    void should_deduplicate_when_sameDimensionConfiguredTwice() {
         AnalysisQueryDTO q = query(Arrays.asList(dim("region"), dim("region")), metric("amount", "sum", null));
 
         String sql = sqlBuilder.buildSql(q, tableMeta("dwd_sales_daily"));
 
-        // Then 实际行为：逐字重复，没有 DISTINCT/去重（结果集不变，但列头会多一列同名的 region）
-        assertThat(countOf(sql, "`region`, `region`")).isEqualTo(2);
-        assertThat(sql).contains("SELECT `region`, `region`, SUM(`amount`) AS `sum_amount`")
-                .contains("GROUP BY `region`, `region`");
+        // Then 同字段同粒度合并：重复列头会让前端按名取值时拿到两列同名的结果（API-108 那一族的形状）
+        assertThat(sql).isEqualTo("SELECT `region`, SUM(`amount`) AS `sum_amount`"
+                + " FROM `dwd_sales_daily` GROUP BY `region` LIMIT 1000");
+    }
+
+    @Test
+    @DisplayName("同一字段配两种日期粒度 - 拒绝，因为两条投影会撞成同一个列名")
+    void should_reject_when_sameFieldHasTwoGranularities() {
+        AnalysisQueryDTO q = query(Arrays.asList(dim("created_at", "day"), dim("created_at", "month")),
+                metric("amount", "sum", null));
+
+        assertThatThrownBy(() -> sqlBuilder.buildSql(q, tableMeta("dwd_sales_daily")))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("两种日期粒度");
     }
 
     @Test
@@ -305,16 +315,16 @@ class SqlBuilderProjectionTest {
                 .isInstanceOf(BizException.class)
                 .hasMessageContaining("不是只读查询");
 
-        // CTE 与注释开头的写法都不在 SELECT 前缀白名单里
+        // CTE 不在 SELECT 前缀白名单里（本轮不改判据口径：要放就得单独定 WITH 的规则）
         assertThatThrownBy(() -> sqlBuilder.buildSql(query(null, metric("a", "sum", null)),
                 sqlMeta("WITH s AS (SELECT 1 AS a) SELECT * FROM s")))
                 .isInstanceOf(BizException.class)
                 .hasMessageContaining("不是只读查询");
 
-        assertThatThrownBy(() -> sqlBuilder.buildSql(query(null, metric("a", "sum", null)),
-                sqlMeta("-- 说明\nSELECT 1 AS a")))
-                .isInstanceOf(BizException.class)
-                .hasMessageContaining("不是只读查询");
+        // Then 行注释开头不再算"不是只读"：判据看的是掩掉注释之后的第一个词（API-115 同一处修的过度拒绝）
+        String commented = sqlBuilder.buildSql(query(Collections.singletonList(dim("a")), metric("a", "count", null)),
+                sqlMeta("-- 说明\nSELECT 1 AS a"));
+        assertThat(commented).contains("FROM (-- 说明\nSELECT 1 AS a) t_source");
     }
 
     @Test
@@ -327,31 +337,40 @@ class SqlBuilderProjectionTest {
     }
 
     @Test
-    @DisplayName("【记录实际行为】字面量里带分号的合法只读 SQL 也被当成多条语句拒了")
-    void should_reject_when_customSqlHoldsSemicolonInsideAStringLiteral() {
+    @DisplayName("字面量里带分号的只读 SQL - 不再被当成多条语句（API-115 已修）")
+    void should_accept_when_customSqlHoldsSemicolonInsideAStringLiteral() {
         // Given 完全只读，只是常量里含分号
         AnalysisQueryDTO q = query(Collections.singletonList(dim("k")), metric("v", "count", null));
         String customSql = "SELECT 'a;b' AS k, 1 AS v FROM dual";
 
-        // Then 分号检查扫的是整段文本，没跳过字符串字面量 → 合法数据集直接 400
-        assertThatThrownBy(() -> sqlBuilder.buildSql(q, sqlMeta(customSql)))
+        // Then 分号判据扫的是"掩掉字面量与注释之后"的文本，原样语句仍然进来源子查询
+        String sql = sqlBuilder.buildSql(q, sqlMeta(customSql));
+        assertThat(sql).contains("FROM (SELECT 'a;b' AS k, 1 AS v FROM dual) t_source");
+
+        // And 真多条语句仍然拒绝 —— 掩码只吃掉字面量里的分号，不吃语法分号
+        assertThatThrownBy(() -> sqlBuilder.buildSql(q, sqlMeta("SELECT 'a;b' AS k; DELETE FROM t")))
                 .isInstanceOf(BizException.class)
-                .hasMessageContaining("数据集自定义 SQL 含多条语句，拒绝作为查询来源");
+                .hasMessageContaining("含多条语句");
     }
 
     @Test
-    @DisplayName("【记录实际行为】只读前缀判据只看第一个词，SELECT 之后的写/锁子句原样进子查询")
-    void should_passThroughVerbatim_when_customSqlStartsWithSelectButWritesToFile() {
+    @DisplayName("SELECT 之后的写/锁子句被拒绝（API-114 已修）：前缀判据不再单独把关")
+    void should_reject_when_customSqlStartsWithSelectButWritesToFile() {
         // Given 以 SELECT 开头、尾部带 INTO OUTFILE（落盘）与 FOR UPDATE（加锁）的语句
         AnalysisQueryDTO q = query(Collections.singletonList(dim("a")), metric("a", "count", null));
 
-        String outfile = sqlBuilder.buildSql(q, sqlMeta("SELECT a FROM t INTO OUTFILE 'D:/dump/a.csv'"));
-        String locking = sqlBuilder.buildSql(q, sqlMeta("SELECT a FROM t FOR UPDATE"));
+        assertThatThrownBy(() -> sqlBuilder.buildSql(q,
+                sqlMeta("SELECT a FROM t INTO OUTFILE 'D:/dump/a.csv'")))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("INTO OUTFILE");
 
-        // Then 两条都原样包进来源子查询，前缀判据拦不住它们
-        assertThat(outfile).contains("FROM (SELECT a FROM t INTO OUTFILE 'D:/dump/a.csv') t_source");
-        assertThat(locking).contains("FROM (SELECT a FROM t FOR UPDATE) t_source");
-        assertThat(outfile).doesNotContain("t_source FOR UPDATE");
+        assertThatThrownBy(() -> sqlBuilder.buildSql(q, sqlMeta("SELECT a FROM t FOR UPDATE")))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("FOR UPDATE");
+
+        // 关键词写在字符串字面量里时不算写操作，否则连"备注列"都建不了数据集
+        String benign = sqlBuilder.buildSql(q, sqlMeta("SELECT 'FOR UPDATE' AS a FROM t"));
+        assertThat(benign).contains("FROM (SELECT 'FOR UPDATE' AS a FROM t) t_source");
     }
 
     @Test
@@ -410,20 +429,57 @@ class SqlBuilderProjectionTest {
     }
 
     @Test
-    @DisplayName("【记录实际行为】维度上的 dateFormat 被完全忽略，不生成任何日期分桶表达式")
-    void should_ignoreDateFormat_when_dimensionRequestsBucketing() {
-        // Given 前端配了"按月"粒度
+    @DisplayName("日期粒度 - 生成 DATE_FORMAT 分桶并投影回原列名（API-113 已修：此前 dateFormat 零引用）")
+    void should_bucketByDateFormat_when_dimensionRequestsGranularity() {
+        // Given 一个用粒度词、一个用模式串，两种写法都该认
         AnalysisQueryDTO q = query(Arrays.asList(dim("created_at", "month"), dim("order_date", "yyyy-MM")),
                 metric("amount", "sum", null));
 
         String sql = sqlBuilder.buildSql(q, tableMeta("dwd_sales_daily"));
 
-        // Then 实际输出是裸列，粒度配置静默丢失：折线图的 x 轴退化成逐条时间戳
-        assertThat(sql).isEqualTo("SELECT `created_at`, `order_date`, SUM(`amount`) AS `sum_amount`"
-                + " FROM `dwd_sales_daily` GROUP BY `created_at`, `order_date` LIMIT 1000");
-        assertThat(sql).doesNotContainIgnoringCase("DATE_FORMAT")
-                .doesNotContainIgnoringCase("DATE_TRUNC")
-                .doesNotContainIgnoringCase("month");
+        // Then 别名仍是列名本身 —— 前端按 dim.field 取值，换名就等于把 API-108 再犯一次
+        assertThat(sql).isEqualTo("SELECT DATE_FORMAT(`created_at`, '%Y-%m') AS `created_at`,"
+                + " DATE_FORMAT(`order_date`, '%Y-%m') AS `order_date`, SUM(`amount`) AS `sum_amount`"
+                + " FROM `dwd_sales_daily`"
+                + " GROUP BY DATE_FORMAT(`created_at`, '%Y-%m'), DATE_FORMAT(`order_date`, '%Y-%m') LIMIT 1000");
+    }
+
+    @Test
+    @DisplayName("日期粒度 - 六种粒度和大小写/下划线写法都落到各自的模式串")
+    void should_mapEachGranularity_when_spelledAnyWay() {
+        assertThat(bucketOf("day")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y-%m-%d')");
+        assertThat(bucketOf("HOUR")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y-%m-%d %H')");
+        assertThat(bucketOf("minute")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y-%m-%d %H:%i')");
+        assertThat(bucketOf("year")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y')");
+        assertThat(bucketOf("quarter")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y-Q%q')");
+        assertThat(bucketOf("week")).isEqualTo("DATE_FORMAT(`stat_date`, '%x-W%v')");
+        assertThat(bucketOf("YYYY_MM_DD")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y-%m-%d')");
+        assertThat(bucketOf("yyyy-MM-dd HH:mm:ss")).isEqualTo("DATE_FORMAT(`stat_date`, '%Y-%m-%d %H:%i:%s')");
+    }
+
+    @Test
+    @DisplayName("日期粒度 - 空白即不分桶；认不出来的值拒绝并列出可用粒度，而不是原样塞进 DATE_FORMAT")
+    void should_rejectUnknownGranularity_when_notWhitelisted() {
+        AnalysisQueryDTO plain = query(Collections.singletonList(dim("created_at", "  ")),
+                metric("amount", "sum", null));
+        assertThat(sqlBuilder.buildSql(plain, tableMeta("t")))
+                .isEqualTo("SELECT `created_at`, SUM(`amount`) AS `sum_amount`"
+                        + " FROM `t` GROUP BY `created_at` LIMIT 1000");
+
+        AnalysisQueryDTO bogus = query(Collections.singletonList(dim("created_at", "%Y; DROP")),
+                metric("amount", "sum", null));
+        assertThatThrownBy(() -> sqlBuilder.buildSql(bogus, tableMeta("t")))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("不支持的日期粒度")
+                .hasMessageContaining("month");
+    }
+
+    private String bucketOf(String granularity) {
+        AnalysisQueryDTO q = query(Collections.singletonList(dim("stat_date", granularity)),
+                metric("amount", "sum", null));
+        String sql = sqlBuilder.buildSql(q, tableMeta("dws_store_sales"));
+        int start = sql.indexOf("DATE_FORMAT");
+        return sql.substring(start, sql.indexOf(" AS `stat_date`"));
     }
 
     @Test

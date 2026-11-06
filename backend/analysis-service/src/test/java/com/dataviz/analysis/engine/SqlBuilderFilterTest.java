@@ -324,13 +324,21 @@ class SqlBuilderFilterTest {
     }
 
     @Test
-    @DisplayName("【记录实际行为】LIKE 不校验空值：null 取值被渲染成字符串 'null' 的匹配模式")
-    void should_matchLiteralNullText_when_likeValueIsMissing() {
-        String sql = sqlBuilder.buildSql(filtered(filter("name", "like", null)), meta());
+    @DisplayName("LIKE 的空值与比较类操作符同口径拒绝（API-116 已修：原先渲染成 '%null%'）")
+    void should_reject_when_likeValueIsMissing() {
+        assertThatThrownBy(() -> sqlBuilder.buildSql(filtered(filter("name", "like", null)), meta()))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("过滤值不能为空");
 
-        // Then 字面量是 '%null%'，会匹配到名字里真含 "null" 的行，而不是"没配值"的语义
-        assertThat(sql).isEqualTo("SELECT * FROM `dwd_orders` WHERE `name` LIKE '%null%' LIMIT 1000");
-        assertThat(sql).doesNotContain("IS NULL");
+        // 空串是"用户真的没写关键词"的另一种输入，保留原语义（匹配全部），但它必须显式发生而不是变成 'null'
+        assertThat(sqlBuilder.buildSql(filtered(filter("name", "like", "")), meta()))
+                .isEqualTo("SELECT * FROM `dwd_orders` WHERE `name` LIKE '%%' LIMIT 1000");
+
+        // 数组取值同样拒绝：String.valueOf(list) 会把 "[a, b]" 当关键词去匹配
+        assertThatThrownBy(() -> sqlBuilder.buildSql(
+                filtered(filter("name", "like", Arrays.asList("a", "b"))), meta()))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("不接受数组");
     }
 
     @Test

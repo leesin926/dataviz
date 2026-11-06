@@ -42,7 +42,18 @@
           <div class="query-config">
             <div class="config-row">
               <span class="config-label">{{ t('analysis.dimension') }}:</span>
-              <el-tag v-for="(d, i) in queryDimensions" :key="i" closable @close="removeDim(i)">{{ d.field }}</el-tag>
+              <span v-for="(d, i) in queryDimensions" :key="i" class="dim-chip">
+                <el-tag closable type="info" @close="removeDim(i)">{{ d.field }}</el-tag>
+                <el-select
+                  v-model="d.dateFormat"
+                  size="small"
+                  clearable
+                  class="granularity-select"
+                  :placeholder="t('analysis.granularityRaw')"
+                >
+                  <el-option v-for="g in GRANULARITIES" :key="g.value" :label="t(g.label)" :value="g.value" />
+                </el-select>
+              </span>
               <span v-if="!queryDimensions.length" class="dv-text-3">-</span>
             </div>
             <div class="config-row">
@@ -113,8 +124,22 @@
   const datasetId = ref<string | number>('')
   const dimensions = ref<QueryDataset['dimensions']>([])
   const measures = ref<QueryDataset['measures']>([])
-  const queryDimensions = ref<Array<{ field: string }>>([])
+  const queryDimensions = ref<Array<{ field: string; dateFormat?: string }>>([])
   const queryMeasures = ref<Array<{ field: string; aggregation: 'sum' | 'avg' | 'count' | 'max' | 'min' }>>([])
+  /**
+   * 日期粒度清单，与后端 `SqlBuilder` 的白名单逐条对齐（多一条或少一条都会让用户拿到 400）。
+   * 留空 = 不分桶，按原始值分组 —— 这是修 API-113 之前唯一的（错误）行为，所以默认值必须是空而不是"day"。
+   */
+  const GRANULARITIES: Array<{ value: string; label: string }> = [
+    { value: 'minute', label: 'analysis.granMinute' },
+    { value: 'hour', label: 'analysis.granHour' },
+    { value: 'day', label: 'analysis.granDay' },
+    { value: 'week', label: 'analysis.granWeek' },
+    { value: 'month', label: 'analysis.granMonth' },
+    { value: 'quarter', label: 'analysis.granQuarter' },
+    { value: 'year', label: 'analysis.granYear' },
+  ]
+
   const queryResult = ref<{ columns: Array<{ field: string; type: string; displayName?: string }>; rows: Record<string, unknown>[] } | null>(null)
   const chartConfig = ref<ChartConfig | null>(null)
   const loading = ref(false)
@@ -290,5 +315,16 @@
 
   .chart-area {
     margin-bottom: var(--dv-space-lg);
+  }
+  /* 维度标签与它的日期粒度下拉：一组一条，避免"选了什么粒度"和"选了哪个维度"分处两地 */
+  .dim-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 10px;
+  }
+
+  .granularity-select {
+    width: 104px;
   }
 </style>

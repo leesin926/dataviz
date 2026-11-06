@@ -42,6 +42,40 @@ public class SqlBuilder {
     private static final Pattern NUMBER = Pattern.compile("-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?");
 
     /** 前端 FilterOperator 用符号（'='、'notIn'），后端 DTO 历史上用词形（eq、gte），两套都收进白名单 */
+    /**
+     * 维度的日期分桶粒度（API-113）。此前 {@code AnalysisQueryDTO.DimensionConfig.dateFormat} 在本类<b>零引用</b>
+     * —— 界面上选"按月"，SQL 里却是按原始行分组，等于这个配置项被吞掉。
+     * 只认下面两张表：粒度词与固定模式串；认不出来的值一律拒绝，而不是原样塞进 {@code DATE_FORMAT} 的参数位。
+     */
+    private static final Map<String, String> DATE_GRANULARITY = new HashMap<>();
+
+    /** 前端常见的模式串写法（小写键），与粒度词等价 */
+    private static final Map<String, String> DATE_PATTERNS = new HashMap<>();
+
+    /**
+     * 首词已是 SELECT、但仍会改变语句性质的写法（API-114）。
+     * 只看首词就等于允许"读"数据集把结果写到服务端磁盘上或给行加排他锁。
+     */
+    private static final List<String> READ_ONLY_DENY = Arrays.asList(
+            "INTO OUTFILE", "INTO DUMPFILE", "FOR UPDATE", "LOCK IN SHARE MODE");
+
+    static {
+        DATE_GRANULARITY.put("minute", "%Y-%m-%d %H:%i");
+        DATE_GRANULARITY.put("hour", "%Y-%m-%d %H");
+        DATE_GRANULARITY.put("day", "%Y-%m-%d");
+        DATE_GRANULARITY.put("date", "%Y-%m-%d");
+        DATE_GRANULARITY.put("week", "%x-W%v");
+        DATE_GRANULARITY.put("month", "%Y-%m");
+        DATE_GRANULARITY.put("quarter", "%Y-Q%q");
+        DATE_GRANULARITY.put("year", "%Y");
+        DATE_PATTERNS.put("yyyy", "%Y");
+        DATE_PATTERNS.put("yyyy-mm", "%Y-%m");
+        DATE_PATTERNS.put("yyyy-mm-dd", "%Y-%m-%d");
+        DATE_PATTERNS.put("yyyy-mm-dd hh", "%Y-%m-%d %H");
+        DATE_PATTERNS.put("yyyy-mm-dd hh:mm", "%Y-%m-%d %H:%i");
+        DATE_PATTERNS.put("yyyy-mm-dd hh:mm:ss", "%Y-%m-%d %H:%i:%s");
+    }
+
     private static final Map<String, String> OPERATORS = new HashMap<>();
     private static final List<String> COMPARISON_ONLY = Arrays.asList("=", "<>", ">", "<", ">=", "<=");
 
@@ -170,11 +204,12 @@ public class SqlBuilder {
     private String buildSelectClause(AnalysisQueryDTO queryDTO) {
         StringBuilder select = new StringBuilder();
 
-        if (queryDTO.getDimensions() != null && !queryDTO.getDimensions().isEmpty()) {
-            String dims = queryDTO.getDimensions().stream()
-                    .map(d -> column(d.getField(), "维度字段"))
-                    .collect(Collectors.joining(", "));
-            select.append(dims);
+        Map<String, String> dimensions = dimensionExpressions(queryDTO);
+        if (!dimensions.isEmpty()) {
+            select.append(dimensions.entrySet().stream()
+                    .map(e -> e.getValue().equals(e.getKey())
+                            ? e.getKey() : e.getValue() + " AS " + e.getKey())
+                    .collect(Collectors.joining(", ")));
         }
 
         if (queryDTO.getMetrics() != null && !queryDTO.getMetrics().isEmpty()) {
@@ -266,12 +301,56 @@ public class SqlBuilder {
     }
 
     private String buildGroupByClause(AnalysisQueryDTO queryDTO) {
-        if (queryDTO.getDimensions() == null || queryDTO.getDimensions().isEmpty()) {
+        Map<String, String> dimensions = dimensionExpressions(queryDTO);
+        if (dimensions.isEmpty()) {
             return "";
         }
-        return queryDTO.getDimensions().stream()
-                .map(d -> column(d.getField(), "维度字段"))
-                .collect(Collectors.joining(", "));
+        // 分桶后必须按表达式分组：按裸列分组再投影 DATE_FORMAT，只_full_group_by 会把分桶结果判成"未在 GROUP BY 里"
+        return dimensions.values().stream().collect(Collectors.joining(", "));
+    }
+
+    /**
+     * 维度投影表：清洗后的列名 → 该列进入 SELECT/GROUP BY 的表达式。
+     * <p>
+     * 用 {@link LinkedHashMap} 而不是列表，是因为"同一字段 + 同一粒度"应当自然合并，
+     * 而"同一字段 + 两种粒度"必须拒绝 —— 两者的投影别名同名，后者会把结果列覆盖掉，
+     * 前端拿到的就是看不懂的错列（症状与 API-108 同族：接口 200、图上是错的形状）。
+     */
+    private Map<String, String> dimensionExpressions(AnalysisQueryDTO queryDTO) {
+        Map<String, String> expressions = new LinkedHashMap<>();
+        if (queryDTO.getDimensions() == null) {
+            return expressions;
+        }
+        for (AnalysisQueryDTO.DimensionConfig d : queryDTO.getDimensions()) {
+            String cleaned = column(d.getField(), "维度字段");
+            String format = resolveDateFormat(d.getDateFormat());
+            String expression = format == null ? cleaned : "DATE_FORMAT(" + cleaned + ", '" + format + "')";
+            String previous = expressions.get(cleaned);
+            if (previous != null && !previous.equals(expression)) {
+                throw new BizException(ErrorCode.BAD_REQUEST,
+                        "同一维度字段 " + d.getField() + " 配了两种日期粒度，投影列名会冲突");
+            }
+            expressions.put(cleaned, expression);
+        }
+        return expressions;
+    }
+
+    /** @return 进入 {@code DATE_FORMAT} 的模式串；粒度为空返回 null（不分桶），认不出来则拒绝 */
+    private String resolveDateFormat(String dateFormat) {
+        String raw = trimToNull(dateFormat);
+        if (raw == null) {
+            return null;
+        }
+        String key = raw.toLowerCase().replace("_", "-");
+        String mysqlFormat = DATE_GRANULARITY.get(key);
+        if (mysqlFormat == null) {
+            mysqlFormat = DATE_PATTERNS.get(key);
+        }
+        if (mysqlFormat != null) {
+            return mysqlFormat;
+        }
+        throw new BizException(ErrorCode.BAD_REQUEST, "不支持的日期粒度: " + dateFormat
+                + "（可用：" + String.join(" / ", DATE_GRANULARITY.keySet()) + "，或 yyyy / yyyy-MM / yyyy-MM-dd / yyyy-MM-dd HH:mm:ss）");
     }
 
     private String buildHavingClause(AnalysisQueryDTO queryDTO) {
@@ -340,11 +419,21 @@ public class SqlBuilder {
         String sqlQuery = trimToEmpty(meta.getSqlQuery());
         if (!sqlQuery.isEmpty()) {
             String single = sqlQuery.replaceAll(";\\s*$", "").trim();
-            if (single.contains(";")) {
+            // 判分号与关键词时先掩掉字符串字面量与注释（API-115）：
+            // 原先 single.contains(";") 会把 SELECT 'a;b' AS k 这种完全只读的写法判成多语句，
+            // 症状与 API-108/109 同族 —— 接口 200、图上空框，看的人会去查数据集有没有数。
+            String masked = maskLiteralsAndComments(single).toUpperCase();
+            if (masked.contains(";")) {
                 throw new BizException(ErrorCode.BAD_REQUEST, "数据集自定义 SQL 含多条语句，拒绝作为查询来源");
             }
-            if (!single.toUpperCase().startsWith("SELECT")) {
+            if (!masked.trim().startsWith("SELECT")) {
                 throw new BizException(ErrorCode.BAD_REQUEST, "数据集自定义 SQL 不是只读查询，拒绝作为查询来源");
+            }
+            for (String banned : READ_ONLY_DENY) {
+                if (masked.contains(banned)) {
+                    throw new BizException(ErrorCode.BAD_REQUEST,
+                            "数据集自定义 SQL 含 " + banned + "，已超出只读查询，拒绝作为查询来源");
+                }
             }
             return "(" + single + ") t_source";
         }
@@ -356,6 +445,71 @@ public class SqlBuilder {
             return "`" + tableName + "`";
         }
         throw new BizException(ErrorCode.BAD_REQUEST, "数据集未配置表名或自定义 SQL，无法执行查询");
+    }
+
+    /**
+     * 把字符串字面量、反引号标识符与注释替换成占位符，只用于<b>校验</b>（返回值不进入 SQL）。
+     * <p>
+     * 掩掉之后，字面量里的 {@code ;}、{@code INTO OUTFILE}、{@code FOR UPDATE} 不再冒充语法，
+     * 而注释也不能靠 {@code --} 把后面的守卫吃掉。反斜杠转义与 MySQL 的连续两个引号转义都按原样处理，
+     * 否则一个 {@code 'it''s'} 就会让后半句逃脱检查。
+     */
+    static String maskLiteralsAndComments(String sql) {
+        StringBuilder out = new StringBuilder(sql.length());
+        int i = 0;
+        int n = sql.length();
+        while (i < n) {
+            char c = sql.charAt(i);
+            if (c == '\'' || c == '"' || c == '`') {
+                boolean identifier = c == '`';
+                i++;
+                while (i < n) {
+                    char d = sql.charAt(i);
+                    if (!identifier && d == '\\' && i + 1 < n) {
+                        i += 2;
+                        continue;
+                    }
+                    if (d == c) {
+                        if (i + 1 < n && sql.charAt(i + 1) == c) {
+                            i += 2;
+                            continue;
+                        }
+                        i++;
+                        break;
+                    }
+                    i++;
+                }
+                out.append("''");
+                continue;
+            }
+            if (c == '-' && i + 1 < n && sql.charAt(i + 1) == '-') {
+                i += 2;
+                while (i < n && sql.charAt(i) != '\n') {
+                    i++;
+                }
+                out.append(' ');
+                continue;
+            }
+            if (c == '#') {
+                while (i < n && sql.charAt(i) != '\n') {
+                    i++;
+                }
+                out.append(' ');
+                continue;
+            }
+            if (c == '/' && i + 1 < n && sql.charAt(i + 1) == '*') {
+                i += 2;
+                while (i + 1 < n && !(sql.charAt(i) == '*' && sql.charAt(i + 1) == '/')) {
+                    i++;
+                }
+                i = Math.min(n, i + 2);
+                out.append(' ');
+                continue;
+            }
+            out.append(c);
+            i++;
+        }
+        return out.toString();
     }
 
     private int resolveLimit(AnalysisQueryDTO queryDTO, Integer rowLimit) {
@@ -428,8 +582,20 @@ public class SqlBuilder {
         return "'" + escapeString(String.valueOf(value)) + "'";
     }
 
-    /** LIKE 里的 % 与 _ 是通配符，用户输入带它们时按字面匹配更符合直觉 */
+    /**
+     * LIKE 里的 % 与 _ 是通配符，用户输入带它们时按字面匹配更符合直觉。
+     * <p>
+     * 空值必须拒绝（API-116）：原先 {@code String.valueOf(null)} 会得到字面串 {@code "null"}，
+     * 生成 {@code LIKE '%null%'} —— 一个"没填关键词"的过滤器于是悄悄变成"只匹配含 null 三个字母的行"，
+     * 比空结果更难查。同 {@code eq} 的口径。
+     */
     private String likeLiteral(Object value) {
+        if (value == null) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "过滤值不能为空");
+        }
+        if (value instanceof Collection) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "该操作符的取值不接受数组");
+        }
         String escaped = escapeString(String.valueOf(value));
         return escaped.replace("%", "\\%").replace("_", "\\_");
     }
