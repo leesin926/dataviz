@@ -1,17 +1,15 @@
 package com.dataviz.screen.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.dataviz.common.core.exception.BizException;
 import com.dataviz.screen.dto.ScreenUpsertDTO;
 import com.dataviz.screen.entity.Screen;
 import com.dataviz.screen.mapper.ScreenMapper;
+import com.dataviz.screen.test.MybatisPlusTableInfoHelper;
 import com.dataviz.screen.vo.ScreenListVO;
 import com.dataviz.screen.vo.ScreenVO;
 import com.dataviz.screen.websocket.ScreenChangeBroadcaster;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.ibatis.builder.MapperBuilderAssistant;
-import org.apache.ibatis.session.Configuration;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,10 +50,11 @@ class ScreenServiceImplTest {
 
     @BeforeAll
     static void setUpClass() {
-        // screen-service 没有自己的 MybatisPlusTableInfoHelper 副本；为避免"第五份拷贝"，
-        // 这里就用同样的两行 API 把 Screen 的 lambda 列缓存初始化好（list/getByShareToken 用 lambda wrapper）。
-        MapperBuilderAssistant assistant = new MapperBuilderAssistant(new Configuration(), "");
-        TableInfoHelper.initTableInfo(assistant, Screen.class);
+        // 与各模块 test/MybatisPlusTableInfoHelper 同一份规范体（列名渲染与生产一致：
+        // mybatis-plus.configuration.map-underscore-to-camel-case: true）。
+        // 此前这里内联了一个未开 camelCase 的 Configuration —— 用例只断单词列名所以没红，
+        // 但那等于测的是助手配置而不是业务条件（2026-11-06 收口，见报告 19.39.4）。
+        MybatisPlusTableInfoHelper.initFor(Screen.class);
     }
 
     @BeforeEach

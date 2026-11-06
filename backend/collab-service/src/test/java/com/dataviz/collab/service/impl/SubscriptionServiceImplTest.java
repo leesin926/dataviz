@@ -95,12 +95,13 @@ class SubscriptionServiceImplTest {
         Wrapper<CollabSubscription> wrapper = captor.getValue();
         // 必须先逼出 SQL 段：MP 的 eq() 把值塞进 paramNameValuePairs 发生在 formatParam 里，
         // 而那是 ISqlSegment 懒求值 —— 不读 getSqlSegment() 就拿到空 Map。
-        // 只断言参数、不断言列名：测试助手里的 Configuration 没开 mapUnderscoreToCamelCase，
-        // MP 退化成用属性名拼 SQL，断 "user_id" 会测到助手的配置而不是业务条件。
+        // 列名也一起断：测试助手已与生产的 map-underscore-to-camel-case:true 对齐（2026-11-06），
+        // 原先这里写着"助手没开 camelCase 所以不能断列名"，那是在迁就助手的错配置。
         String sql = wrapper.getSqlSegment();
         Map<String, Object> pairs =
                 ((AbstractWrapper<CollabSubscription, ?, ?>) wrapper).getParamNameValuePairs();
         assertTrue(sql.contains("MPGENVAL"), "我的订阅应按主体加条件: " + sql);
+        assertTrue(sql.contains("user_id"), "主体条件必须落在真实列名 user_id 上: " + sql);
         assertTrue(pairs.containsValue(7L), "我的订阅必须按会话主体过滤: " + pairs);
     }
 
