@@ -26,6 +26,13 @@ import java.util.stream.Collectors;
 @Service
 public class MinioService {
 
+    /**
+     * 长度未知时的分片大小。SDK 的硬约束：objectSize 与 partSize 不能同时为 -1
+     * （"valid part size must be provided when object size is unknown"），
+     * 未知长度的流只能给定一个 ≥5 MiB 的分片。取 10 MiB：既是合法下限的余量，又避免把整个流读进内存。
+     */
+    private static final int UNKNOWN_OBJECT_SIZE_PART_SIZE = 10 * 1024 * 1024;
+
     private static final Logger log = LoggerFactory.getLogger(MinioService.class);
 
     private final MinioClient minioClient;
@@ -60,15 +67,15 @@ public class MinioService {
     }
 
     /**
-     * Upload with auto-size detection (buffered, part size -1)
+     * Upload a stream whose length is not known up front (fixed-part multipart).
+     * <p>原来这里是 {@code upload(bucket, name, stream, -1, contentType)}——size 与 partSize 同时 -1，
+     * SDK 在建 PutObjectArgs 时就抛 {@code IllegalArgumentException: valid part size must be provided
+     * when object size is unknown}，任何走这个重载的上传 100% 失败（连请求都发不出去，与 MinIO 是否在跑无关）。
+     * 这里也不再重复包一层 RuntimeException：被调方法已经包过，再包只会让根因多套一层。</p>
      */
     public FileUploadResult upload(String bucket, String objectName, InputStream inputStream,
                                     String contentType) {
-        try {
-            return upload(bucket, objectName, inputStream, -1, contentType);
-        } catch (Exception e) {
-            throw new RuntimeException("MinIO upload failed", e);
-        }
+        return uploadMultipart(bucket, objectName, inputStream, -1, contentType, UNKNOWN_OBJECT_SIZE_PART_SIZE);
     }
 
     /**

@@ -82,7 +82,9 @@ class DatasourceServiceImplTest {
     void setUp() {
         datasourceMapper = mock(DatasourceMapper.class);
         connectionFactory = mock(DataSourceConnectionFactory.class);
-        datasourceService = new DatasourceServiceImpl(datasourceMapper, connectionFactory);
+        // 空连接器表：本类锁住 JDBC 路径与"无连接器类型"的原拒绝文案逐字节不变；
+        // 连接器路由的单列在 DatasourceServiceImplConnectorRoutingTest。
+        datasourceService = new DatasourceServiceImpl(datasourceMapper, connectionFactory, Collections.emptyList());
     }
 
     // ---- helpers -----------------------------------------------------------

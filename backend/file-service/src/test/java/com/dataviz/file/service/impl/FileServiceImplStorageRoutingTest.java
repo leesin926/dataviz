@@ -287,6 +287,37 @@ class FileServiceImplStorageRoutingTest {
         assertThat(vo.getStorageType()).isEqualTo("local");
     }
 
+    @Test
+    @DisplayName("请求指定 storageType 与写侧策略不符 - 当场拒绝并点名两边，一次写入都不发生")
+    void should_refuseUpload_when_requestedStorageTypeDiffersFromWriteStrategy() {
+        FileServiceImpl service = serviceWith("local", "", "", "", "");
+        FileUploadDTO dto = new FileUploadDTO();
+        dto.setStorageType("minio");
+
+        assertThatThrownBy(() -> service.upload(
+                new MockMultipartFile("file", "a.png", "image/png", new byte[]{1, 2}), dto))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("storageType=minio")
+                .hasMessageContaining("file.storage.type");
+
+        verify(fileMapper, never()).insert(any(FileInfo.class));
+        verify(minio, never()).upload(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("请求指定的值与写侧一致（大小写/空白无关）- 照常落库，新守卫不误拒")
+    void should_acceptUpload_when_requestedStorageTypeMatchesWriteStrategy() {
+        FileServiceImpl service = serviceWith("local", "", "", "", "");
+        FileUploadDTO dto = new FileUploadDTO();
+        dto.setStorageType(" LOCAL ");
+
+        FileUploadResultVO vo = service.upload(
+                new MockMultipartFile("file", "b.png", "image/png", new byte[]{3}), dto);
+
+        assertThat(vo.getStorageType()).isEqualTo("local");
+        verify(local).upload(any(), eq(BUCKET), any());
+    }
+
     private static FileInfo fileInfo(Long id, String storageType, String bucket, String path, String type) {
         return FileInfo.builder()
                 .id(id)

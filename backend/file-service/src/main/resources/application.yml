@@ -34,7 +34,10 @@ mybatis-plus:
 minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  # 默认值对齐 docker-compose.yml 里 minio 服务的 MINIO_ROOT_PASSWORD（minioadmin123）。
+  # 原来这里写的是 minioadmin——照默认值起 minio 模式会被 MinIO 判凭据不合法，桶探测直接失败，
+  # 而报错只说"探测失败"，很容易误判成容器没起。仓库惯例是 yml 默认值 == compose 值（DB_PASSWORD:root123456 同理）。
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
   bucket: ${MINIO_BUCKET:dataviz}
 
 # 本地存储根目录：大屏背景图等静态资源落盘位置，浏览器经 /api/file/view/{id} 免登读取

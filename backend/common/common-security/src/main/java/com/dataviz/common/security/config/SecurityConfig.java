@@ -55,6 +55,13 @@ public class SecurityConfig implements WebMvcConfigurer {
             // 图片直读（file-service，仅 image/*）与免登全局开关（admin-service，仅白名单 key）
             "/api/file/view/*",
             "/api/admin/config/public/*",
+            // 第三方回调（openapi-service）。闸门是 HMAC 验签，不是 JWT：外部系统手上没有会话令牌，
+            // 而 servlet 过滤器跑在拦截器之前，于是"验签通过"之后仍会被这道 JWT 拦截器判 401 ——
+            // 2026-11-06 实跑就是这么断的（正向验签回 401 "未认证或认证已过期"）。
+            // 逐条列举而不是 /api/openapi/callback/**：将来这里若长出不要 HMAC 的端点，通配会替它免登。
+            "/api/openapi/callback/datasource/*",
+            "/api/openapi/callback/auth/callback",
+            "/api/openapi/callback/webhook/test",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/v3/api-docs/**",

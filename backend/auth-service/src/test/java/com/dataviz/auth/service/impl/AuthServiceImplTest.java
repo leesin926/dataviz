@@ -318,7 +318,7 @@ class AuthServiceImplTest {
 
     @Test
     @DisplayName("generateCaptcha：返回 key+提示图，答案只写进 Redis 不外泄")
-    void should_returnKeyAndPromptWithoutLeakingAnswer_when_generateCaptcha() {
+    void should_returnKeyAndPromptWithoutLeakingAnswer_when_generateCaptcha() throws Exception {
         CaptchaVO vo = authService.generateCaptcha();
 
         assertNotNull(vo.getCaptchaKey());
@@ -330,9 +330,26 @@ class AuthServiceImplTest {
         ArgumentCaptor<String> answerCaptor = ArgumentCaptor.forClass(String.class);
         verify(valueOps).set(eq("captcha:" + vo.getCaptchaKey()), answerCaptor.capture(), eq(Duration.ofMinutes(5)));
         assertTrue(answerCaptor.getValue().matches("\\d+"), "Redis 里应是数字答案: " + answerCaptor.getValue());
-        // 返回体只有 key 与图片，绝不含答案字段（CaptchaVO 无 answer 字段）—— 图片渲染的是提示 "a + b = ?"
-        String rendered = vo.getCaptchaKey() + vo.getCaptchaImage();
-        assertFalse(rendered.contains(answerCaptor.getValue()), "答案不得出现在返回体");
+        // 图片渲染的是提示 "a + b = ?"，答案只在 Redis。
+        //
+        // 判据按字段逐条比，不把图片拼成一个大字符串做子串扫描：图片是 base64，字母表里就有数字，
+        // 而答案只有 2~20 这两三位数 ⇒ 那个写法会随机命中并报告"答案外泄"，而实际说谎的是断言自己
+        // （本轮全量门禁第一次跑到它就是这么红的，产品代码并没有外泄）。
+        assertFalse(anyFieldCarriesAnswer(vo, answerCaptor.getValue()), "CaptchaVO 不得有字段装着答案");
+    }
+
+    /** 图片载荷之外（key 是 32 位、expireSeconds 是 300），任何字段等于 Redis 里那个数字答案都算外泄。 */
+    private boolean anyFieldCarriesAnswer(CaptchaVO vo, String answer) throws Exception {
+        for (java.lang.reflect.Field field : CaptchaVO.class.getDeclaredFields()) {
+            if ("captchaImage".equals(field.getName())) {
+                continue;
+            }
+            field.setAccessible(true);
+            if (answer.equals(String.valueOf(field.get(vo)))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private SmsLoginDTO smsDto() {

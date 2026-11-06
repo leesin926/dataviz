@@ -3,7 +3,9 @@ package com.dataviz.openapi.filter;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dataviz.common.redis.util.CacheHelper;
 import com.dataviz.openapi.entity.OpenApiApp;
+import com.dataviz.openapi.entity.OpenApiLog;
 import com.dataviz.openapi.mapper.OpenApiAppMapper;
+import com.dataviz.openapi.service.ApiLogService;
 import com.dataviz.openapi.support.CachedBodyHttpServletRequest;
 import com.dataviz.openapi.support.OpenApiSignature;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +19,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * 对外回调的验签与限流。签名形状见 {@link OpenApiSignature}。
+ * <p>每一道回调都落一行 {@code openapi_log}（拒绝走 {@link #recordRefusal}，放行走 {@link #recordAccepted}，
+ * 口径同 {@code OpenApiController#recordRefusal}）：拒绝本身才是运维要看的信号，不写就等于给运维页
+ * 造了一个"永远不会变脏"的历史；反过来只记拒绝，则成功的一天在账上不存在。
  */
 @Slf4j
 @Component
@@ -38,6 +44,7 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
 
     private final OpenApiAppMapper openApiAppMapper;
     private final CacheHelper cacheHelper;
+    private final ApiLogService apiLogService;
 
     /**
      * 与网关 {@code gateway.rate-limit.trusted-proxy-hops} 同一口径：默认 0 只信 TCP 对端。
@@ -49,19 +56,24 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        long startTime = System.currentTimeMillis();
         String appKey = request.getHeader(OpenApiSignature.HEADER_APP_KEY);
         String signature = request.getHeader(OpenApiSignature.HEADER_SIGNATURE);
         String timestamp = request.getHeader(OpenApiSignature.HEADER_TIMESTAMP);
         String nonce = request.getHeader(OpenApiSignature.HEADER_NONCE);
 
+        // 审计里的 clientId/appName 只在"钥匙确实验过"之后填：后面每个 reject 传 app 或 null，
+        // 判据就是有没有越过 OpenApiSignature.matches —— 未验签就认领归属，等于让调用方自称是谁。
         if (isBlank(appKey) || isBlank(signature) || isBlank(timestamp) || isBlank(nonce)) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED,
-                    "Missing authentication headers", "缺少 X-App-Key / X-Timestamp / X-Nonce / X-Signature");
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED,
+                    "Missing authentication headers", "缺少 X-App-Key / X-Timestamp / X-Nonce / X-Signature",
+                    null, startTime);
             return;
         }
 
         if (!isCurrent(timestamp)) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Request expired", "时间戳超出允许偏差");
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Request expired",
+                    "时间戳超出允许偏差", null, startTime);
             return;
         }
 
@@ -71,7 +83,8 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
         OpenApiApp app = openApiAppMapper.selectOne(wrapper);
 
         if (app == null) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid AppKey", "AppKey 不存在或已停用");
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid AppKey",
+                    "AppKey 不存在或已停用", null, startTime);
             return;
         }
 
@@ -79,7 +92,8 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
         try {
             wrapped = new CachedBodyHttpServletRequest(request, MAX_BODY_BYTES);
         } catch (CachedBodyHttpServletRequest.BodyTooLargeException e) {
-            reject(response, 413, "Request body too large", "请求体超过签名上限");
+            // 应用记录是查到了，但密钥还没验过：归属留空（见类内 reject 的判据说明）
+            reject(request, response, 413, "Request body too large", "请求体超过签名上限", null, startTime);
             return;
         }
 
@@ -90,30 +104,47 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
 
         if (!OpenApiSignature.matches(app.getAppSecret(), canonical, signature)) {
             log.warn("Openapi signature mismatch: appKey={}, path={}", appKey, wrapped.getRequestURI());
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid Signature", "签名校验未通过");
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid Signature",
+                    "签名校验未通过", null, startTime);
             return;
         }
 
         // 先验签再登记 nonce：否则未授权的请求就能占用 nonce、把合法请求挤掉
-        if (isReplayedNonce(appKey, nonce)) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Replayed request", "nonce 在重放窗口内重复出现");
+        NonceCheck nonceState = checkNonce(appKey, nonce);
+        if (nonceState == NonceCheck.REPLAYED) {
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Replayed request",
+                    "nonce 在重放窗口内重复出现", app, startTime);
+            return;
+        }
+        if (nonceState == NonceCheck.STORE_UNAVAILABLE) {
+            // fail-closed 是对的，但文案不能沿用"重放"：那是把"我们的 Redis 挂了"说成"你在重放"，
+            // 调用方查半天查不到自己的问题（503 也更诚实——这不是授权结论，是防护不可用）。
+            reject(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Nonce store unavailable",
+                    "重放防护暂不可用（nonce 存储不可达），已按 fail-closed 拒绝", app, startTime);
             return;
         }
 
         // 限流是可用性护栏不是授权判据：Redis 不可用时放行并告警，
         // 而 nonce 是防重放判据：Redis 不可用时拒绝（宁可拒外部集成，不能悄悄重放）。
-        if (isRateLimited(app, response)) {
+        if (isRateLimited(request, app, response, startTime)) {
             return;
         }
 
         if (!isWhitelisted(app.getIpWhitelist(), resolveClientIp(request))) {
-            reject(response, HttpServletResponse.SC_FORBIDDEN, "IP not in whitelist", "来源 IP 不在白名单");
+            reject(request, response, HttpServletResponse.SC_FORBIDDEN, "IP not in whitelist",
+                    "来源 IP 不在白名单", app, startTime);
             return;
         }
 
         request.setAttribute("appId", app.getId());
         request.setAttribute("tenantId", app.getTenantId());
-        filterChain.doFilter(wrapped, response);
+        try {
+            filterChain.doFilter(wrapped, response);
+        } finally {
+            // 放行的这一程也要留痕：原来只有拒绝写日志，于是运维页看到的是"这个调用方只会失败"，
+            // 成功的一天在账上根本不存在。归属在此处已经过了验签，可以放心带 client_id。
+            recordAccepted(wrapped, app, response, startTime);
+        }
     }
 
     private boolean isCurrent(String timestamp) {
@@ -127,19 +158,23 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
         return Math.abs(now - epochSeconds) <= OpenApiSignature.SKEW_SECONDS;
     }
 
-    private boolean isReplayedNonce(String appKey, String nonce) {
-        String key = NONCE_KEY_PREFIX + appKey + ":" + nonce;
+    /** nonce 三道结论分开：通过 / 重放 / 存储不可用。原来把后两者合成"重放"，等于把自家 Redis 故障推给调用方。 */
+    private enum NonceCheck { ACCEPTED, REPLAYED, STORE_UNAVAILABLE }
+
+    private NonceCheck checkNonce(String appKey, String nonceValue) {
+        String key = NONCE_KEY_PREFIX + appKey + ":" + nonceValue;
         try {
             Boolean first = cacheHelper.setIfAbsent(key, "1",
                     OpenApiSignature.SKEW_SECONDS * 2, TimeUnit.SECONDS);
-            return Boolean.FALSE.equals(first);
+            return Boolean.FALSE.equals(first) ? NonceCheck.REPLAYED : NonceCheck.ACCEPTED;
         } catch (Exception e) {
             log.error("Openapi nonce guard unavailable, rejecting request to stay fail-closed: appKey={}", appKey, e);
-            return true;
+            return NonceCheck.STORE_UNAVAILABLE;
         }
     }
 
-    private boolean isRateLimited(OpenApiApp app, HttpServletResponse response) throws IOException {
+    private boolean isRateLimited(HttpServletRequest request, OpenApiApp app, HttpServletResponse response,
+                                  long startTime) throws IOException {
         int limit = app.getRateLimit() == null || app.getRateLimit() <= 0
                 ? DEFAULT_RATE_LIMIT : app.getRateLimit();
         long windowSeconds = 60L;
@@ -158,7 +193,8 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
             return false;
         }
         response.setHeader("Retry-After", String.valueOf(windowSeconds));
-        reject(response, 429, "Rate limit exceeded", "超过应用配额 " + limit + " 次/分钟");
+        // 审计在 reject 内部完成：这条 429 的响应体也只由 reject 写一次，不另开写法
+        reject(request, response, 429, "Rate limit exceeded", "超过应用配额 " + limit + " 次/分钟", app, startTime);
         return true;
     }
 
@@ -183,24 +219,28 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
      * 因为最左值是客户端自己写的。与网关 D58 的判据一致，不在服务侧另立一套。
      */
     private String resolveClientIp(HttpServletRequest request) {
+        String socketIp = request.getRemoteAddr();
         if (trustedProxyHops <= 0) {
-            return request.getRemoteAddr();
+            return socketIp;
         }
         List<String> forwarded = splitForwardedFor(request.getHeader("X-Forwarded-For"));
         int clientIndex = forwarded.size() - trustedProxyHops;
-        if (clientIndex < 0 || clientIndex >= forwarded.size()) {
-            return request.getRemoteAddr();
+        if (clientIndex < 0 || clientIndex >= forwarded.size() || forwarded.get(clientIndex).isEmpty()) {
+            // 代理链比声明的跳数短（头没带上/被剥掉/那一段写的是 unknown）⇒ 退回不可伪造的 TCP 对端
+            return socketIp;
         }
         return forwarded.get(clientIndex);
     }
 
+    /** 逗号拆分并 trim；"unknown" 记为空串，让下标运算保持诚实（与 {@code OpenApiController} 同一条规矩） */
     private static List<String> splitForwardedFor(String headerValue) {
         List<String> entries = new ArrayList<>();
-        if (headerValue == null || headerValue.isEmpty()) {
+        if (headerValue == null || headerValue.trim().isEmpty()) {
             return entries;
         }
         for (String entry : headerValue.split(",")) {
-            entries.add(entry.trim());
+            String value = entry.trim();
+            entries.add("unknown".equalsIgnoreCase(value) ? "" : value);
         }
         return entries;
     }
@@ -209,11 +249,61 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
         return value == null || value.trim().isEmpty();
     }
 
-    private void reject(HttpServletResponse response, int status, String error, String message) throws IOException {
+    /**
+     * 拒绝的统一出口：先落审计、再写响应。
+     * <p>三处刻意保守，与 {@code OpenApiController#recordRefusal} 同口径：
+     * ① {@code verifiedApp} 只在密钥已经通过 {@link OpenApiSignature#matches} 之后传入（重放、限流、
+     * 白名单三道），其余各点传 {@code null} —— 钥匙都没验对就把 appKey 对应的 id/name 写进
+     * {@code client_id}，等于让外部自己声称归属；AppKey 查到了但没验签（413、签名不符）同样留空。
+     * ② 不写 {@code requestParams} —— 回调体、签名、nonce、appSecret 一个都不进日志列，
+     * 抄进去就是二次泄漏。
+     * ③ 审计异常只 {@code warn} 且只带异常消息，绝不改变对外的状态码；响应体也仍由本方法写一次。
+     * <p>ip 用 {@link #resolveClientIp(HttpServletRequest)}：默认只信 TCP 对端，不重开 XFF 最左值。
+     */
+    private void reject(HttpServletRequest request, HttpServletResponse response, int status,
+                        String error, String message, OpenApiApp verifiedApp, long startTime) throws IOException {
+        recordRefusal(request, status, verifiedApp, startTime);
         response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"code\":" + status + ",\"message\":\"" + message
                 + "\",\"error\":\"" + error + "\"}");
+    }
+
+    /** 拒绝留痕。写失败只降级为告警：审计是附属品，不能把它变成对外的第二个故障面。 */
+    private void recordRefusal(HttpServletRequest request, int status, OpenApiApp verifiedApp, long startTime) {
+        try {
+            apiLogService.saveLog(OpenApiLog.builder()
+                    .clientId(verifiedApp == null ? null : verifiedApp.getId())
+                    .appName(verifiedApp == null ? null : verifiedApp.getAppName())
+                    .apiPath(request.getRequestURI())
+                    .method(request.getMethod())
+                    .responseCode(status)
+                    .executionTime(System.currentTimeMillis() - startTime)
+                    .ip(resolveClientIp(request))
+                    .createTime(LocalDateTime.now())
+                    .build());
+        } catch (Exception e) {
+            log.warn("开放接口回调拒绝记录写入失败（不影响对外响应）: {}", e.getMessage());
+        }
+    }
+
+    /** 放行的回调留痕：状态码取业务真正回出去的那个（200/4xx/5xx），写失败同样只降级为告警。 */
+    private void recordAccepted(HttpServletRequest request, OpenApiApp app, HttpServletResponse response,
+                                long startTime) {
+        try {
+            apiLogService.saveLog(OpenApiLog.builder()
+                    .clientId(app.getId())
+                    .appName(app.getAppName())
+                    .apiPath(request.getRequestURI())
+                    .method(request.getMethod())
+                    .responseCode(response.getStatus())
+                    .executionTime(System.currentTimeMillis() - startTime)
+                    .ip(resolveClientIp(request))
+                    .createTime(LocalDateTime.now())
+                    .build());
+        } catch (Exception e) {
+            log.warn("开放接口回调留痕写入失败（不影响已回给调用方的响应）: {}", e.getMessage());
+        }
     }
 
     @Override

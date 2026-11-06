@@ -2,11 +2,13 @@ package com.dataviz.datasource.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dataviz.common.core.client.DatasourceQueryResult;
 import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.core.result.ErrorCode;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.sql.SqlIdentifiers;
+import com.dataviz.datasource.connector.DatasourceConnector;
 import com.dataviz.datasource.dto.*;
 import com.dataviz.datasource.entity.Datasource;
 import com.dataviz.datasource.entity.DatasourceType;
@@ -30,6 +32,12 @@ import java.util.stream.Collectors;
 
 /**
  * 数据源服务实现
+ * <p>
+ * 路由次序（本类的核心约定）：类型有注册的 {@link DatasourceConnector} → 走连接器（ClickHouse/Elasticsearch
+ * 经 HTTP 真实可用，MongoDB 只有可达性探测）；没有连接器且 {@code isJdbcSupported()} → 走
+ * {@link DataSourceConnectionFactory} 的 JDBC 池（mysql/postgresql/oracle/sqlserver 行为保持逐字节不变）；
+ * 两者皆无（api/csv/excel）→ 沿用原有的具体拒绝文案。七个原「非JDBC」拒绝点全部改为按连接器能力判定，
+ * 而不是只看驱动列。
  */
 @Slf4j
 @Service
@@ -38,6 +46,7 @@ public class DatasourceServiceImpl implements DatasourceService {
 
     private final DatasourceMapper datasourceMapper;
     private final DataSourceConnectionFactory connectionFactory;
+    private final List<DatasourceConnector> connectors;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -45,8 +54,14 @@ public class DatasourceServiceImpl implements DatasourceService {
         // 验证类型
         DatasourceType dsType = requireTypeCode(dto.getType());
 
-        // 如果是JDBC支持的类型，先测试连接
-        if (dsType.isJdbcSupported()) {
+        // 建库前先验连通：连接器类型（ClickHouse/ES 走 HTTP、Mongo 走 TCP）验连接器，
+        // 其余 JDBC 支持的类型维持原一次性测试连接；api/csv/excel 仍旧直接落库不探测
+        DatasourceConnector connector = findConnector(dsType);
+        if (connector != null) {
+            if (connector.capability().isTestConnection()) {
+                testConnectorConnection(connector, dto.getConfig());
+            }
+        } else if (dsType.isJdbcSupported()) {
             testJdbcConnection(dto.getType(), dto.getConfig());
         }
 
@@ -155,6 +170,14 @@ public class DatasourceServiceImpl implements DatasourceService {
             throw new BizException(ErrorCode.DATASOURCE_NOT_FOUND);
         }
         DatasourceType dsType = DatasourceType.fromCode(datasource.getType());
+        DatasourceConnector connector = findConnector(dsType);
+        if (connector != null) {
+            if (!connector.capability().isTestConnection()) {
+                throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED,
+                        "数据源类型不支持连接测试: " + dsType.getCode());
+            }
+            return connector.testConnection(datasource.getConfig());
+        }
         if (!dsType.isJdbcSupported()) {
             throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED,
                     "非JDBC数据源类型不支持连接测试: " + dsType.getCode());
@@ -171,6 +194,14 @@ public class DatasourceServiceImpl implements DatasourceService {
     @Override
     public boolean testConnection(TestConnectionDTO dto) {
         DatasourceType dsType = DatasourceType.fromCode(dto.getType());
+        DatasourceConnector connector = findConnector(dsType);
+        if (connector != null) {
+            if (!connector.capability().isTestConnection()) {
+                throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED,
+                        "数据源类型不支持连接测试: " + dsType.getCode());
+            }
+            return connector.testConnection(dto.getConfig());
+        }
         if (!dsType.isJdbcSupported()) {
             throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED,
                     "非JDBC数据源类型不支持连接测试: " + dsType.getCode());
@@ -191,6 +222,17 @@ public class DatasourceServiceImpl implements DatasourceService {
             throw new BizException(ErrorCode.DATASOURCE_NOT_FOUND);
         }
         DatasourceType dsType = DatasourceType.fromCode(datasource.getType());
+        DatasourceConnector connector = findConnector(dsType);
+        if (connector != null) {
+            List<String> names = requireListTables(connector, datasource.getConfig(), dsType);
+            List<TableInfoVO> tables = new ArrayList<>();
+            for (String name : names) {
+                TableInfoVO tableInfo = new TableInfoVO();
+                tableInfo.setTableName(name);
+                tables.add(tableInfo);
+            }
+            return tables;
+        }
         if (!dsType.isJdbcSupported()) {
             throw new BizException("非JDBC数据源不支持获取表列表");
         }
@@ -231,6 +273,13 @@ public class DatasourceServiceImpl implements DatasourceService {
             throw new BizException(ErrorCode.DATASOURCE_NOT_FOUND);
         }
         DatasourceType dsType = DatasourceType.fromCode(datasource.getType());
+        DatasourceConnector columnConnector = findConnector(dsType);
+        if (columnConnector != null && !columnConnector.capability().isListColumns()) {
+            // 连接器接口没有列元数据方法：给出可操作的替代路径，而不是谎称支持或泛化 500
+            throw new BizException(ErrorCode.BAD_REQUEST,
+                    dsType.getCode() + "（HTTP 连接器）暂不支持列信息接口，可改用只读查询获取"
+                            + "（ClickHouse: DESCRIBE TABLE 表名 / Elasticsearch: 通过 SELECT 探测字段）");
+        }
         if (!dsType.isJdbcSupported()) {
             throw new BizException("非JDBC数据源不支持获取列信息");
         }
@@ -284,15 +333,41 @@ public class DatasourceServiceImpl implements DatasourceService {
             throw new BizException(ErrorCode.DATASOURCE_NOT_FOUND);
         }
         DatasourceType dsType = DatasourceType.fromCode(datasource.getType());
-        if (!dsType.isJdbcSupported()) {
+        DatasourceConnector connector = findConnector(dsType);
+        if (connector == null && !dsType.isJdbcSupported()) {
             throw new BizException("非JDBC数据源不支持SQL查询");
         }
 
-        // 安全检查: 只允许SELECT语句
+        // 类型本身取不了数（如 MongoDB：离线仓库没有驱动 jar）——先让连接器把真正的原因说出口。
+        // 实跑发现的顺序问题：这一句原来在只读白名单之后，用户提交 db.collection.find() 收到的是
+        // "只允许执行只读查询语句 (SELECT/SHOW/DESCRIBE)"，照做换成 SELECT 依然取不到，等于把人往错方向引。
+        if (connector != null && !connector.capability().isQuery()) {
+            requireQuery(connector, datasource.getConfig(), dto.getSql().trim(), 1, 1, dsType);
+        }
+
+        // 安全检查: 只允许SELECT语句（连接器路径同样受此白名单约束）
         String sql = dto.getSql().trim();
         String upperSql = sql.toUpperCase();
         if (!upperSql.startsWith("SELECT") && !upperSql.startsWith("SHOW") && !upperSql.startsWith("DESCRIBE")) {
             throw new BizException(ErrorCode.SQL_SYNTAX_ERROR, "只允许执行只读查询语句 (SELECT/SHOW/DESCRIBE)");
+        }
+
+        if (connector != null) {
+            // 行数/超时缺省与 JDBC 路径同口径，内部端点已先夹紧天花板
+            int timeout = dto.getTimeout() != null ? dto.getTimeout() : 30;
+            int maxRows = dto.getMaxRows() != null ? dto.getMaxRows() : 1000;
+            DatasourceQueryResult queryResult = requireQuery(connector, datasource.getConfig(), sql,
+                    maxRows, timeout, dsType);
+            // 复用内部查询端点既有响应形状（columns/rows/rowCount/truncated/executionTime/sql），
+            // 不另造平行 DTO —— analysis/alert/ETL 经 DatasourceQueryClient 读的就是这套 key。
+            Map<String, Object> connectorResult = new HashMap<>();
+            connectorResult.put("columns", queryResult.getColumns());
+            connectorResult.put("rows", queryResult.getRows());
+            connectorResult.put("rowCount", queryResult.getRowCount());
+            connectorResult.put("truncated", queryResult.isTruncated());
+            connectorResult.put("executionTime", queryResult.getExecutionTime());
+            connectorResult.put("sql", queryResult.getSql());
+            return connectorResult;
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -375,7 +450,15 @@ public class DatasourceServiceImpl implements DatasourceService {
         if (datasource == null) {
             throw new BizException(ErrorCode.DATASOURCE_NOT_FOUND);
         }
-        if (!DatasourceType.fromCode(datasource.getType()).isJdbcSupported()) {
+        DatasourceType writeType = DatasourceType.fromCode(datasource.getType());
+        DatasourceConnector writeConnector = findConnector(writeType);
+        if (writeConnector != null && !writeConnector.capability().isBatchWrite()) {
+            // 当前没有任何连接器提供写入：HTTP 通道刻意只读，拒绝文案要说明白而不是静默走 JDBC
+            throw new BizException(ErrorCode.BAD_REQUEST,
+                    "批量写入仅支持 JDBC 数据源（mysql/postgresql/oracle/sqlserver）: "
+                            + writeType.getCode() + " 走连接器，不提供写入通道");
+        }
+        if (!writeType.isJdbcSupported()) {
             throw new BizException(ErrorCode.BAD_REQUEST, "非JDBC数据源不支持批量写入");
         }
 
@@ -502,5 +585,53 @@ public class DatasourceServiceImpl implements DatasourceService {
             throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED,
                     "连接失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 类型 → 连接器路由：有注册连接器即优先走连接器（ClickHouse 即便枚举里带着 JDBC 驱动名也走 HTTP ——
+     * 离线产物里没有 clickhouse-jdbc jar），JDBC 四件套不受影响。
+     */
+    private DatasourceConnector findConnector(DatasourceType type) {
+        for (DatasourceConnector connector : connectors) {
+            if (connector.supports(type)) {
+                return connector;
+            }
+        }
+        return null;
+    }
+
+    /** 建库时的连接器探测：连接器自己抛具体原因（如 ClickHouse 401 原文），这里只做兜底包装，绝不拼凭据。 */
+    private void testConnectorConnection(DatasourceConnector connector, String configJson) {
+        try {
+            if (!connector.testConnection(configJson)) {
+                throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED, "无法建立有效连接");
+            }
+        } catch (BizException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BizException(ErrorCode.DATASOURCE_CONNECTION_FAILED,
+                    "连接失败: " + e.getMessage());
+        }
+    }
+
+    /** 列表能力缺失时仍然调用连接器 —— 让连接器给出真实原因（MongoDB 缺驱动 jar），返回即谎报，兜底再抛。 */
+    private List<String> requireListTables(DatasourceConnector connector, String configJson, DatasourceType type) {
+        if (!connector.capability().isListTables()) {
+            List<String> slippedThrough = connector.listTables(configJson);
+            throw new BizException(ErrorCode.BAD_REQUEST,
+                    type.getCode() + " 连接器未声明列表能力却返回了结果，拒绝按成功处理: "
+                            + (slippedThrough == null ? "null" : slippedThrough.size() + " 项"));
+        }
+        return connector.listTables(configJson);
+    }
+
+    /** 同上：查询能力缺失时由连接器抛真实原因，绝不把"没做成"读成"查到空集"。 */
+    private DatasourceQueryResult requireQuery(DatasourceConnector connector, String configJson, String sql,
+                                               int maxRows, int timeoutSeconds, DatasourceType type) {
+        if (!connector.capability().isQuery()) {
+            connector.query(configJson, sql, maxRows, timeoutSeconds);
+            throw new BizException(ErrorCode.BAD_REQUEST, type.getCode() + " 连接器未声明查询能力且未给出原因");
+        }
+        return connector.query(configJson, sql, maxRows, timeoutSeconds);
     }
 }

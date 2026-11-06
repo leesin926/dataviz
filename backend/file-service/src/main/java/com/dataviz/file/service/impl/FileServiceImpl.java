@@ -61,6 +61,16 @@ public class FileServiceImpl implements FileService {
         // 写侧策略由配置选定（file.storage.type），并在选定阶段完成 minio 必填项校验；
         // 校验不过会在这里抛出，落库与策略写入都还没发生，不会留下"记了 local 其实没存"的假行。
         StorageStrategyRouter.WriteRoute route = storageStrategyRouter.routeForWrite();
+        // 请求里显式写了 storageType 就得和实际要用的策略一致：静默忽略等于让调用方以为文件进了 minio，
+        // 而落库那行记的是 local —— 读侧按行路由，后面取不到东西时没人能解释是谁说的。
+        String requestedType = uploadDTO == null ? null : uploadDTO.getStorageType();
+        if (requestedType != null && !requestedType.trim().isEmpty()
+                && !requestedType.trim().equalsIgnoreCase(route.getStorageType())) {
+            throw new BizException(ErrorCode.BAD_REQUEST,
+                    "请求指定 storageType=" + requestedType.trim().toLowerCase()
+                            + "，但本服务写侧策略是 " + route.getStorageType()
+                            + "（由 file.storage.type 决定，单次上传不可覆盖；要换存储请改配置并重启）");
+        }
         String originalFilename = file.getOriginalFilename();
         String storedName = buildObjectName(originalFilename);
         String bk = (uploadDTO != null && uploadDTO.getBucketName() != null && !uploadDTO.getBucketName().isEmpty())

@@ -5,11 +5,11 @@ import com.dataviz.datasource.dto.WriteBatchDTO;
 import com.dataviz.datasource.entity.Datasource;
 import com.dataviz.datasource.factory.DataSourceConnectionFactory;
 import com.dataviz.datasource.mapper.DatasourceMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -51,8 +51,14 @@ class DatasourceServiceImplWriteBatchTest {
     @Mock
     private DataSourceConnectionFactory connectionFactory;
 
-    @InjectMocks
     private DatasourceServiceImpl datasourceService;
+
+    @BeforeEach
+    void setUpService() {
+        // 写入通道本就只允许 JDBC：空连接器表即复现"clickhouse 等即便注册了 HTTP 连接器也不提供写入"之外的
+        // 原语义；连接器路由对写入的拒绝在 DatasourceServiceImplConnectorRoutingTest 单列。
+        datasourceService = new DatasourceServiceImpl(datasourceMapper, connectionFactory, Collections.emptyList());
+    }
 
     private static final long DS_ID = 7L;
 

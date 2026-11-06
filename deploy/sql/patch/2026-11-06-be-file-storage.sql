@@ -9,7 +9,8 @@ SET NAMES utf8mb4;
 --       老行会被当前配置误导（明明在本地盘上却按 minio 去读），且读侧无法按行路由。
 --       init/03-all-services-schema.sql 与 patch/2026-09-21-file-info-table.sql 建的 file_info
 --       都没有这一列（已核对），因此这里补列并回填存量行。
--- ⚠️ 本轮数据库停机（Docker/MinIO 未起），**脚本只落盘不执行**；起库后人工核对再跑。
+-- ✅ 已于 2026-11-06 在 dataviz-mysql（容器起来后）执行，回读：@@BAD=0、@@DISTINCT=[local]、列定义 varchar(32) NOT NULL DEFAULT local。
+--    （落笔当时数据库停机，脚本只落盘不执行；那一版警示已过期，此处按执行结果更正。）
 -- =============================================
 
 USE `db_file`;

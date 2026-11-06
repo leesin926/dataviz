@@ -87,6 +87,11 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             // 尾段就是分享令牌本身（/api/screen/ws/share/{token}），与免登 HTTP 端点同构：
             // 能连上的前提是已经拿到令牌，令牌错了业务侧一样拒。
             "/api/screen/ws/share/*",
+            // 第三方回调三条：闸门是 openapi-service 侧的 HMAC 验签，外部系统没有 JWT 可用。
+            // 与 /api/auth/sms/* 同口径逐条列举，不用 /api/openapi/callback/** —— 通配会替以后新增的回调端点预先免登。
+            "/api/openapi/callback/datasource/*",
+            "/api/openapi/callback/auth/callback",
+            "/api/openapi/callback/webhook/test",
             "/actuator/health",
             "/actuator/info",
             "/v3/api-docs/**",

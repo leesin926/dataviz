@@ -24,7 +24,9 @@ public class MinioStorageStrategy implements StorageStrategy {
     public String upload(MultipartFile file, String bucketName, String objectName) {
         try {
             String bucket = (bucketName != null && !bucketName.isEmpty()) ? bucketName : "dataviz";
-            minioService.upload(bucket, objectName, file.getInputStream(), file.getContentType());
+            // 用带 size 的重载：MultipartFile 本身就知道字节数，报给 SDK 才能走单分片上传，
+            // 而不是让 common-minio 按"长度未知"退成分片模式（FileUploadResult 里的 size 也会是 -1）。
+            minioService.upload(bucket, objectName, file.getInputStream(), file.getSize(), file.getContentType());
             log.info("MinIO文件上传成功: bucket={}, object={}", bucket, objectName);
             return objectName;
         } catch (Exception e) {
