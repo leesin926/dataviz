@@ -1,5 +1,5 @@
 server:
-  port: 8094
+  port: 17094
 
 spring:
   application:
@@ -48,7 +48,7 @@ file:
     type: ${FILE_STORAGE_TYPE:local}
     local:
       base-path: ${FILE_LOCAL_BASE_PATH:./uploads}
-      url-prefix: ${FILE_LOCAL_URL_PREFIX:http://localhost:8094/files/}
+      url-prefix: ${FILE_LOCAL_URL_PREFIX:http://localhost:17094/files/}
 
 logging:
   level:

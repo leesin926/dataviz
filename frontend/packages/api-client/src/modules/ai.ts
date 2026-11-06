@@ -2,7 +2,7 @@ import type { R } from '@dataviz/shared-types'
 import { request } from '../request'
 
 /**
- * ai-service（8091）的真实契约。
+ * ai-service（17091）的真实契约。
  * 路径以前端曾写过的 `/ai/nl2sql`、`/ai/chart/recommend`、`/ai/assistant/ask`、`/ai/query/optimize`
  * 都不存在（那四条是凭空造的），这里逐条对齐 `/v3/api-docs` 抓下来的端点。
  */

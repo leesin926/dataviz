@@ -47,13 +47,13 @@ public class OpenApiProxyProperties {
     @Data
     public static class Target {
 
-        /** 上游基地址（含端口，不含路径），如 http://localhost:8083 */
+        /** 上游基地址（含端口，不含路径），如 http://localhost:17083 */
         private String baseUrl;
 
         /**
          * 上游真实路径是否剥掉 /api 前缀（对齐网关路由里的 StripPrefix）：
          * 网关对 user-service 配了 StripPrefix=1，其控制器映射在 /user/internal，
-         * 直连 8082 时就必须用剥掉 /api 的路径；model/datasource 等未剥前缀的服务用原路径。
+         * 直连 17082 时就必须用剥掉 /api 的路径；model/datasource 等未剥前缀的服务用原路径。
          */
         private boolean stripApiPrefix = false;
 

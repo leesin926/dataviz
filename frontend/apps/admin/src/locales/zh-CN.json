@@ -510,7 +510,7 @@
     "riskUnregistered": "这条任务每次触发只会留下一条失败日志：它指向的处理器在服务器上没有注册过。改编辑换一个可用的执行内容，或者删掉它。",
     "riskUnregisteredTag": "跑不起来",
     "noHandlerTitle": "服务器上一个处理器都没注册",
-    "noHandlerDesc": "可调度的执行内容是服务端注册的闭集，不是前端填字符串的地方。这一轮内置了「清理任务执行日志」，如果一个都没列出来，说明 schedule-service 没带上新代码，先重建并重启 8095。",
+    "noHandlerDesc": "可调度的执行内容是服务端注册的闭集，不是前端填字符串的地方。这一轮内置了「清理任务执行日志」，如果一个都没列出来，说明 schedule-service 没带上新代码，先重建并重启 17095。",
     "noHandlerInForm": "没有可选的处理器：候选项来自服务端注册表，不能手填。",
     "params": "参数（JSON）",
     "paramsPlaceholder": "例如 {\"keepDays\": 90}",

@@ -37,7 +37,7 @@ public class ModelServiceClient {
     private final String internalToken;
 
     public ModelServiceClient(RestTemplateBuilder builder,
-                              @Value("${model-service.base-url:http://localhost:8085}") String baseUrl,
+                              @Value("${model-service.base-url:http://localhost:17085}") String baseUrl,
                               @Value("${internal.api.token:}") String internalToken) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.internalToken = internalToken;

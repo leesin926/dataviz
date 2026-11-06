@@ -32,7 +32,7 @@ describe('shared-utils/validate —— 联系方式与证件', () => {
 describe('shared-utils/validate —— URL、空值与账号口令', () => {
   it('isUrl 只放行 http/https 协议，且协议后必须跟可打印主机', () => {
     expect(isUrl('https://a.com/x')).toBe(true)
-    expect(isUrl('http://127.0.0.1:8080/api')).toBe(true)
+    expect(isUrl('http://127.0.0.1:17080/api')).toBe(true)
     expect(isUrl('ftp://a.com')).toBe(false)
     expect(isUrl('https://.com')).toBe(false)
     expect(isUrl('a.com')).toBe(false)

@@ -50,7 +50,7 @@ public class DatasourceQueryClient {
 
     public DatasourceQueryClient(RestTemplateBuilder builder,
                                  ObjectMapper objectMapper,
-                                 @Value("${datasource-service.base-url:http://localhost:8083}") String baseUrl,
+                                 @Value("${datasource-service.base-url:http://localhost:17083}") String baseUrl,
                                  @Value("${internal.api.token:}") String internalToken,
                                  @Value("${datasource-service.query-read-timeout-seconds:35}") int readTimeoutSeconds) {
         this.objectMapper = objectMapper;

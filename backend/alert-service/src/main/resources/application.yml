@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 17090
 
 spring:
   application:
@@ -36,7 +36,7 @@ logging:
 
 # 指标取数走 datasource-service 的内部只读查询端点（不自己持 JDBC 连接与口令）
 datasource-service:
-  base-url: ${DATASOURCE_SERVICE_URL:http://localhost:8083}
+  base-url: ${DATASOURCE_SERVICE_URL:http://localhost:17083}
 
 # 与各服务配成同一个值，否则内部端点会回 403
 internal:

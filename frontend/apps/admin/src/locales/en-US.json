@@ -510,7 +510,7 @@
     "riskUnregistered": "Every trigger of this job writes one failure line: the handler it points at is not registered on the server. Edit it to choose an available handler, or delete it.",
     "riskUnregisteredTag": "Cannot run",
     "noHandlerTitle": "No handler is registered on the server",
-    "noHandlerDesc": "Schedulable handlers are a closed set registered server side, not a free-text field here. This build ships one handler that prunes job logs; if the list is empty, schedule-service was not rebuilt - rebuild and restart port 8095.",
+    "noHandlerDesc": "Schedulable handlers are a closed set registered server side, not a free-text field here. This build ships one handler that prunes job logs; if the list is empty, schedule-service was not rebuilt - rebuild and restart port 17095.",
     "noHandlerInForm": "No handler to pick: candidates come from the server registry and cannot be typed in.",
     "params": "Parameters (JSON)",
     "paramsPlaceholder": "For example {\"keepDays\": 90}",

@@ -53,7 +53,7 @@ public class DatasourceWriteClient {
 
     public DatasourceWriteClient(RestTemplateBuilder builder,
                                  ObjectMapper objectMapper,
-                                 @Value("${datasource-service.base-url:http://localhost:8083}") String baseUrl,
+                                 @Value("${datasource-service.base-url:http://localhost:17083}") String baseUrl,
                                  @Value("${internal.api.token:}") String internalToken,
                                  @Value("${datasource-service.write-read-timeout-seconds:60}") int readTimeoutSeconds) {
         this.objectMapper = objectMapper;

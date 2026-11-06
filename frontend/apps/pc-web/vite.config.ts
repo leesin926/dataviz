@@ -24,13 +24,13 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:17080',
         changeOrigin: true,
         // 免登全局配置推送通道走 /api/admin/ws/public，开发态要让 vite 透传 Upgrade
         ws: true,
       },
       '/ws': {
-        target: 'ws://localhost:8080',
+        target: 'ws://localhost:17080',
         ws: true,
         changeOrigin: true,
       },

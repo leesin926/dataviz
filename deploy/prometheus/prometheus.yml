@@ -6,118 +6,118 @@ scrape_configs:
   - job_name: 'gateway-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['gateway-service:8080']
+      - targets: ['gateway-service:17080']
         labels:
           service: gateway
 
   - job_name: 'auth-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['auth-service:8081']
+      - targets: ['auth-service:17081']
         labels:
           service: auth
 
   - job_name: 'user-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['user-service:8082']
+      - targets: ['user-service:17082']
         labels:
           service: user
 
   - job_name: 'datasource-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['datasource-service:8083']
+      - targets: ['datasource-service:17083']
         labels:
           service: datasource
 
   - job_name: 'etl-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['etl-service:8084']
+      - targets: ['etl-service:17084']
         labels:
           service: etl
 
   - job_name: 'model-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['model-service:8085']
+      - targets: ['model-service:17085']
         labels:
           service: model
 
   - job_name: 'analysis-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['analysis-service:8086']
+      - targets: ['analysis-service:17086']
         labels:
           service: analysis
 
   - job_name: 'dashboard-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['dashboard-service:8087']
+      - targets: ['dashboard-service:17087']
         labels:
           service: dashboard
 
   - job_name: 'screen-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['screen-service:8088']
+      - targets: ['screen-service:17088']
         labels:
           service: screen
 
   - job_name: 'collab-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['collab-service:8089']
+      - targets: ['collab-service:17089']
         labels:
           service: collab
 
   - job_name: 'alert-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['alert-service:8090']
+      - targets: ['alert-service:17090']
         labels:
           service: alert
 
   - job_name: 'ai-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['ai-service:8091']
+      - targets: ['ai-service:17091']
         labels:
           service: ai
 
   - job_name: 'openapi-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['openapi-service:8092']
+      - targets: ['openapi-service:17092']
         labels:
           service: openapi
 
   - job_name: 'admin-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['admin-service:8093']
+      - targets: ['admin-service:17093']
         labels:
           service: admin
 
   - job_name: 'file-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['file-service:8094']
+      - targets: ['file-service:17094']
         labels:
           service: file
 
   - job_name: 'schedule-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['schedule-service:8095']
+      - targets: ['schedule-service:17095']
         labels:
           service: schedule
 
   - job_name: 'monitor-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['monitor-service:8096']
+      - targets: ['monitor-service:17096']
         labels:
           service: monitor

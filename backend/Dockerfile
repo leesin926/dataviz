@@ -3,7 +3,7 @@ FROM eclipse-temurin:17-jre-alpine
 LABEL maintainer="dataviz-team"
 
 ARG JAR_FILE=target/*.jar
-ARG SERVICE_PORT=8080
+ARG SERVICE_PORT=17080
 
 ENV TZ=Asia/Shanghai \
     JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof" \

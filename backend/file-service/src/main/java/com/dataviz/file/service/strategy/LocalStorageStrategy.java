@@ -23,7 +23,7 @@ public class LocalStorageStrategy implements StorageStrategy {
     @Value("${file.storage.local.base-path:./uploads}")
     private String basePath;
 
-    @Value("${file.storage.local.url-prefix:http://localhost:8094/files/}")
+    @Value("${file.storage.local.url-prefix:http://localhost:17094/files/}")
     private String urlPrefix;
 
     @Override

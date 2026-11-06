@@ -35,7 +35,7 @@
     "baseUnusableTitle": "服务地址不可用",
     "baseUnusableDesc": "当前是 {base}。打包后的窗口是 file:// 页面，相对地址出不了本机，请先在右上角填写 http(s):// 的完整网关地址。",
     "baseDialogTitle": "设置服务地址",
-    "baseDialogPlaceholder": "例如 http://localhost:8080/api",
+    "baseDialogPlaceholder": "例如 http://localhost:17080/api",
     "baseDialogTip": "打包态必须填绝对地址；开发态（vite）填 /api 就能走本地代理。改完不需要重启。",
     "baseSaved": "服务地址已保存",
     "errBaseEmpty": "服务地址不能为空",

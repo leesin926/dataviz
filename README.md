@@ -17,23 +17,23 @@ wowowo/
 │   │   ├── common-kafka/             # Kafka 封装
 │   │   ├── common-minio/             # MinIO 封装
 │   │   └── common-websocket/         # WebSocket 封装
-│   ├── gateway-service/              # API 网关 :8080
-│   ├── auth-service/                 # 认证授权 :8081
-│   ├── user-service/                 # 用户管理 :8082
-│   ├── datasource-service/           # 数据源管理 :8083
-│   ├── etl-service/                  # ETL 编排 :8084
-│   ├── model-service/                # 数据建模 :8085
-│   ├── analysis-service/             # 自助分析 :8086
-│   ├── dashboard-service/            # 仪表板 :8087
-│   ├── screen-service/               # 大屏管理 :8088
-│   ├── collab-service/               # 协作服务 :8089
-│   ├── alert-service/                # 告警服务 :8090
-│   ├── ai-service/                   # AI 服务 :8091
-│   ├── openapi-service/              # 开放 API :8092
-│   ├── admin-service/                # 平台管理 :8093
-│   ├── file-service/                 # 文件服务 :8094
-│   ├── schedule-service/             # 调度服务 :8095
-│   ├── monitor-service/              # 监控服务 :8096
+│   ├── gateway-service/              # API 网关 :17080
+│   ├── auth-service/                 # 认证授权 :17081
+│   ├── user-service/                 # 用户管理 :17082
+│   ├── datasource-service/           # 数据源管理 :17083
+│   ├── etl-service/                  # ETL 编排 :17084
+│   ├── model-service/                # 数据建模 :17085
+│   ├── analysis-service/             # 自助分析 :17086
+│   ├── dashboard-service/            # 仪表板 :17087
+│   ├── screen-service/               # 大屏管理 :17088
+│   ├── collab-service/               # 协作服务 :17089
+│   ├── alert-service/                # 告警服务 :17090
+│   ├── ai-service/                   # AI 服务 :17091
+│   ├── openapi-service/              # 开放 API :17092
+│   ├── admin-service/                # 平台管理 :17093
+│   ├── file-service/                 # 文件服务 :17094
+│   ├── schedule-service/             # 调度服务 :17095
+│   ├── monitor-service/              # 监控服务 :17096
 │   ├── Dockerfile
 │   └── pom.xml
 ├── frontend/                         # 前端 Monorepo (Vue 3 + TypeScript)
@@ -103,7 +103,7 @@ pnpm dev:pc
 ### 4. 访问
 
 - 前端: http://localhost:5173
-- API 网关: http://localhost:8080
+- API 网关: http://localhost:17080
 - Nacos: http://localhost:8848/nacos
 - MinIO: http://localhost:9001
 - Grafana: http://localhost:3000

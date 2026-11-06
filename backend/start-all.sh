@@ -19,28 +19,31 @@ export NACOS_ADDR=localhost:8848
 export NACOS_NAMESPACE=
 export MINIO_ENDPOINT=http://localhost:9000
 export MINIO_ACCESS_KEY=minioadmin
-export MINIO_SECRET_KEY=minioadmin
+# 与 docker-compose.yml 的 MINIO_ROOT_PASSWORD 一致（compose 里是 minioadmin123）。
+# 这里原来写 minioadmin：脚本一 export 就会盖掉 file-service yml 的正确默认值，
+# 于是"照 start-all.sh 起的栈"里 MinIO 模式必然探测失败——与 API-153 同一颗坑，两处都要堵。
+export MINIO_SECRET_KEY=minioadmin123
 export ES_HOSTS=localhost:9200
 
 # Service definitions: name:port:jar
 SERVICES=(
-    "gateway-service:8080"
-    "auth-service:8081"
-    "user-service:8082"
-    "datasource-service:8083"
-    "etl-service:8084"
-    "model-service:8085"
-    "analysis-service:8086"
-    "dashboard-service:8087"
-    "screen-service:8088"
-    "collab-service:8089"
-    "alert-service:8090"
-    "ai-service:8091"
-    "openapi-service:8092"
-    "admin-service:8093"
-    "file-service:8094"
-    "schedule-service:8095"
-    "monitor-service:8096"
+    "gateway-service:17080"
+    "auth-service:17081"
+    "user-service:17082"
+    "datasource-service:17083"
+    "etl-service:17084"
+    "model-service:17085"
+    "analysis-service:17086"
+    "dashboard-service:17087"
+    "screen-service:17088"
+    "collab-service:17089"
+    "alert-service:17090"
+    "ai-service:17091"
+    "openapi-service:17092"
+    "admin-service:17093"
+    "file-service:17094"
+    "schedule-service:17095"
+    "monitor-service:17096"
 )
 
 echo "=========================================="

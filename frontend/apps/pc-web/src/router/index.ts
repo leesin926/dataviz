@@ -60,7 +60,7 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'nav.analysis', icon: 'DataAnalysis', group: 'nav.groupDesign' },
       },
       {
-        // AI 助手：8091 的 chat / nl2sql / recommend / insight 四组端点此前在前端零入口
+        // AI 助手：17091 的 chat / nl2sql / recommend / insight 四组端点此前在前端零入口
         // （api-client 里那四个路径是凭空写的，后端一条都没有）。ai:read / ai:write 见 D66 码表，补丁已执行（AW5）。
         // 未配置大模型时页面显式标"未接入"并给出原因，不显示编造的结论。
         path: 'ai',

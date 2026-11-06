@@ -1,5 +1,5 @@
 server:
-  port: 8092
+  port: 17092
 
 spring:
   application:
@@ -53,13 +53,13 @@ openapi:
       # 只读 SQL 查询：控制器映射在 /api/datasource/internal，网关未剥前缀，直连同路径。
       # 读不读由 datasource-service 的白名单/行数/超时兜底（见 InternalDatasourceController）。
       datasource:
-        base-url: http://localhost:8083
+        base-url: http://localhost:17083
         strip-api-prefix: false
         paths:
           - /api/datasource/internal/query
       # 数据集元数据（GET /api/model/internal/dataset/{id}）
       model:
-        base-url: http://localhost:8085
+        base-url: http://localhost:17085
         strip-api-prefix: false
         paths:
           - /api/model/internal/dataset/{id}

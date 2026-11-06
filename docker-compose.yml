@@ -28,6 +28,36 @@ services:
       timeout: 5s
       retries: 5
 
+  # PI2 · 分库分表的第二个 MySQL 实例（2026-11-06）。
+  # 端口用 3307：本机 3306 已被 dataviz-mysql 占住，而 3307 实测空闲。
+  # 刻意**不挂** ./deploy/sql/init —— 那套脚本会把全部 db_* 在空库里建一遍，
+  # 而分片实例只需要被分片那几张表的月度物理表，结构由 deploy/sql/shard/* 生成，
+  # 两边都建一遍只会造出"第二实例上有一张没人写的完整库"这种更难查的状态。
+  mysql2:
+    image: mysql:8.0
+    container_name: dataviz-mysql-2
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql2-data:/var/lib/mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=1000
+      --innodb-buffer-pool-size=512M
+    networks:
+      - dataviz-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: dataviz-redis
@@ -232,6 +262,7 @@ services:
 
 volumes:
   mysql-data:
+  mysql2-data:
   redis-data:
   zookeeper-data:
   kafka-data:

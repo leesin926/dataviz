@@ -63,7 +63,7 @@ spec:
               service:
                 name: gateway-service
                 port:
-                  number: 8080
+                  number: 17080
     - host: dataviz.local
       http:
         paths:

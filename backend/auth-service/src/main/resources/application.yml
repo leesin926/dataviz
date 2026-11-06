@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 17081
 
 spring:
   application:
@@ -55,7 +55,7 @@ jwt:
 
 # 认证所需的用户/角色/权限唯一归属 user-service（db_user），本服务不再直连那些表（见 D39）
 user-service:
-  base-url: ${USER_SERVICE_URL:http://localhost:8082}
+  base-url: ${USER_SERVICE_URL:http://localhost:17082}
 # 与 user-service 的 internal.api.token 必须一致，否则内部接口一律 403
 internal:
   api:

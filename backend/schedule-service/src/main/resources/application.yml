@@ -1,5 +1,5 @@
 server:
-  port: 8095
+  port: 17095
 
 spring:
   application:
@@ -26,7 +26,7 @@ spring:
 xxl:
   job:
     admin:
-      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://localhost:8080/xxl-job-admin}
+      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://localhost:17080/xxl-job-admin}
     accessToken: ${XXL_JOB_ACCESS_TOKEN:}
     executor:
       appname: ${spring.application.name}

@@ -35,7 +35,7 @@
     "baseUnusableTitle": "Server URL is not usable",
     "baseUnusableDesc": "Current value is {base}. A packaged window runs on file://, where a relative path never leaves the machine, so set the full gateway URL starting with http(s):// in the top right.",
     "baseDialogTitle": "Set server URL",
-    "baseDialogPlaceholder": "For example http://localhost:8080/api",
+    "baseDialogPlaceholder": "For example http://localhost:17080/api",
     "baseDialogTip": "A packaged build needs an absolute URL. In development /api is enough because the vite proxy picks it up. Saving does not require a restart.",
     "baseSaved": "Server URL saved",
     "errBaseEmpty": "Server URL cannot be empty",
