@@ -37,7 +37,9 @@ interface QueryResultVO {
 function toDTO(query: AnalysisQuery): AnalysisQueryDTO {
   return {
     datasetId: query.datasetId,
-    dimensions: (query.dimensions ?? []).map((d) => ({ field: d.field })),
+    // dateFormat 必须转发：后端 SqlBuilder 靠它做日期分桶（API-113），
+    // 而 DTO 类型本来就声明了这个字段 —— 之前只在这里丢了它，界面选了粒度也等于没选。
+    dimensions: (query.dimensions ?? []).map((d) => (d.dateFormat ? { field: d.field, dateFormat: d.dateFormat } : { field: d.field })),
     metrics: (query.measures ?? []).map((m) => ({ field: m.field, aggFunction: m.aggregation, alias: m.alias })),
     filters: query.filters,
     orders: query.sorts?.map((s) => ({ field: s.field, direction: s.order })),

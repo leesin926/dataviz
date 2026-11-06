@@ -34,8 +34,19 @@ export class DataAdapter {
     const rows = result.rows || []
     const dimFields = config.dimensions.map((d) => d.field)
     const measureFields = config.measures.map((m) => m.field)
-    /** 图例/系列名优先用别名，物理列名（amount）对用户没有可读性 */
-    const seriesNames = config.measures.map((m) => m.alias || m.field)
+    /**
+     * 图例/系列名优先用别名，物理列名（amount）对用户没有可读性；
+     * 同一字段配两种聚合时别名会重复（`amount` 两条），补上聚合函数区分 ——
+     * 否则图上画出两条同名系列，看的人无从分辨哪条是 sum 哪条是 avg。
+     */
+    const baseNames = config.measures.map((m) => m.alias || m.field)
+    const nameFrequency = baseNames.reduce<Record<string, number>>((acc, name) => {
+      acc[name] = (acc[name] ?? 0) + 1
+      return acc
+    }, {})
+    const seriesNames = config.measures.map((m, i) =>
+      nameFrequency[baseNames[i]] > 1 ? `${baseNames[i]}(${m.aggregation ?? 'sum'})` : baseNames[i],
+    )
 
     const measures: string[] = measureFields
 
@@ -48,13 +59,14 @@ export class DataAdapter {
       seriesMap.set(m, [])
     }
 
-    if (seriesDim && categoryDim) {
-      // 透视表模式
+    if (seriesDim && categoryDim && rows.length) {
+      // 透视表模式（空结果走下面的简单模式，保证两种路径的 series 形状一致：
+      // 否则"无数据"在两条路上分别是 series: [] 与 series: [{data: []}]，看图的人分不清哪种是没数）
       const categoryValues = Array.from(new Set(rows.map((r) => String(r[categoryDim] ?? ''))))
       const seriesValues = Array.from(new Set(rows.map((r) => String(r[seriesDim] ?? ''))))
       for (const sv of seriesValues) {
-        for (const m of measures) {
-          seriesMap.set(`${m}_${sv}`, [])
+        for (let i = 0; i < measures.length; i++) {
+          seriesMap.set(`${i}_${sv}`, [])
         }
       }
       const pivot = new Map<string, Record<string, unknown>>()
@@ -65,7 +77,9 @@ export class DataAdapter {
         if (!pivot.has(key)) pivot.set(key, { __category: cat })
         const bucket = pivot.get(key)!
         config.measures.forEach((m, i) => {
-          bucket[`${measures[i]}_${ser}`] = row[measureKey(row, m)]
+          // 桶键用度量下标而不是字段名：同一字段两种聚合（sum_amount / avg_amount）在
+          // 字段名作键时会互相覆盖，两个系列都读到最后写进去的那一列（API-108 的姊妹形状）
+          bucket[`${i}_${ser}`] = row[measureKey(row, m)]
         })
       }
       const series: ChartData['series'] = []
@@ -73,7 +87,7 @@ export class DataAdapter {
         for (const sv of seriesValues) {
           series.push({
             name: `${seriesNames[i]} - ${sv}`,
-            data: categoryValues.map((cat) => pivot.get(cat)?.[`${measures[i]}_${sv}`] ?? null),
+            data: categoryValues.map((cat) => pivot.get(cat)?.[`${i}_${sv}`] ?? null),
           })
         }
       })

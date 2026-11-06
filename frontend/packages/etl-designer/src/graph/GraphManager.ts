@@ -1,5 +1,6 @@
-import { Graph, Snapline, type Node as X6Node } from '@antv/x6'
+import { Graph, MiniMap, Snapline, type Node as X6Node } from '@antv/x6'
 import type { EtlDag, EtlNode, EtlEdge } from '@dataviz/shared-types'
+import { buildMiniMapOptions } from '../panels/minimapOptions'
 
 /**
  * X6 图管理
@@ -7,6 +8,8 @@ import type { EtlDag, EtlNode, EtlEdge } from '@dataviz/shared-types'
 export class GraphManager {
   private graph: Graph | null = null
   private nodeSelectHandler: ((node: EtlNode) => void) | null = null
+  private miniMap: MiniMap | null = null
+  private miniMapContainer: HTMLElement | null = null
 
   init(container: HTMLElement): void {
     this.graph = new Graph({
@@ -28,6 +31,29 @@ export class GraphManager {
     })
     // snapline 在 v3 里是插件而不是 Graph 选项，写在选项字面量里会被静默忽略
     this.graph.use(new Snapline({ enabled: true }))
+    // 小地图容器可能先于 graph 挂载（子组件 onMounted 早于父组件），init() 这里补装
+    this.installMiniMap()
+  }
+
+  /**
+   * 接入 X6 小地图插件（`MiniMap` 在 v3 已并入 `@antv/x6` 主包，无独立插件包）。
+   * 传入 null 表示面板卸载。
+   * @returns graph 已存在则当场装上；否则只记下容器，等 init() 建好 graph 再装
+   */
+  attachMiniMap(container: HTMLElement | null): boolean {
+    this.uninstallMiniMap()
+    this.miniMapContainer = container
+    return this.installMiniMap()
+  }
+
+  /** 面板卸载：只摘插件，graph 的释放交给 dispose() */
+  detachMiniMap(): void {
+    this.uninstallMiniMap()
+    this.miniMapContainer = null
+  }
+
+  isMiniMapAttached(): boolean {
+    return this.graph != null && this.miniMap != null
   }
 
   onNodeSelect(handler: (node: EtlNode) => void): void {
@@ -114,8 +140,38 @@ export class GraphManager {
   }
 
   dispose(): void {
+    // graph.dispose() 会遍历 installedPlugins 逐个 dispose（含 MiniMap），此处不能再手动 dispose 插件
     this.graph?.dispose()
     this.graph = null
+    this.miniMap = null
+    this.miniMapContainer = null
+  }
+
+  /**
+   * 装上小地图：尺寸在装上那一刻按面板容器的实际像素采样。
+   * 主画布目前同样只在 init() 时取一次 clientWidth/clientHeight，所以窗口缩放后两者一起失准；
+   * 要跟随布局变化，只需在布局变化时调用 graph.resize(w, h) —— 它会触发 resize 事件，
+   * 插件据此重算 画布→小地图 的缩放比例，小地图自身的像素框仍保持面板给的大小。
+   */
+  private installMiniMap(): boolean {
+    if (!this.graph || !this.miniMapContainer) return false
+    this.uninstallMiniMap()
+    const container = this.miniMapContainer
+    const options = buildMiniMapOptions(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+    })
+    const miniMap = new MiniMap(options)
+    this.graph.use(miniMap)
+    this.miniMap = miniMap
+    return true
+  }
+
+  private uninstallMiniMap(): void {
+    if (!this.miniMap) return
+    // disposePlugins 会调用 plugin.dispose() 并把它从 installedPlugins 中移除，避免残留引用重复释放
+    this.graph?.disposePlugins(this.miniMap.name)
+    this.miniMap = null
   }
 
   private getColorByType(type: string): string {

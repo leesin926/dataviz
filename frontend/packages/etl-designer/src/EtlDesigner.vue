@@ -9,7 +9,7 @@
       <div v-else class="empty-hint">请选择节点查看属性</div>
     </div>
     <div class="etl-minimap">
-      <MiniMap />
+      <MiniMap :manager="manager" />
     </div>
     <div class="etl-toolbar">
       <button @click="handleSave">保存</button>

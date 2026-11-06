@@ -6,9 +6,16 @@ import type { AggregationType, ChartFilter } from './chart'
 
 export interface AnalysisQuery {
   datasetId: string | number
+  /**
+   * `dateFormat` 是日期分桶粒度，取值必须是后端 `SqlBuilder` 白名单里的那些
+   * （minute / hour / day / week / month / quarter / year，或 yyyy-MM 这类模式串）；
+   * 留空 = 不分桶。此前这个字段只存在于 DTO，UI 侧类型没有它、`toDTO` 也不转发，
+   * 于是"界面选了按月、SQL 还是按原始行"（API-113 的前端半区）。
+   */
   dimensions: Array<{
     field: string
     alias?: string
+    dateFormat?: string
   }>
   measures: Array<{
     field: string
