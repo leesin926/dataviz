@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 对外回调的验签与限流。签名形状见 {@link OpenApiSignature}。
- * <p>每一道回调都落一行 {@code openapi_log}（拒绝走 {@link #recordRefusal}，放行走 {@link #recordAccepted}，
+ * <p>每一道回调都落一行 {@code openapi_log}（拒绝与放行共用 {@link #recordAudit}，
  * 口径同 {@code OpenApiController#recordRefusal}）：拒绝本身才是运维要看的信号，不写就等于给运维页
  * 造了一个"永远不会变脏"的历史；反过来只记拒绝，则成功的一天在账上不存在。
  */
@@ -138,12 +138,16 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
 
         request.setAttribute("appId", app.getId());
         request.setAttribute("tenantId", app.getTenantId());
+        // 默认按"没走完"记 500：doFilter 抛出时 response.getStatus() 仍是 200（容器要到外层才写错误页），
+        // 不这么写就会把业务炸掉的回调记成成功 —— 审计最坏的就是这种错方向的账。
+        int outcome = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         try {
             filterChain.doFilter(wrapped, response);
+            outcome = response.getStatus();
         } finally {
             // 放行的这一程也要留痕：原来只有拒绝写日志，于是运维页看到的是"这个调用方只会失败"，
             // 成功的一天在账上根本不存在。归属在此处已经过了验签，可以放心带 client_id。
-            recordAccepted(wrapped, app, response, startTime);
+            recordAudit(wrapped, outcome, app, startTime);
         }
     }
 
@@ -262,19 +266,24 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
      */
     private void reject(HttpServletRequest request, HttpServletResponse response, int status,
                         String error, String message, OpenApiApp verifiedApp, long startTime) throws IOException {
-        recordRefusal(request, status, verifiedApp, startTime);
+        recordAudit(request, status, verifiedApp, startTime);
         response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"code\":" + status + ",\"message\":\"" + message
                 + "\",\"error\":\"" + error + "\"}");
     }
 
-    /** 拒绝留痕。写失败只降级为告警：审计是附属品，不能把它变成对外的第二个故障面。 */
-    private void recordRefusal(HttpServletRequest request, int status, OpenApiApp verifiedApp, long startTime) {
+    /**
+     * 审计留痕的唯一写法（拒绝与放行共用）：归属只在密钥真验过之后带（{@code maybeApp} 为 null 就留空），
+     * 永不写 {@code requestParams}（回调体、签名、nonce、appSecret 抄进日志列就是二次泄漏），
+     * 写失败只降级为告警、绝不改变对外的状态码与响应体。
+     * <p>ip 用 {@link #resolveClientIp(HttpServletRequest)}：默认只信 TCP 对端，不重开 XFF 最左值。</p>
+     */
+    private void recordAudit(HttpServletRequest request, int status, OpenApiApp maybeApp, long startTime) {
         try {
             apiLogService.saveLog(OpenApiLog.builder()
-                    .clientId(verifiedApp == null ? null : verifiedApp.getId())
-                    .appName(verifiedApp == null ? null : verifiedApp.getAppName())
+                    .clientId(maybeApp == null ? null : maybeApp.getId())
+                    .appName(maybeApp == null ? null : maybeApp.getAppName())
                     .apiPath(request.getRequestURI())
                     .method(request.getMethod())
                     .responseCode(status)
@@ -283,26 +292,7 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
                     .createTime(LocalDateTime.now())
                     .build());
         } catch (Exception e) {
-            log.warn("开放接口回调拒绝记录写入失败（不影响对外响应）: {}", e.getMessage());
-        }
-    }
-
-    /** 放行的回调留痕：状态码取业务真正回出去的那个（200/4xx/5xx），写失败同样只降级为告警。 */
-    private void recordAccepted(HttpServletRequest request, OpenApiApp app, HttpServletResponse response,
-                                long startTime) {
-        try {
-            apiLogService.saveLog(OpenApiLog.builder()
-                    .clientId(app.getId())
-                    .appName(app.getAppName())
-                    .apiPath(request.getRequestURI())
-                    .method(request.getMethod())
-                    .responseCode(response.getStatus())
-                    .executionTime(System.currentTimeMillis() - startTime)
-                    .ip(resolveClientIp(request))
-                    .createTime(LocalDateTime.now())
-                    .build());
-        } catch (Exception e) {
-            log.warn("开放接口回调留痕写入失败（不影响已回给调用方的响应）: {}", e.getMessage());
+            log.warn("开放接口回调留痕写入失败（不影响对外响应）: {}", e.getMessage());
         }
     }
 

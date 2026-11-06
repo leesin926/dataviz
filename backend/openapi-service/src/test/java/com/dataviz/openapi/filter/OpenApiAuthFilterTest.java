@@ -22,6 +22,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.StreamUtils;
 
+import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -496,6 +498,35 @@ class OpenApiAuthFilterTest {
         assertEquals(Integer.valueOf(200), accepted.getResponseCode(), "记的是业务真正回出去的状态码");
         assertEquals(Long.valueOf(7L), accepted.getClientId(), "验签已过 ⇒ 归属可以认领");
         assertNull(accepted.getRequestParams(), "回调体不进日志列");
+    }
+
+    /**
+     * 审查时抓到自己写错的一处：doFilter 抛异常时 response.getStatus() 仍是 200（容器要到外层才写 500），
+     * 于是"业务炸掉的回调"会被记成成功。审计记错方向比不记更坏 —— 这一条钉住"异常路径必须记 500"。
+     */
+    @Test
+    @DisplayName("放行后业务抛异常 - 审计记 500 而不是 200，异常原样上抛")
+    void should_audit500_when_downstreamThrowsAfterAccepted() throws Exception {
+        OpenApiApp app = appWithIdentity();
+        when(openApiAppMapper.selectOne(anyWrapper())).thenReturn(app);
+        allowNonce();
+        when(cacheHelper.increment(anyString(), eq(1L))).thenReturn(1L);
+        when(cacheHelper.expire(anyString(), anyLong(), eq(TimeUnit.SECONDS))).thenReturn(Boolean.TRUE);
+
+        FilterChain boom = (req, resp) -> {
+            throw new IllegalStateException("业务侧炸了");
+        };
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> filter.doFilter(signedRequest(app, CALLBACK_URI, null, BODY), response, boom));
+        assertEquals("业务侧炸了", thrown.getMessage(), "异常必须原样上抛，不能被审计段吃掉");
+
+        ArgumentCaptor<OpenApiLog> captor = ArgumentCaptor.forClass(OpenApiLog.class);
+        verify(apiLogService).saveLog(captor.capture());
+        assertEquals(Integer.valueOf(500), captor.getValue().getResponseCode(),
+                "异常路径不许记成 200");
+        assertEquals(Long.valueOf(7L), captor.getValue().getClientId());
     }
 
     @Test

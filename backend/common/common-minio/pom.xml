@@ -29,5 +29,13 @@
             <artifactId>minio</artifactId>
             <version>8.5.7</version>
         </dependency>
+
+        <!-- API-152 那条坑（长度未知时 objectSize 与 partSize 同时 -1）只有"发给 SDK 的参数形状"这一层能钉住，
+             真容器闭环测试默认跳过（要 -Dminio.live=true），所以这里必须有 test scope 才能进门禁。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -66,8 +66,13 @@ public class FileServiceImpl implements FileService {
         String requestedType = uploadDTO == null ? null : uploadDTO.getStorageType();
         if (requestedType != null && !requestedType.trim().isEmpty()
                 && !requestedType.trim().equalsIgnoreCase(route.getStorageType())) {
+            // 回显调用方给的值要截断：不截的话一句 ?storageType=<2MB> 就把异常文本和日志撑爆（API-125 同族）
+            String echo = requestedType.trim().toLowerCase();
+            if (echo.length() > 40) {
+                echo = echo.substring(0, 40) + "…(已截断)";
+            }
             throw new BizException(ErrorCode.BAD_REQUEST,
-                    "请求指定 storageType=" + requestedType.trim().toLowerCase()
+                    "请求指定 storageType=" + echo
                             + "，但本服务写侧策略是 " + route.getStorageType()
                             + "（由 file.storage.type 决定，单次上传不可覆盖；要换存储请改配置并重启）");
         }
