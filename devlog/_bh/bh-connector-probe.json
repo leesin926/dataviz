@@ -1,0 +1,112 @@
+{
+  "steps": [
+    {
+      "name": "login",
+      "hasToken": true,
+      "code": 0
+    },
+    {
+      "name": "create:clickhouse",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "908"
+    },
+    {
+      "name": "test-connection:clickhouse",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "true"
+    },
+    {
+      "name": "tables:clickhouse",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "[{\"tableName\":\"bh_scratch\",\"tableComment\":null,\"tableType\":null},{\"tableName\":\"dwd_order_channel_daily\",\"tableComment\":null,\"tableType\":null}]"
+    },
+    {
+      "name": "execute:clickhouse",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "{\"executionTime\":17,\"columns\":[\"channel\",\"total_amount\",\"qty\"],\"truncated\":false,\"rowCount\":4,\"rows\":[{\"channel\":\"�̳�\",\"total_amount\":989926.77,\"qty\":10697},{\"channel\":\"С�\",\"total_amount\":986326.03,\"qty\":10809},{\"channel\":\"�ŵ�\",\"total_amount\":972694.97,\"qty\":10519},{\"channel\":\"�\",\"total_amount\":968824.1,\"qty\":10531}],\"sql\":\"SELECT channel, round(sum(amount), 2) AS total_amount, sum(order_cnt) AS qty FROM dwd_order_ch"
+    },
+    {
+      "name": "execute-write-denied:clickhouse",
+      "status": 200,
+      "code": 3002,
+      "message": "只允许执行只读查询语句 (SELECT/SHOW/DESCRIBE)",
+      "data": "null"
+    },
+    {
+      "name": "create:elasticsearch",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "909"
+    },
+    {
+      "name": "test-connection:elasticsearch",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "true"
+    },
+    {
+      "name": "tables:elasticsearch",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "[{\"tableName\":\"demo_order_events\",\"tableComment\":null,\"tableType\":null}]"
+    },
+    {
+      "name": "execute:elasticsearch",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "{\"executionTime\":32,\"columns\":[\"stat_date\",\"channel\",\"amount\"],\"truncated\":false,\"rowCount\":5,\"rows\":[{\"stat_date\":\"2026-11-01T00:00:00.000Z\",\"channel\":\"线上商城\",\"amount\":1280.5},{\"stat_date\":\"2026-11-02T00:00:00.000Z\",\"channel\":\"小程序\",\"amount\":960.25},{\"stat_date\":\"2026-11-03T00:00:00.000Z\",\"channel\":\"门店\",\"amount\":2150},{\"stat_date\":\"2026-11-04T00:00:00.000Z\",\"channel\":\"分销\",\"amount\":735.2},{\"stat_date\":\"2026-11-05T00:00"
+    },
+    {
+      "name": "execute-write-denied:elasticsearch",
+      "status": 200,
+      "code": 3002,
+      "message": "只允许执行只读查询语句 (SELECT/SHOW/DESCRIBE)",
+      "data": "null"
+    },
+    {
+      "name": "create:mongodb",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "910"
+    },
+    {
+      "name": "test-connection:mongodb",
+      "status": 200,
+      "code": 0,
+      "message": "操作成功",
+      "data": "true"
+    },
+    {
+      "name": "tables:mongodb",
+      "status": 200,
+      "code": 400,
+      "message": "MongoDB 不支持获取集合列表：当前构建离线且 classpath 上没有任何 MongoDB 驱动 jar（本地 .m2 只有 pom 无 jar，mvn dependency:get 不可用），平台无法讲 MongoDB wire protocol（OP_MSG/isMaster），需要引入 org.mongodb:mongodb-driver-sync（连带 mongodb-driver-core、bson）才能支持集合列表与取数；在此之前本类型仅支持 TCP 连通性测试（且不代表凭据已验证）",
+      "data": "null"
+    },
+    {
+      "name": "execute:mongodb",
+      "status": 200,
+      "code": 400,
+      "message": "MongoDB 不支持查询：当前构建离线且 classpath 上没有任何 MongoDB 驱动 jar（本地 .m2 只有 pom 无 jar，mvn dependency:get 不可用），平台无法讲 MongoDB wire protocol（OP_MSG/isMaster），需要引入 org.mongodb:mongodb-driver-sync（连带 mongodb-driver-core、bson）才能支持集合列表与取数；在此之前本类型仅支持 TCP 连通性测试（且不代表凭据已验证）",
+      "data": "null"
+    },
+    {
+      "name": "retained-datasources",
+      "count": 0,
+      "ids": []
+    }
+  ]
+}

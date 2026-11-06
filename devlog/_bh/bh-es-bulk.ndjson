@@ -1,0 +1,10 @@
+{"index":{"_index":"demo_order_events"}}
+{"stat_date":"2026-11-01","channel":"线上商城","region":"华东","amount":1280.5,"qty":7}
+{"index":{"_index":"demo_order_events"}}
+{"stat_date":"2026-11-02","channel":"小程序","region":"华北","amount":960.25,"qty":4}
+{"index":{"_index":"demo_order_events"}}
+{"stat_date":"2026-11-03","channel":"门店","region":"华南","amount":2150.0,"qty":12}
+{"index":{"_index":"demo_order_events"}}
+{"stat_date":"2026-11-04","channel":"分销","region":"西南","amount":735.2,"qty":3}
+{"index":{"_index":"demo_order_events"}}
+{"stat_date":"2026-11-05","channel":"线上商城","region":"华北","amount":1876.44,"qty":9}

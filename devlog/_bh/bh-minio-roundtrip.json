@@ -1,0 +1,59 @@
+{
+  "steps": [
+    {
+      "name": "sms-send",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功"
+    },
+    {
+      "name": "sms-login",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "hasToken": true
+    },
+    {
+      "name": "upload",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功",
+      "id": 908,
+      "storageType": "minio"
+    },
+    {
+      "name": "info",
+      "status": 200,
+      "storageType": "minio",
+      "bucket": "dataviz"
+    },
+    {
+      "name": "download",
+      "status": 200,
+      "bytes": 70,
+      "identicalToUploaded": true
+    },
+    {
+      "name": "view-unauthenticated",
+      "status": 200,
+      "bytes": 70,
+      "identicalToUploaded": true
+    },
+    {
+      "name": "container-side",
+      "storedName": "2026/11/06/52c715af6c244370844bf47d4803b349.png",
+      "objectDirVisible": true
+    },
+    {
+      "name": "delete",
+      "status": 200,
+      "code": 0,
+      "msg": "操作成功"
+    },
+    {
+      "name": "container-after-delete",
+      "stillVisible": false,
+      "listing": "ls: cannot access '/data/dataviz/2026/11/06': No such file or directory"
+    }
+  ]
+}

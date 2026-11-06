@@ -2750,3 +2750,73 @@ BE 轮我在 §19.38.4 写下"本轮不修，理由：改完必须活栈复验 /
 2. **目视小地图与框选**（框选预计仍坏 = API-137）；小地图的几何/视口框/拖拽/resize 缩放比**全部未验**。
 3. **口径题 12 条**（见第四节）等你定，定了我一批收。
 4. 起栈顺序那条不变：**`install common/*` → 跑 `2026-11-06-be-file-storage.sql` → 再重启**；本轮 4 次提交**未推送远端**。
+
+---
+
+## 2026-11-06 · 阶段 BH：把"有容器"变成"真能用"——MinIO 三层闭环、CK/ES 真取数、回调端到端（任务 **#202~#206**，决策 **D91** / 报告 **19.41**，新立 **API-152~165** 十四条、当场修 12 条）
+
+**驱动指令**：用户"ai 助手先不管，短信我去想办法，minio 是有容器的，你启动一下，ClickHouse / Elasticsearch / MongoDB 数据源你自己建容器然后跑通就行，其余代码层面的功能优先完成"。**这是本项目这几个月第一次不是"零运行时正证"**：docker 19 个容器全绿、MySQL 起来后把 BE 那份补列补丁真跑了，并由我起了 8081 auth / 8082 user / 8083 datasource / 8092 openapi / 8094 file 五个进程（`launch-bh.ps1` / `launch-bh-ds.ps1` / `launch-bh-openapi.ps1`，全在我名下）。**没动你起的进程，没绕验证码，没清 `sms:day`**；取 token 走产品自带的短信登录路径（开发态固定码），配额 `sms:day:13912345678` 计数到 5/10。
+
+### 〇、本轮计数
+
+| 面 | 读数 |
+|---|---|
+| 新立缺陷 | **14 条**（**API-152~165**）：当场修 **12**（152~161、163、164），登记 **2**（162 / 165）⇒ 累计 **165** |
+| 清偿前轮 | BG 登记的 **11 条**（API-141~151）全修；既存 **API-137**（x6 v3 框选）结案；BG 遗留的"跑 file-service 补列补丁"本轮真跑了 |
+| 功能补全 | MinIO 对象存储可用（152/153/154）、CK + ES 数据源可取数、Mongo 诚实降级、openapi 第三方回调端到端 200 |
+| 后端改动 | `common-minio/MinioService`（未知长度改固定分片 + 不再重复包异常）、`common-security/SecurityConfig`（回调三条免登）、`gateway-service/AuthGlobalFilter`（同三条）、`file-service`（`MinioBucketProvisioner` 新增、`MinioStorageStrategy` 传 size、`FileServiceImpl` 拒绝不符的 `storageType`、yml 默认口令对齐 compose）、`datasource-service`（新增 `connector` 包 + 路由 + 155/156/157）、`openapi-service`（过滤器：放行入账、nonce 三态、XFF 口径） |
+| 前端改动 | `query-engine`（`SqlParser` / `QueryEngine` / `QueryFormatter`）、`shared-utils`（`debounce` / `color` / `storage` / `date` / `number` 仅测试钉住）、`api-client/unwrap`、`etl-designer`（`selectionOptions.ts` 新增、`panningOptions.ts` 新增、`GraphManager.ts`、`EtlDesigner.vue`） |
+| 数据与制品 | `db_file.file_info.storage_type` 补列并回填；`db_datasource.datasource` 新增 905/906/907 三条（重复的 908~910 已清）；CK `dataviz.dwd_order_channel_daily` 4,000 行（UTF-8 重播）；ES `demo_order_events` 5 篇；上传闭环产生的两行 `file_info`（907/908）走接口 delete 已回收，容器里对象同步消失 |
+| 门禁 | 后端全量 `mvn -o test` **926 通过 / 0 失败 / 0 错误 / 3 跳过 / BUILD SUCCESS**（上轮 843；`datasource` 52→**99**、`file` 21→**32**、`openapi` 83→**95**）；前端 `npx vitest run` **19 文件 / 191 条 / 0 失败 / 3.86 s**（上轮 17/172）；`apps/pc-web` `vue-tsc --noEmit` **EXIT=0** |
+| 制品口径 | 本轮所有 fat jar 一律 `-am` 现做：嵌套 `common-security` 实测 **23,437 B**（今天的），`.m2` 那份仍是 **19,101 B / 2026-09-18** ⇒ **`install` 这一步依然没执行**，BF 记的那条前置条件不变 |
+| 提交 | 本条 + 前两本台账，**未推送远端** |
+
+### 一、MinIO：三条叠在一起，正好解释"BE3 之后它从来没通过"
+
+单测层面 BE3 那批（21 条）全绿，`StorageStrategyRouter` 的判据也齐，但 minio 模式一次都没真跑过。三层各有一坑：
+
+- **API-152**（`common-minio/MinioService.java:65`）：`upload(bucket, name, stream, contentType)` 委托到 `upload(..., size=-1, ...)`，而 5 参数版把 `.stream(inputStream, -1, -1)` **两个 -1 一起交给 SDK** ⇒ `IllegalArgumentException: valid part size must be provided when object size is unknown`，**在建 args 时就抛，一个请求都不发**。这不是"MinIO 没起"，是这条路本来就是死的。现在未知长度按 10 MiB 固定分片（SDK 的约束是两者不可同时 -1，分片下限 5 MiB），并去掉外层那次重复包装（被调方法已经包过，再包只会让根因多套一层）。
+- **API-153**：yml `secret-key: ${MINIO_SECRET_KEY:minioadmin}` 对不上 compose 的 `minioadmin123`。症状是"探测失败"，人第一反应去查容器，而真因是默认值。**默认值也是产品的一部分**：仓库惯例（`DB_PASSWORD:root123456` == compose）已写进注释。
+- **API-154**：`StorageStrategyRouter.validateOnStartup()` 只校验四项配齐；`MinioConfig.minioClient()` 无条件建 client，而建 client 不发请求 ⇒ "服务起来了"完全不证明连通。新增 `MinioBucketProvisioner`（`@ConditionalOnProperty(name="file.storage.type", havingValue="minio")`，所以 local-only 部署根本不实例化它，没 MinIO 的环境照常启动）：启动即 `bucketExists`（同时证网络与凭据），缺桶当场 `createBucket`，失败点名 endpoint 与桶名；endpoint 若被写成 `http://user:pass@host` 会先抹成 `http://***@host`，凭据值绝不进异常与日志。
+
+**三层证据**（都在 `devlog/_bh/`）：① `MinioLiveRoundTripTest -Dminio.live=true` 用**生产类**打真容器 —— put 拿到真 etag → 读回字节相等 → **预签名 URL 用不带任何头的匿名请求取回同样内容** → delete 后读不到；默认跳过，CI 无容器不受影响。② 8094 以 `FILE_STORAGE_TYPE=minio` 起，日志 `MinIO 启动验证通过，桶已存在: endpoint=http://localhost:9000, bucket=dataviz`。③ `bh-minio-roundtrip.cjs` 走真接口：`upload` → `info` 行 `storage_type=minio`/`bucket=dataviz` → `download` **70 字节逐字节相等** → `/view` 免登同样相等 → `delete` 200，**并在容器里对账**（删除前 `/data/dataviz/2026-11-06/<uuid>.png` 可见，删除后目录都不存在）。顺手把 **API-163**（`storageType` 请求参数收下不用，静默按配置落库）改成"显式指定就必须一致，否则 400 点名两边"，并加两条用例（拒绝时一次写入都不发生；大小写/空白一致照常落库）。
+
+### 二、CK / ES / Mongo：离线没有驱动 jar，就把 HTTP 接口做成一等公民（#203）
+
+新 `connector` 分层按**能力位**（testConnection / listTables / query / listColumns / batchWrite）路由，替掉原先 7 处 `isJdbcSupported()` 拒绝；CK 走 `POST /?database=…` + `FORMAT JSONCompact`，ES 走 `_sql` 与 `_cat/indices`，凭据只进 `Authorization` 头；测连接刻意用 `SELECT 1` 而不是 `/ping`（**`/ping` 对错误口令也回 `Ok.`**，用它会把"凭据不对"谎报成"连接正常"）。Mongo 没有 HTTP 接口 ⇒ 只证 TCP 可达，`listTables`/`query` 抛出真原因（离线无 `mongodb-driver-sync`），**不拿空列表冒充"没有表"**。
+
+实跑（`bh-connector-probe.cjs`，走 8083 的 CRUD + test-connection + tables + execute）当场逼出三条：
+
+- **API-155**：URL 参数写成 `query_max_execution_time`，CK 23.12 回 `Code: 115 UNKNOWN_SETTING（Maybe you meant ['max_execution_time']）` ⇒ **所有 CK 查询与取表都失败**。这条正是写它那一轮自己在报告里标注"离线无法验证的假设"的那一项 —— 实跑一枪打中，说明**标出来的假设必须有一次真跑来回账，否则它会以"绿"的姿态进入依赖它的下游**。
+- **API-156**：`listTables` 没翻译 CK 的 4xx，`RestClientException` 直达全局处理器 ⇒ 调用方只看到"系统内部错误"，引擎原文全丢；查询路径反而翻译了。两条路现在共用一套翻译。
+- **API-157**：Mongo 提交 shell 语句时先被**只读白名单**挡下，回"只允许执行只读查询语句 (SELECT/SHOW/DESCRIBE)" ⇒ 用户照做换成 SELECT 还是取不到。类型本身没有查询能力时先让连接器把原因说出口。
+
+**一条只属于"实跑"的发现**：CK 里中文一度显示成 `U+FFFD`。查 `hex(channel)` 得 `C3C5B5EA` —— 那是 **GBK 字节**，即**我的播种 SQL 经 Git Bash 命令行递进去时已经坏了**，连接器与应用只是忠实回吐。改走 UTF-8 文件 + `--data-binary @file` 重播后 `E997A8E5BA97` 正常。**与 API-110 的 MySQL latin1 陷阱同族**：跨 Windows 命令行传中文必坏，一律走文件。留存演示资产：数据源 905/906/907、CK 表 4,000 行、ES 索引 5 篇；写闸门探针刻意打在一张 `bh_scratch` 上（万一闸门坏了的只是它），跑完已 `DROP`，重复建的 908~910 已清。
+
+### 三、openapi 回调：一条"设计完整但从来没通过"的链路（#204）
+
+`servlet 过滤器`跑在`HandlerInterceptor`**之前**，所以 HMAC 验签先过、JWT 闸门后拦。而 `/api/openapi/callback/**` 三条既不在 `SecurityConfig.EXCLUDE_PATHS` 也不在网关 `WHITE_LIST` ⇒ **API-158**：签名方案做完那天起，没有一条请求能进 `CallbackController`。实跑正向验签打回 **401 "未认证或认证已过期"**（另三条反向对照分别回原本的具体原因，说明过滤器自己是好的）。修法：**两侧各逐条列举三条**（`datasource/*`、`auth/callback`、`webhook/test`），不用通配 —— 理由与 `/api/auth/sms/*` 一样：通配会替以后新增的回调端点预先免登。修后同一条请求 **200 `{"success":true,…}`**。
+
+连带三条：**API-159** 放行不写审计 ⇒ 运维页看到的是"这个调用方只会失败"；现在 `doFilter` 之后按**业务真正回出去的状态码**补一行，归属只在已过验签后认领。`openapi_log` 实跑对账：`id=910 / client_id=901 / 200` 一条，四条拒绝 `client_id=NULL`。**API-160** nonce 存储不可用沿用 `"Replayed request"` + 401 ⇒ 自家 Redis 故障说成调用方重放；改 **503**，fail-closed 一字不动（原断言翻转留痕）。**API-161** 过滤器的 XFF 拆分/回退与同服务控制器不一致，已对齐成一套判据。**API-162 登记需拍**：`openapi_app`（回调验签读它）与 `openapi_client`（调用方 CRUD、日志可见性按它的 id 集合收口）两张同构表并存，`client_id` 归属口径分裂；两表恰好都是 901/902 ⇒ 今天看不出问题，一旦任一侧变动就会串号或看不见。
+
+### 四、前端：BG 登记的十一条一次清完，而框选牵出"平移被整体关掉"（#205）
+
+141~151 全部按应有语义修完并翻断言（多语句先掩字面量与注释、在飞去重、统计跳过空值且全空列四个统计一律 `null`、`FROM a, b` 解析两张表、补全去重、debounce 尾次用末次参数、color/storage/date/unwrap）。**API-137 结案**：v3 里 `Selection` 是核心导出的插件类，老代码写的 `selecting` 选项**在 v3 不存在**（`lib/graph`、`lib/config` grep 零命中），插件默认 `rubberband: false` ⇒ 框选从来没生效过；改为 `graph.use(new Selection(...))`。
+
+**API-164（新，已修）**：装上框选之后，x6 的 `resolvePanningSelectionConflict()`（`plugin/selection/index.js:315-335`，`init()` 里跑）会直接 `graph.panning.disablePanning()` —— 不是只废左键拖拽，而是**所有平移手势一起废**（`panning.enabled=false` 连带关掉右键与 `allowMouseWheel`）。触发条件正是老配置：`eventTypes` 重叠且 `isModifierKeyEqual(undefined, null) === true`（**这一条是在 Node 里调用装了库的那个谓词函数验出来的**）。修法是把手势**分工**而不是二选一：框选挂 `shift`（shift+左键），平移保留左键 + 右键拖拽，新增纯模块 `panningOptions.ts` 把选项与库内判定逐行镜像，另加一条 tripwire。这与用户一贯的口径一致：**常规控件语义是需求，不能拿它去换新功能**。登记 **API-165**（`formatBytes(1024**6)` → `'1 undefined'`），属"边界外封顶还是科学计数"的口径题。
+
+### 五、两条关于"证据本身"的记录
+
+**① 会误报的绿断言比没有断言更贵**：`AuthServiceImplTest.should_returnKeyAndPromptWithoutLeakingAnswer_when_generateCaptcha` 本轮全量第一次跑到就是红的。它把 `captchaKey + 图片 base64` 拼成一个大字符串再断言"不含 Redis 里那个数字答案"，而 base64 字母表里就有数字、答案只有 2~20 ⇒ 必然偶发命中。查过产品代码：图片只渲染 `a + b = ?`、答案只进 Redis，**没有外泄**。判据改成"逐字段比（图片载荷除外）"，原意保留、不再随机红。
+
+**② 端口这条是我按记忆猜的，不是台账写错**：我一开始写"台账与记忆把 openapi 记成 8090"，回来核了一遍 —— **两处端口表一直是对的**（8090 = alert、8092 = openapi），错在我没读 `application.yml` 就动手。真实且更要紧的一条是：**本机 8090 被 HBuilderX 的 `node.exe`（PID 17652）占用**，`alert-service` 按 8090 起就会 `Port 8090 was already in use` —— 这解释了 AA6 / §19.31 那条"告警链路等重启 8090"为什么一直悬着，不是代码没好，是端口根本起不来。我起 8092 之前打到"8090"的三轮探针拿到的 **426 Upgrade Required** 是邻居的响应。⇒ **探针拿到异常读数的第一步，是证它是不是自己人的进程；端口一律以 yml 为准，别以记忆为准。**
+
+### 六、归用户与下一轮回访
+
+1. 起 8080 后**带签名走网关**打一次回调：判据是"不 401 且 `openapi_log` 多一行 200"。本轮只证到服务侧。
+2. 拍 **API-162**（`openapi_app` / `openapi_client` 并表还是分工）、**API-165** 与 BG 剩下的空值/统计口径题。
+3. 目视 ETL：shift+左键框选、左键/右键平移、拖拽加选、多选时属性面板"已选 N 个节点（多选，暂不支持批量编辑）"；小地图几何与缩放比仍未目视。
+4. 要让 Mongo 真能取数，需要你允许引入 `org.mongodb:mongodb-driver-sync`（离线仓库现在只有 pom）。
+5. **API-140 的结案判据仍在浏览器里**（登录态选"按月"看趋势图真分桶）；8084 告警对新 CK/ES 数据源的端到端未跑。
+6. `install common/*` 这条前置**本轮仍未执行**（写 `.m2` 属改动共享状态），所以任何"只打一个服务"的重启指令都要带 `-am`。
+
