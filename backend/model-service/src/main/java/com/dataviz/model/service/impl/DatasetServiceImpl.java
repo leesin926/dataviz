@@ -155,7 +155,9 @@ public class DatasetServiceImpl implements DatasetService {
         }
         String tableName = dataset.getTableName() == null ? "" : dataset.getTableName().trim();
         if (tableName.isEmpty()) {
-            throw new BizException("数据集未配置查询SQL或表名");
+            // 同一个决策在 analysis 侧是 400（SqlBuilder#resolveFrom），这里原先走 BizException(String)
+            // 默认码 = 500：调用方少配一个字段却收到"服务端故障"，属 API-101/API-121 那一族口径不一致（API-131）
+            throw new BizException(ErrorCode.BAD_REQUEST, "数据集未配置查询SQL或表名");
         }
         if (!TABLE_IDENTIFIER.matcher(tableName).matches()) {
             throw new BizException(ErrorCode.BAD_REQUEST, "数据集表名不是合法标识符: " + tableName);

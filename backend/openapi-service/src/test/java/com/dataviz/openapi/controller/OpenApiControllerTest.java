@@ -24,7 +24,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -211,5 +213,52 @@ class OpenApiControllerTest {
         assertEquals(500, response.getCode());
         assertTrue(response.getMessage().contains("boom"), response.getMessage());
         assertEquals(Integer.valueOf(500), capturedLog().getResponseCode());
+    }
+
+    @Test
+    @DisplayName("鉴权不过也入一条拒绝账（API-129：原先 401 绕过审计段，日志页永远只显示成功）")
+    void should_recordRefusal_when_authenticationFails() {
+        // Given：AppKey/Secret 校验未通过（外部最容易触发的失败）
+        when(apiAuthService.authenticate(anyString(), anyString(), anyString()))
+                .thenThrow(new BizException(com.dataviz.common.core.result.ErrorCode.UNAUTHORIZED, "AppKey 或密钥不正确"));
+
+        BizException thrown = assertThrows(BizException.class,
+                () -> controller.proxy(dto(), servletRequest("10.0.0.9", null)));
+
+        // Then：错误照原样抛出，但审计段确实进了一行
+        assertTrue(thrown.getMessage().contains("AppKey"), thrown.getMessage());
+        OpenApiLog refusal = capturedLog();
+        assertEquals(Integer.valueOf(401), refusal.getResponseCode());
+        assertEquals("/api/model/internal/dataset/7", refusal.getApiPath());
+        assertEquals("10.0.0.9", refusal.getIp());
+    }
+
+    @Test
+    @DisplayName("拒绝账不认领归属、也不抄请求体：没验过的钥匙不能写 clientId，失败体里可能带半把口令")
+    void should_notClaimClientOrParams_when_refusalLogged() {
+        when(apiAuthService.authenticate(anyString(), anyString(), anyString()))
+                .thenThrow(new BizException(com.dataviz.common.core.result.ErrorCode.FORBIDDEN, "来源 IP 不在白名单"));
+
+        assertThrows(BizException.class, () -> controller.proxy(dto(), servletRequest("10.0.0.9", null)));
+
+        OpenApiLog refusal = capturedLog();
+        assertNull(refusal.getClientId(), "归属未经校验，写入等于让外部自称");
+        assertNull(refusal.getAppName());
+        assertNull(refusal.getRequestParams(), "拒绝的调用不得把请求体抄进日志");
+        assertEquals(Integer.valueOf(403), refusal.getResponseCode());
+    }
+
+    @Test
+    @DisplayName("审计写入失败只降级为 warn，不改变对外的 401")
+    void should_stillReturn401_when_auditWriteFails() {
+        when(apiAuthService.authenticate(anyString(), anyString(), anyString()))
+                .thenThrow(new BizException(com.dataviz.common.core.result.ErrorCode.UNAUTHORIZED, "AppKey 或密钥不正确"));
+        org.mockito.Mockito.doThrow(new IllegalStateException("库不可达")).when(apiLogService).saveLog(any(OpenApiLog.class));
+
+        BizException thrown = assertThrows(BizException.class,
+                () -> controller.proxy(dto(), servletRequest("10.0.0.9", null)));
+
+        assertEquals(401, thrown.getCode());
+        verify(apiLogService).saveLog(any(OpenApiLog.class));
     }
 }

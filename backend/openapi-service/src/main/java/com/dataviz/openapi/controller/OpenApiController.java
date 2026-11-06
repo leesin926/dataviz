@@ -60,8 +60,16 @@ public class OpenApiController {
         long startTime = System.currentTimeMillis();
         String clientIp = resolveClientIp(request);
 
-        // Authenticate —— 鉴权不过直接抛 BizException（与改前一致，不进审计段）
-        OpenApiClient client = apiAuthService.authenticate(dto.getAppKey(), dto.getAppSecret(), clientIp);
+        // Authenticate —— 鉴权不过抛 BizException，但**先入一条拒绝账**（API-129）：
+        // 配错 appKey/appSecret 是外部最容易触发的失败，而它原先恰好绕过整个审计段，
+        // 于是「开放接口调用日志」只显示成功调用 —— 一个永远不会变脏的页面等于没有页面。
+        OpenApiClient client;
+        try {
+            client = apiAuthService.authenticate(dto.getAppKey(), dto.getAppSecret(), clientIp);
+        } catch (BizException e) {
+            recordRefusal(dto, clientIp, e.getCode(), startTime);
+            throw e;
+        }
 
         // 初值 500：走到审计段却没被任何分支覆写过状态的，只能是异常本身（不合成 200）
         int responseCode = ErrorCode.INTERNAL_SERVER_ERROR.getCode();
@@ -103,6 +111,28 @@ public class OpenApiController {
         }
         // 上游非 2xx：真实状态码进 R.code，消息带上游响应体摘要 —— 调用方看得见失败本身
         return R.fail(responseCode, "上游返回 " + responseCode + "：" + summarize(forwarded.getBody()));
+    }
+
+    /**
+     * 鉴权失败也留痕：只记"谁在什么时候打了哪条路径、被拒于哪个状态码"。
+     * <p>
+     * 三处刻意保守：① {@code clientId}/{@code appName} 留空 —— 钥匙都没验过，写进去等于让外部
+     * 自己声称归属；② 不写 {@code requestParams} —— 失败的调用体里可能带着半把口令，
+     * 抄进日志就是二次泄漏；③ 审计本身失败只记 warn，绝不改变对外的 401/403。
+     */
+    private void recordRefusal(ApiProxyRequestDTO dto, String clientIp, int responseCode, long startTime) {
+        try {
+            apiLogService.saveLog(OpenApiLog.builder()
+                    .apiPath(dto == null ? null : dto.getApiPath())
+                    .method(dto == null ? null : dto.getMethod())
+                    .responseCode(responseCode)
+                    .executionTime(System.currentTimeMillis() - startTime)
+                    .ip(clientIp)
+                    .createTime(LocalDateTime.now())
+                    .build());
+        } catch (Exception e) {
+            log.warn("开放接口拒绝记录写入失败（不影响对外响应）: {}", e.getMessage());
+        }
     }
 
     /**

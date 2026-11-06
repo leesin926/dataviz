@@ -115,6 +115,144 @@
           <template #empty><span class="dv-text-3">{{ t('common.empty') }}</span></template>
         </el-table>
       </el-tab-pane>
+
+      <!-- ═══════════ 开放接口调用日志 ═══════════ -->
+      <el-tab-pane :label="t('openPlatform.tabLogs')" name="logs">
+        <p class="dv-page-desc">{{ t('openPlatform.logDesc') }}</p>
+
+        <div class="dv-toolbar">
+          <el-input
+            v-model="logFilter.appKey"
+            :placeholder="t('openPlatform.logAppKeyPlaceholder')"
+            clearable
+            style="width: 210px"
+            @keyup.enter="reloadLogs"
+            @clear="reloadLogs"
+          />
+          <el-input
+            v-model="logFilter.clientId"
+            :placeholder="t('openPlatform.logClientIdPlaceholder')"
+            clearable
+            style="width: 170px"
+            @keyup.enter="reloadLogs"
+            @clear="reloadLogs"
+          />
+          <el-select v-model="logFilter.result" style="width: 150px" @change="reloadLogs">
+            <el-option
+              v-for="opt in logResultSelectKeys"
+              :key="opt"
+              :label="logResultText(opt)"
+              :value="opt"
+            />
+          </el-select>
+          <el-date-picker
+            v-model="logRange"
+            type="datetimerange"
+            :start-placeholder="t('openPlatform.logRangeFrom')"
+            :end-placeholder="t('openPlatform.logRangeTo')"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            style="width: 330px"
+            @change="reloadLogs"
+          />
+          <el-input
+            v-model="logFilter.serviceCode"
+            :placeholder="t('openPlatform.logServiceCodePlaceholder')"
+            clearable
+            style="width: 170px"
+            @keyup.enter="reloadLogs"
+            @clear="reloadLogs"
+          />
+          <el-input
+            v-model="logFilter.apiPath"
+            :placeholder="t('openPlatform.logApiPathPlaceholder')"
+            clearable
+            style="width: 190px"
+            @keyup.enter="reloadLogs"
+            @clear="reloadLogs"
+          />
+          <el-button type="primary" :loading="logsLoading" @click="reloadLogs">{{ t('common.search') }}</el-button>
+          <el-button @click="onResetLogs">{{ t('common.reset') }}</el-button>
+          <el-button :loading="logsLoading" @click="loadLogs">{{ t('common.refresh') }}</el-button>
+        </div>
+
+        <!-- 读不到就是读不到：后端消息原样留在这儿，不能让它只响一次就不见了 -->
+        <el-alert
+          v-if="logsError"
+          class="notice"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="t('openPlatform.logFailed')"
+          :description="logsError"
+        />
+        <el-alert
+          class="notice"
+          type="info"
+          :closable="false"
+          show-icon
+          :title="t('openPlatform.logLimitTitle')"
+          :description="t('openPlatform.logLimitDesc')"
+        />
+        <el-alert
+          class="notice"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="t('openPlatform.logAuthFailTitle')"
+          :description="t('openPlatform.logAuthFailDesc')"
+        />
+
+        <el-table :data="logs" v-loading="logsLoading" stripe>
+          <el-table-column prop="createTime" :label="t('openPlatform.logTime')" width="170" fixed="left">
+            <template #default="{ row }">{{ row.createTime || '—' }}</template>
+          </el-table-column>
+          <el-table-column :label="t('openPlatform.logCaller')" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span v-if="row.appName">{{ row.appName }}</span>
+              <span v-else class="dv-text-3">{{ t('openPlatform.logCallerUnattributed') }}</span>
+              <span class="dv-text-3 mono"> #{{ row.clientId ?? '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('openPlatform.logPath')" min-width="250" show-overflow-tooltip>
+            <template #default="{ row }">
+              <code class="mono">{{ row.method || '?' }} {{ row.apiPath || '—' }}</code>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('openPlatform.logStatus')" width="110" align="center">
+            <template #default="{ row }">
+              <el-tag :type="logResultTag(logResultKeyOf(row))" size="small" disable-transitions>
+                {{ row.responseCode ?? t('openPlatform.logStatusUnknown') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('openPlatform.logResult')" width="120" align="center">
+            <!-- 状态码分类是这里能给的最细的"失败原因"：openapi_log 没有 message/error 列 -->
+            <template #default="{ row }">
+              <span class="dv-text-3">{{ logResultText(logResultKeyOf(row)) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('openPlatform.logLatency')" width="100" align="center">
+            <template #default="{ row }">
+              {{ row.executionTime == null ? t('openPlatform.logLatencyUnknown') : `${row.executionTime} ms` }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('openPlatform.logIp')" width="140">
+            <template #default="{ row }"><span class="mono">{{ row.ip || '—' }}</span></template>
+          </el-table-column>
+          <template #empty>
+            <span class="dv-text-3">{{ logsError ? t('openPlatform.logFailed') : t('openPlatform.logEmpty') }}</span>
+          </template>
+        </el-table>
+        <el-pagination
+          class="dv-pager"
+          layout="total, sizes, prev, pager, next"
+          :total="logsTotal"
+          :current-page="logPageNum"
+          :page-size="logPageSize"
+          @current-change="(p: number) => { logPageNum = p; loadLogs() }"
+          @size-change="(s: number) => { logPageSize = s; logPageNum = 1; loadLogs() }"
+        />
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 铸造/重置密钥：口令只在这一次出现，所以单独弹窗、必须当场复制 -->
@@ -246,14 +384,18 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, reactive, ref } from 'vue'
+  import { computed, onMounted, reactive, ref, watch } from 'vue'
   import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
   import type {
     OpenApiClient,
     OpenApiApp,
     OpenApiKeyResult,
+    OpenApiLog,
+    OpenApiLogPageQuery,
+    OpenApiLogResult,
     OpenApiWebhook,
   } from '@dataviz/shared-types'
+  import { rowsOf, totalOf } from '@dataviz/shared-types'
   import {
     createApp,
     createClient,
@@ -264,6 +406,7 @@
     listApps,
     listClients,
     listWebhooks,
+    pageOpenApiLogs,
     regenerateAppSecret,
     resetClientSecret,
     updateWebhook,
@@ -272,7 +415,7 @@
 
   const { t } = useI18n()
 
-  const tab = ref<'clients' | 'apps'>('clients')
+  const tab = ref<'clients' | 'apps' | 'logs'>('clients')
   const saving = ref(false)
 
   const clients = ref<OpenApiClient[]>([])
@@ -317,6 +460,111 @@
       { pattern: /^https?:\/\/\S+$/, message: t('openPlatform.urlPattern'), trigger: 'blur' },
     ],
   }))
+
+  // ─────────── 调用日志（读 openapi_log，GET /openapi/log/page） ───────────
+  const logs = ref<OpenApiLog[]>([])
+  const logsTotal = ref(0)
+  const logsLoading = ref(false)
+  /** 上一次的失败消息，留在页面上：只弹一次 toast 的话，运维会把"读不到"当成"没有调用" */
+  const logsError = ref('')
+  const logPageNum = ref(1)
+  const logPageSize = ref(20)
+  const logRange = ref<string[] | null>(null)
+  const logsLoadedOnce = ref(false)
+  const logFilter = reactive<{
+    appKey: string
+    clientId: string
+    result: OpenApiLogResult | 'ALL'
+    serviceCode: string
+    apiPath: string
+  }>({ appKey: '', clientId: '', result: 'ALL', serviceCode: '', apiPath: '' })
+  const logResultSelectKeys: Array<OpenApiLogResult | 'ALL'> = [
+    'ALL',
+    'SUCCESS',
+    'FAIL',
+    'CLIENT_ERROR',
+    'SERVER_ERROR',
+    'OTHER',
+  ]
+
+  function logResultText(key: string): string {
+    const i18nKey = `openPlatform.logResultOptions.${key}`
+    const text = t(i18nKey)
+    return text === i18nKey ? key : text
+  }
+
+  /** 分类判据 = 后端 result 过滤的同一套区间（SUCCESS 按 2xx），两边不同口径的话筛出来的和显示的对不上 */
+  function logResultKeyOf(row: OpenApiLog): OpenApiLogResult {
+    const code = row.responseCode
+    if (code == null) return 'OTHER'
+    if (code >= 200 && code < 300) return 'SUCCESS'
+    if (code >= 400 && code < 500) return 'CLIENT_ERROR'
+    if (code >= 500 && code < 600) return 'SERVER_ERROR'
+    return 'OTHER'
+  }
+
+  function logResultTag(key: OpenApiLogResult): 'success' | 'warning' | 'danger' | 'info' {
+    if (key === 'SUCCESS') return 'success'
+    if (key === 'CLIENT_ERROR') return 'warning'
+    if (key === 'SERVER_ERROR') return 'danger'
+    return 'info'
+  }
+
+  function logQuery(): OpenApiLogPageQuery {
+    const range = logRange.value
+    return {
+      pageNum: logPageNum.value,
+      pageSize: logPageSize.value,
+      appKey: logFilter.appKey.trim() || undefined,
+      clientId: logFilter.clientId.trim() || undefined,
+      result: logFilter.result === 'ALL' ? undefined : logFilter.result,
+      serviceCode: logFilter.serviceCode.trim() || undefined,
+      apiPath: logFilter.apiPath.trim() || undefined,
+      startTime: range?.[0] || undefined,
+      endTime: range?.[1] || undefined,
+    }
+  }
+
+  async function loadLogs() {
+    logsLoading.value = true
+    logsError.value = ''
+    try {
+      const page = await pageOpenApiLogs(logQuery())
+      logs.value = rowsOf(page)
+      logsTotal.value = totalOf(page)
+    } catch (e) {
+      // 后端 message 原样显示，不塌成"加载失败"三个字，也不静默给一张空表
+      logsError.value = (e as Error).message
+      logs.value = []
+      logsTotal.value = 0
+      ElMessage.error(logsError.value)
+    } finally {
+      logsLoading.value = false
+    }
+  }
+
+  function reloadLogs() {
+    logPageNum.value = 1
+    loadLogs()
+  }
+
+  function onResetLogs() {
+    logFilter.appKey = ''
+    logFilter.clientId = ''
+    logFilter.result = 'ALL'
+    logFilter.serviceCode = ''
+    logFilter.apiPath = ''
+    logRange.value = null
+    reloadLogs()
+  }
+
+  // 只在第一次进这个页签时打一次：日志页是排查用的，不该为另外两个页签的打开陪跑一次全表分页
+  watch(tab, (value) => {
+    if (value === 'logs' && !logsLoadedOnce.value) {
+      logsLoadedOnce.value = true
+      loadLogs()
+    }
+  })
 
   function clientStatusText(value: string): string {
     const key = `openPlatform.clientStatus.${value}`

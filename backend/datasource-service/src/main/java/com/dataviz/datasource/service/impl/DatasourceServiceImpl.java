@@ -43,7 +43,7 @@ public class DatasourceServiceImpl implements DatasourceService {
     @Transactional(rollbackFor = Exception.class)
     public Long createDatasource(DatasourceCreateDTO dto, String tenantId) {
         // 验证类型
-        DatasourceType dsType = DatasourceType.fromCode(dto.getType());
+        DatasourceType dsType = requireTypeCode(dto.getType());
 
         // 如果是JDBC支持的类型，先测试连接
         if (dsType.isJdbcSupported()) {
@@ -67,10 +67,35 @@ public class DatasourceServiceImpl implements DatasourceService {
         if (datasource == null) {
             throw new BizException(ErrorCode.DATASOURCE_NOT_FOUND);
         }
+        if (dto.getType() != null) {
+            requireTypeCode(dto.getType());
+        }
+        // 空 config 必须拒绝（API-126）：BeanUtils 是整份覆盖语义，留空会把已存的 host/账号/口令一起抹掉，
+        // 用户视角是"我什么都没改，这个数据源突然连不上了"。前端已在 BA4 改成先取详情再提交，
+        // 但这条底线得由服务端自己守住 —— 任何调用方都不该有一次"顺手覆盖凭据"的能力。
+        if (dto.getConfig() != null && dto.getConfig().trim().isEmpty()) {
+            throw new BizException(ErrorCode.BAD_REQUEST,
+                    "更新数据源不允许提交空的 config：请先取详情再整份提交，空值会覆盖掉已存的连接凭据");
+        }
         BeanUtils.copyProperties(dto, datasource);
         datasourceMapper.updateById(datasource);
         // 重新创建连接池
         connectionFactory.removePool(id);
+    }
+
+    /**
+     * 类型码校验：未知类型走 400 并列出内置支持的码，而不是让 {@code IllegalArgumentException}
+     * 冒到 catch-all 变 500（API-101 同一口径）。
+     */
+    private DatasourceType requireTypeCode(String type) {
+        try {
+            return DatasourceType.fromCode(type);
+        } catch (IllegalArgumentException e) {
+            String supported = Arrays.stream(DatasourceType.values())
+                    .map(DatasourceType::getCode)
+                    .collect(Collectors.joining(" / "));
+            throw new BizException(ErrorCode.BAD_REQUEST, "未知数据源类型: " + type + "（内置支持：" + supported + "）");
+        }
     }
 
     @Override

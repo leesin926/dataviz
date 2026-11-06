@@ -488,6 +488,16 @@ public class NotifyChannelServiceImpl implements NotifyChannelService {
                     masked.put(field.getKey(), ChannelField.MASK);
                 }
             }
+        } else {
+            // 类型没注册 notifier（老数据、或渠道类型已从内置清单里去掉）时，"哪个键算口令"无从得知，
+            // 于是按最坏情况处理：所有非空值一律只回掩码（API-127）。
+            // 原先这里整段跳过，等于把明文 token/password 直接给任何持 channel 读权限的人 ——
+            // 而这条渠道因为没有 notifier 本来也不能测试发送，少看这几个值不损失任何可用能力。
+            for (Map.Entry<String, Object> entry : config.entrySet()) {
+                if (!isEmptyValue(entry.getValue())) {
+                    masked.put(entry.getKey(), ChannelField.MASK);
+                }
+            }
         }
         return NotifyChannelVO.builder()
                 .id(entity.getId())
