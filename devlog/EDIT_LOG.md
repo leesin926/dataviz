@@ -2638,3 +2638,67 @@ BA 轮刚踩过"mtime 把被写坏的产物读成刚打好"，所以这次判"�
 
 **归用户**：① 起库后**先跑 file-service 的补列补丁再重启 8094**；② 重启 8090 让假引擎退场真正生效（**你自己起的进程我不动**）；③ 演示若要自动巡检，设 `ALERT_CHECK_ENABLED=true` 并先把 `notify_channel` 的地址换成可信目标；④ **API-119/120** 的破坏性修法（会话键加 tenantId、JWT 密钥改配置注入）何时做由你拍。
 **下一轮我继续**：#197 后端第二批单测（`NotifyChannelServiceImpl` 58 分支、`ScreenServiceImpl` 53、`DatasourceServiceImpl` 45、`QueryEngine` 26、导出写出器、user/model/gateway 三个零测试服务）、#198 前端 vitest 基建（全仓零测试文件、`pnpm-lock` 里 vitest 零命中 ⇒ 要装依赖，属用户机器上的变更，先问）、#199 调用日志读端点。
+
+---
+
+## 2026-11-06 · 阶段 BF：把 BE 登记的四条修完、三个零测试服务开工，并验出"重启顺序"里的制品坑（任务 **#197~#200**，决策 **D89** / 报告 **19.39**，新立 **API-126~136** 十一条、当场修 5 条）
+
+**驱动指令**：用户一句"**继续完成**"，接上一轮"补全所有功能，并做好单元测试"。环境仍是 **Docker 停、库不可达** ⇒ 本轮同样**零运行时正证**；能给的档位是"源码 + 单测 + 制品字节读数"（第 4 节那条就是制品读数）。
+
+### 〇、本轮计数
+
+| 面 | 读数 |
+|---|---|
+| 新立缺陷 | **11 条**：**API-126 / 127 / 128 / 129 / 131 当场修**，**130 / 132 / 133 / 134 / 135 / 136 登记** ⇒ 累计 **136** |
+| 上一轮登记的回看 | **API-113 / 114 / 115 / 116 本轮修完**（117 / 118 仍登记）；§19.38.4 已就地更正，不删原文 |
+| 功能补全 | **2 项**：调用日志**读端点 + 管理端页面**（上轮只补写侧，页面仍是空的）；分析视图**日期粒度下拉**（后端能力此前无界面可达） |
+| 未做 | **ETL 小地图仍是空 div**（`EtlDesigner.vue:12` 已渲染进面板 ⇒ 用户看得见一个"小地图形状的空白框"；插件本地没有，装依赖属用户动作 → **#200**）；前端 vitest（#198）同因未动 |
+| Java 生产改动 | **5** 个文件：`SqlBuilder`（分桶 + 掩码守卫 + LIKE 空值）、`DatasourceServiceImpl`（空 config 拒绝 + 未知类型 400）、`NotifyChannelServiceImpl`（无 notifier 时全量掩码）、`OpenApiController`（拒绝入账）、`DatasetServiceImpl`（500→400） |
+| 前端改动 | `AnalysisView.vue`（粒度下拉 + 载荷带 `dateFormat`）、pc-web 两侧 locale 各 8 键；`shared-types/openapi.ts`、`api-client/modules/openapi.ts`、`apps/admin/OpenPlatform.vue`、admin 两侧 locale 各 33 键（读日志的三段） |
+| 测试新增 | **12** 个测试类共 **220** 条：`UserServiceImplTest` 20、`RoleServiceImplTest` 9、`DeptServiceImplTest` 11、`DatasetServiceImplTest` 22、`AuthServiceImplTest` 16、`SmsCodeServiceTest` 7、`DatasourceServiceImplTest` 30、`DataSourceConnectionFactoryTest` 10、`NotifyChannelServiceImplTest` 34、`ScreenServiceImplTest` 35、`ApiLogServiceImplTest` 14、`OpenApiLogControllerTest` 5；我另加 `OpenApiControllerTest` 3 条 |
+| 依赖 | 新增 test 作用域 `spring-boot-starter-test` 到 **6** 处：`common-core`、`common-security`（上轮）+ `user-service`、`model-service`、`auth-service`、`file-service`（上轮）；**零新第三方依赖** |
+| 进程 / 数据写面 | **零重启 / 零写入**（库停）。`install` 也**没有**执行 —— 它写 `.m2`，见第四节 |
+| 台账 | docs/10 新增 **D89** + 变更记录 **BF** 行；docs/12 新增 **19.39**（四小节）+ 清单头弹 + §19.38.4 就地更正；EDIT_LOG 本章 |
+| 提交 | **3** 次：`b7e8195` = SqlBuilder 四条 + 分析视图粒度入口（**6 文件 / +335 / −53**）；`b8c05ed` = 读侧补齐 + 五条修复 + 220 条单测（**32 文件 / +6,008 / −14**）；三本台账 = 本条提交（hash 不预先编造）；**未推送远端** |
+
+### 一、四条"登记不修"是怎么被回访的
+
+BE 轮我在 §19.38.4 写下"本轮不修，理由：改完必须活栈复验 / 要与前端同口径 / 属重构"。本轮动手的前提不是"闲着"，而是**同一处代码上有新逻辑要落地**：粒度分桶（113）与守卫掩码（114/115）都住在 `resolveFrom`/维度链路里，分两次改会留下两份不一致的掩码逻辑 —— 这才是把它们一起收的实际理由；LIKE 空值（116）是掩码之外的一行同口径。**没有**借机扩大范围：117（谓词文本原样拼接）与 118（标识符策略不一致）仍登记，因为它们分别要"把字符串谓词结构化成对象"和"盘两侧清洗正则"，都不是本轮能顺手做完的。
+
+**判据（写给所有"登记不修"）**：登记时必须同时写**什么条件下回来修**。只有理由没有回访条件的登记，下一轮就变成没人认领的债。
+
+### 二、翻断言：修行为时，"钉现状"的用例怎么处理
+
+`SqlBuilderProjectionTest` 里上一轮写了 5 条 @DisplayName 以"【记录实际行为】"开头的用例，断言的是当时错误的输出。本轮修完之后：
+- **换成语义断言，而不是删掉** —— 删掉就等于这条行为再也没人管；
+- 每条都补一条**反面用例**证明守卫没被放松过头：接受 `SELECT 'a;b'` 的同时断言 `SELECT 'a;b' AS k; DELETE FROM t` 仍被拒；接受注释开头的同时断言 `WITH …` 仍被拒；拒绝 `FOR UPDATE` 的同时断言字面量里的 `'FOR UPDATE'` **不算**写操作。
+- 同理 `NotifyChannelServiceImplTest` 里那条"明文回传"改为断言"全部只回掩码 + 键数不变"（掩码不能顺手把键吃掉，否则前端表单会以为没配过）。
+
+### 三、单测开荒捞出的两条凭据类缺陷
+
+**API-126（数据丢失）**：`updateDatasource` 用 `BeanUtils.copyProperties` 整份覆盖，`config=""` 会把已存 host/账号/口令一起抹掉；`null` 侥幸躲过只是因为 MyBatis-Plus 的 `NOT_NULL` 默认策略，**不是服务层守卫**。⇒ 现在拒绝空串，且断言"一次写入都没发生"。这正是 BA4 我在前端修掉的那条链路的后端孪生：**底线得由服务端自己守住，前端的谨慎不构成安全性**。
+
+**API-127（凭据外泄）**：`toVO` 的脱敏整段包在 `if (notifier != null)` 里 ⇒ 类型没注册 notifier（老数据、已下架类型）时**明文 token 直接回给任何持读权限的人**。修法不是在 `else` 里补一份字段清单，而是**"不知道哪个键算口令"时按最坏情况全部只回掩码** —— 这条渠道没有 notifier 本来也发不出去，少看这几个值不损失任何能力。
+
+**API-129（可观测性）**：`OpenApiController.proxy` 的 `authenticate()` 抛错绕过整个审计段 ⇒ 配错 appKey/secret 这类外部最容易触发的失败在 `openapi_log` 里一条不留，"开放接口调用日志"永远显示干净的调用史。现拒绝也入账，三处刻意保守：不认领归属（钥匙没验过，写 `clientId` 等于让外部自称）、不抄请求体（失败体里可能带半把口令）、**审计写失败只 warn，不改变对外的 401/403**。⇒ 判据：**交付任何"可观测性"，都要问最容易失败的那条路径进不进账。**
+
+**登记未修的两条要单独点名**：132（dataset 的 `update/delete/getById` 服务层无租户校验）与 134（screen 的 `update` 同样）和 AK1 修过的 40（user）是**同一族**。它们必须排成**一轮成批收口** —— 逐个补会留下"有的 ServiceImpl 查租户、有的不查"的隐式差异，那种差异比全都缺更危险，因为下一轮只测一半就会宣布收口完成。
+
+### 四、本轮最该记住的一条：**制品决定重启顺序**（我上一轮给的重启指令需要补丁）
+
+侦察一路报"auth-service 用普通 `-pl` 跑不过，必须 `-am`"。我自己读了制品：`.m2` 里 `common-security-1.0.0-SNAPSHOT.jar` = **19,101 B / 2026-09-18 22:44**，`unzip -l` 里 **`LoginSessionCache` 命中 0 次**，而 `backend/common/common-security/src/main/java/com/dataviz/common/security/util/LoginSessionCache.java` 现在就在那儿。⇒ 三条后果：
+
+1. 现在任何 `-pl <服务> package` 出来的 fat jar，嵌的就是这份 09-18 的 `common-security`（与 API-110 完全同族 —— `BUILD SUCCESS` 和 mtime 都不说话）；
+2. 我上一轮给的"**重启 8090 / 8094 / 8080**"因此**不完整**：不先 `install common/*`（或不改 `-am` 重新打包），重启后的症状是 `ClassNotFoundException: LoginSessionCache`，会被读成"BE/BF 改坏了代码"；
+3. 门禁定型：**要么跑聚合 reactor `mvn -o test`（27 模块一起构，天然用当前源码），要么 `-pl … -am`**；本轮全量读数就是聚合 reactor 出来的 **843 / 0 失败**。
+
+**我没有执行 `install`** —— 它写 `.m2`，属另一类动作，且需要用户在重启前一次性做完（`mvn -o install -pl common/common-core,common/common-security,common/common-redis -am -DskipTests` 之类）。**这条坑当前仍在**，已写进 §19.39.4 与本节，归用户在起栈前执行。
+
+另外两件记账：`MybatisPlusTableInfoHelper` 现在**六份拷贝**（datasource 与 user 各加一份，两处确实都在构造 `LambdaQueryWrapper`），而 screen 测试走的是内联两行 `TableInfoHelper.initTableInfo` —— **两种绕法并存本身就是不一致**，抽 test-jar 这件事已欠三轮，本轮没还，写在 D89 ⑤免得变成第四条"下次再说"。
+
+### 五、交回用户的四件
+
+1. **起栈顺序**（本轮新增，比上一轮那条更靠前）：`install common/*` → 重新打包要动的服务 → 跑 `deploy/sql/patch/2026-11-06-be-file-storage.sql` → 再重启 8083/8086/8090/8094/8080。少了第一步，症状会是 `ClassNotFoundException` 而不是"代码坏了"。
+2. **API-130 / 133 / 136 是口径题**（停用渠道能不能试发、匿名失败登录记哪个租户、空串口令算撤销还是算保护）—— 三条都需要你定，我不替你拍。
+3. **132 / 134 / 40 的归属校验收口**是否排下一轮整批做。
+4. **#200 ETL 小地图与 #198 前端 vitest 都要装依赖**（`@antv/x6-plugin-minimap` / `vitest`）。装依赖动的是你机器上的 `node_modules` 与 lockfile，**要不要装、用哪个镜像源，你说一句我就做**；本轮我没有自行动手，因为我在上一轮明说过"会先问"。
