@@ -2887,3 +2887,75 @@ BE 轮我在 §19.38.4 写下"本轮不修，理由：改完必须活栈复验 /
 
 **边界**：没解验证码、没清 `sms:day`、没动你起的进程、没推远端；本轮所有数据写面都是**新增行**，逻辑表始终是真相（回填是复制不是移动）。
 
+
+## 2026-11-07 · 阶段 PI 续（PI5）：读侧扇出接上之后，运行时当天就把两条"全绿的代码"打成了红（任务 **#211**，决策 **D93** / 报告 **19.43**，新立 **API-170~173** 四条、当场修 4 条、**API-168 结案**）
+
+**驱动指令**：用户一句"接着做"（继续 PI5），视角沿用上一轮点名的 `@单元测试 @代码审查 @重构建议`。
+
+### 〇、本轮计数
+
+| 面 | 读数 |
+|---|---|
+| 新立缺陷 | **4 条**（**API-170~173**），当场全修：170 ISO 时间入参压根没被解析上、171 扇出计数把列投影搬进 `COUNT(...)`、172 管理端两处文案与 BH3 之后的事实相反、173 服务端补的时间窗只选表不画边界 ⇒ 累计 **173**；**API-168 结案**（读侧扇出已接上，并有走应用的运行时判据） |
+| 跨实例判据 | `devlog/_pi/pi5-cross-instance-read.cjs` **7 条全 PASS**：A 只查 202609 ⇒ `total=6 / shards=1`，而这张月表在 ds0 上实测 **0 行**（行只在 3307 那台）；B 只查 202611 ⇒ `3 / shards=1`；C 跨三个月 ⇒ `total=9 = A+B`、`shards=3`、`truncated=false`；D 不给时间 ⇒ `windowDefaulted=true`、`shards=4`；E 一条未验签回调 ⇒ 落 `ds0.openapi_log_202611`（**11→12**）、逻辑表 **17→17**、另一实例同月表 **0→0** |
+| 独立对账（不信应用读数） | ds0：`openapi_log_202609` 租户 1 可见 **0**、`openapi_log_202611` 可见 **3**、逻辑表总 **17**（租户 1 可见 9）；ds1：`openapi_log_202609` **6**、`openapi_log_202611` **0**；ds0 `openapi_client` 只有 901 / 902 且都属租户 1；ds1 的 `db_openapi` 只有 `openapi_log` + 7 张月表（父表按设计不过去） |
+| 后端生产改动 | 5 文件：`ApiLogServiceImpl`（`rowWrapper` / `countWrapper` / `applyConditions` 三分 + 窗口边界进 SQL + 口径注释重写）、`OpenApiLogShardReader`（行/计数两条 wrapper 工厂）、`OpenApiLogQueryDTO`（两个 `@DateTimeFormat` + 陈旧说明更正）、`MonitorController`（同两个注解，API-170 的同族面）、`PageResult`（`truncated` / `shards` / `windowDefaulted` + `ofSharded`，PI5 上一段） |
+| 前端 | `shared-types/api.ts` 三个取值器 + `OpenPlatform.vue` 的"这一页不完整"横幅（**截断优先于补窗口**）+ 两侧 locale（上一段）；本轮新增 `shared-types/src/api.test.ts`（**5 条**，这个包的第一条测试） |
+| 门禁 | 后端 `mvn -o test` **1111 通过 / 0 失败 / 0 错误 / 3 跳过 / BUILD SUCCESS**（PI4 收口时 1105；`:openapi-service` 99→**105**）；前端 vitest **20 文件 / 196 条 / 0 失败**（原 19 文件 / 191 条）；`admin` 与 `pc-web` 各自本地 `vue-tsc --noEmit` 均 **EXIT=0** |
+| 进程与边界 | 17092 用 `SHARD_ENABLED=true` 重启（**PID 42300**，`Started OpenApiServiceApplication in 6.314 seconds`，日志实打实打印 `实例 [ds0, ds1]` 与 `顺序=[ShardInnerInterceptor, TenantLineInnerInterceptor, PaginationInnerInterceptor, DynamicTableNameInnerInterceptor]`）；这是我自己起的那个进程，**其余 16 个服务与你起的进程一个没动** |
+
+### 一、API-171：单测 165+103 全绿的分片读路径，第一条真 SQL 就把整页打成 500
+
+扇出的计数是我自己发的第二条 SQL（`selectCount`），而喂给它的 wrapper 就是行查询那个 —— 带 `select(id, client_id, app_name, ...)` 九列白名单。MyBatis-Plus 把 wrapper 上的投影原样搬进 `COUNT(%s)`，于是发出的是：
+
+```
+SELECT COUNT(id, client_id, app_name, api_path, method, response_code, execution_time, ip, create_time) AS total
+FROM openapi_log_202611 WHERE (client_id IN (?, ?)) ORDER BY create_time DESC, id DESC
+```
+
+MySQL 的 `COUNT` 只接一个表达式 ⇒ `1064`，整个日志页 500。**单表路径从来没踩过，是因为分页插件自己生成 count SQL 时会先把投影剥掉**；扇出没人剥。修法不是一个 `COUNT(*)` 字符串，而是把语义拆成两个构造点：`rowWrapper`（投影 + 排序）与 `countWrapper`（**只有 WHERE**），各自每片新建，理由写进 javadoc。
+
+**这一条为什么值得单独记**：`:openapi-service` 103 条断言里，扇出的四条用的是真 `ShardRouter` + 真 `ShardQueryFanout` + **mock 掉的 mapper** —— 它们钉住了"扫几片、怎么归并、截断怎么说"，但从头到尾**没有一条 SQL 成形**。这类"逻辑层全绿、SQL 层从没存在过"的空档，只有把服务真起起来打一次才看得见。**判据：mock 掉 mapper 的扇出测试证明的是编排，不是可执行性；分片这类改 SQL 形状的功能，必须留一条走真进程的判据。**
+
+### 二、API-170：时间筛选从上线起就没通过 —— 契约写在注释里，解析器根本不认
+
+探针第一次跑出来的不是分片问题，是 **400**：`Failed to convert ... for property 'startTime' ... for value [2026-09-01T00:00:00]`。而管理端那个区间选择器一直发的就是 `YYYY-MM-DDTHH:mm:ss`（`value-format`），`OpenApiLogQueryDTO` 的注释也一直写着"ISO 本地日期时间形状"。**注释描述的契约，Spring Boot 默认并不提供**：裸 `LocalDateTime` 查询参数不带 `@DateTimeFormat` 时走 locale 的 SHORT 样式，带 `T` 的值在进入方法之前就被拒。也就是说"按时间筛调用日志"这个功能在页面上从来没成过 —— 症状还不是报错，是"选了时间段就没数据"，看起来完全像用户筛错了。
+
+修法是声明这两个字段自己要什么（`@DateTimeFormat(iso = DATE_TIME)`），不动全局装配：全仓 `LocalDateTime` 的**查询参数**只有四处（openapi 两条 DTO 字段 + monitor 两条 `@RequestParam`），而 `spring.mvc.format.date-time` 一改就是 17 个服务的边界。monitor 那两处同形状已一并改掉，**但 17096 现在没起，运行时判据我没拿到** —— 台账按这个口径写，不写"已验证"。
+
+### 三、API-173：窗口只决定"扫哪几张表"，不决定"表里取到哪一行"
+
+`resolveWindow` 补出默认三个月回看之后，我原本只把 `from/to` 交给扇去做**分片选择**，wrapper 里的时间条件仍然读 `condition` 的原始字段 —— 调用方没给时间时，SQL 里一条 `create_time` 条件都没有。而滚动窗口的下界（`now.minusMonths(3)`）落在某张月表的中间：那张月表装的是**整月**的行，于是窗口外的调用被算进 `total`，页面上是一个看起来完全正常的数字。改法是 `applyConditions` 显式收 `from/to` 两个参数，单表路径传调用方原值、扇出路径传生效窗口，两边不可能再各拿一套边界；断言把两件事分开钉：SQL 段里必须有 `create_time >=` 与 `<=`，且这两个值必须是**参数**而不是拼进字符串。
+
+顺带纠正一条我自己写下的注释（"只影响扇出的分片数，不改变单库路径的行为"）—— 它已经不等了，就地改成两处落点都写清楚。
+
+### 四、API-168 结案：七条判据，和一条"根本不需要改的守卫"
+
+登记 API-168 时我说读侧有**两处**要改造：`pageLogs` 的时间窗，以及 `getClientCallCount` 这条"删客户端前的调用数守卫"（扇出被截断会**少算**，那是能放过一次删除的错方向）。前者按上面两条做完；后者全仓扫下来 **main 与 test 都没有调用方** —— 一个死方法。所以本轮不是把它改成 EXISTS 扇出，而是**把它删掉**：不存在的守卫不会算错数。**判据：登记缺陷时要写清"它现在在哪被调用"，否则结案时容易去修一段根本不会被执行的路径。**
+
+跨实例这件事的判据形态我刻意没写成"接口 200"：A 条的成立条件是"**ds0 上这张月表实测 0 行**，而应用读出了 6 行" —— 这条只有真的打到第二个实例才可能成立；C 条要求 `total = A + B` 且 `shards = 3`（扇出不重不漏）；D 条要求服务端补窗口这件事**必须说出来**；E 条要求拒绝行落进桶位那个实例的月表、且**逻辑表一行不多**。桶位不是写死的 202611：探针用 `shard-config.cjs` 现算当月（`202611 → 桶 0 → ds0`），明天再跑照样成立。
+
+### 五、API-172 与两处陈旧口径就地更正
+
+管理端日志页那两条提示写的是"鉴权失败的调用不入账"，而 BH3 之后事实是**入账但不认领归属**（`client_id` / `tenant_id` 留空）—— 文案把用户引向"日志坏了"。本轮改成"失败已记录，调用方为空的那几行就是没验过去的请求"（两侧 locale 同步，键数配平）。另外两处口径也改了：DTO 注释里"表里没有 tenant_id 列"（PI4 已补成可空派生列）与测试类注释里同一句 —— 现在写的是"列有，但它是 `client_id` 的派生物，租户一律由会话决定，不开放成入参"。
+
+### 六、代码审查与重构视角的收成
+
+1. **三个构造点而不是一个 `buildWrapper`**：`applyConditions` 是唯一的条件来源，`rowWrapper` / `countWrapper` 各自只加自己那一段。布尔开关参数（`withProjection`）我试了又退回 —— 两个语义不同的对象比一个带 flag 的对象更难用错。
+2. **`ObjectProvider<ShardQueryFanout>` 而不是直接注入**：分片关着时容器里没这个 bean；构造期就要求它存在，等于逼每一个不开分片的测试都配一套分片。这条留了注释说明为什么不图省事。
+3. **`ShardOutcome` 把两条扇出的截断合并**（`rows.truncated || count.truncated`）：只报其中一条会低估"少了多少"，而 `shards` 取两者的 `max`。
+4. **新加的 5 条 shared-types 断言钉的是"缺失即安全"**：三个 flag 缺失（单库路径压根不下发）必须解释成"没截断 / 没补窗口 / 没分片"，`shardsOf` 缺失给 0 —— 否则页面会画出"共 undefined 片"。
+
+### 七、一条读数口径事故（就地记下）
+
+第一次聚合门禁日志我用 `awk -F'[:,]'` 取字段，`[INFO] Tests run: 105, Failures: 0, Errors: 0, Skipped: 0` 被同时按 `:` 和 `,` 切开，`$3` 是字面量 `" Failures"` 而不是数字 —— 于是报出 **1066 / 0 / 0 / 0**，比 PI4 的 1105 还小，看着像"这轮删掉了测试"。真读数是 **1111 / 0 / 0 / 3**（20 个有测试的模块 / 27 个 reactor 模块）。**判据：聚合读数必须用一条真行的字段索引自证，能对上具体模块的行数才算数**（本轮逐模块列出后相加核对过：63+81+165+10+23+40+99+65+22+82+17+46+30+116+42+105+13+32+31+29 = 1111）。
+
+### 八、交回用户 / 下一步
+
+1. **要不要让 17092 继续开着 `SHARD_ENABLED=true`**：现在它是开的（我起的进程）。关掉跑 `powershell -File devlog/_pi/launch-openapi-sharded.ps1 -ShardOff`；这条开关我只在自己那个进程上动过。
+2. **其余 6 张分片表还没接读侧扇出**（`alert_event` / `alert_notify_log` / `sys_login_log` 等是 TENANT 路由，父表收口口径不同），openapi 这条是模板；alert 那几张要不要同批改造是排期决定。
+3. **PI1 剩下的 11 个服务**仍在旧进程里/没起（任务 #207），端口面未复验。
+4. **API-170 的 monitor 半边**运行时判据要等 17096 起来（那是你起的进程，我不动）。
+5. 遗留待拍：COMPOSITE 告警规则、API-117/118、API-130/132~136、API-165、API-169（`install common/*` 至今未执行）；浏览器目视项（ETL 四种手势、按月真分桶、本轮新增的"这一页不完整"横幅长相）仍在用户侧。
+
+**边界**：没解验证码、没清 `sms:day`（探针改成先直接登录，重跑不吃配额）、没动你起的进程、没推远端；本轮唯一的库写入是探针自己产生的一条拒绝审计行（`api_path=/api/openapi/callback/pi5-probe`，落 `ds0.openapi_log_202611`）。

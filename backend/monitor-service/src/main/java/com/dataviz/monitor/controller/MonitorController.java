@@ -9,6 +9,7 @@ import com.dataviz.monitor.vo.MetricVO;
 import com.dataviz.monitor.vo.ServiceInstanceVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -54,14 +55,21 @@ public class MonitorController {
     }
 
     /**
-     * 获取指标历史数据
+     * 获取指标历史数据。
+     *
+     * <p>时间入参是 ISO 本地日期时间（{@code 2026-11-07T09:30:00}），与管理端
+     * {@code ServiceMonitor.vue} 那个区间选择器的 {@code value-format} 同一形状。
+     * 这两个 {@code @DateTimeFormat} 不是修饰：Spring Boot 默认不给裸 {@code LocalDateTime}
+     * 查询参数装 ISO 解析器（走 locale 的 SHORT 样式），带 {@code T} 的值会在进方法之前就被拒成 400，
+     * 于是"选了时间段就没数据"看起来像指标缺失，实际是入参没解析上（同 API-170，
+     * openapi 侧那条已用运行时判据证实）。
      */
     @GetMapping("/metrics/history")
     public R<List<MetricHistoryVO>> getMetricHistory(
             @RequestParam String serviceName,
             @RequestParam String metricName,
-            @RequestParam(required = false) LocalDateTime startTime,
-            @RequestParam(required = false) LocalDateTime endTime) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         return R.ok(metricService.getMetricHistory(serviceName, metricName, startTime, endTime));
     }
 }

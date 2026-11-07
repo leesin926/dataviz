@@ -36,6 +36,15 @@ export interface PageResult<T> {
   pageSize?: number
   pages?: number
   totalPages?: number
+  /**
+   * 分片读路径专用：这一页与 total 都不完整（扇出被服务端 shard.max-shards-per-read 截断）。
+   * undefined = 这个接口不分片。别把 undefined 当 false 用 —— 画面上"没说"与"完整"是两回事。
+   */
+  truncated?: boolean
+  /** 本次实际扫描的物理分片数；配合 truncated 才能告诉用户"少了多少范围" */
+  shards?: number
+  /** 调用方没给时间范围、服务端按默认窗口收窄了查询。为真时页面要把"这不是全部历史"说出来。 */
+  windowDefaulted?: boolean
 }
 
 /** 从分页响应取行数据，兼容 records / list 两种口径 */
@@ -50,6 +59,21 @@ export function totalOf<T>(page?: PageResult<T> | T[] | null): number {
   if (!page) return 0
   if (Array.isArray(page)) return page.length
   return page.total ?? 0
+}
+
+/** 结果是否被明确宣告为不完整（undefined 一律按"没这个概念"处理，不当 true 也不当 false 用） */
+export function isTruncated(page?: PageResult<unknown> | null): boolean {
+  return page?.truncated === true
+}
+
+/** 服务端是否补了时间窗 */
+export function isWindowDefaulted(page?: PageResult<unknown> | null): boolean {
+  return page?.windowDefaulted === true
+}
+
+/** 扫了多少个分片；没报就是 0（0 与"未分片"在画面上都不该显示成数字） */
+export function shardsOf(page?: PageResult<unknown> | null): number {
+  return page?.shards ?? 0
 }
 
 /**

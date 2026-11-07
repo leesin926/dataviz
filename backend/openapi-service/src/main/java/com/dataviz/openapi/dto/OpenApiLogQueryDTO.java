@@ -3,6 +3,7 @@ package com.dataviz.openapi.dto;
 import com.dataviz.common.core.result.PageQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -11,11 +12,14 @@ import java.time.LocalDateTime;
  *
  * <p><b>每个条件都必须有 {@code openapi_log} 的真实列撑着</b>（列清单来自
  * {@code deploy/sql/patch/2026-09-21-schema-completion.sql} —— 注意 init/*.sql 里 db_openapi 是零表，
- * 这四张表的 DDL 全在 patch 里）：
+ * 这四张表的 DDL 全在 patch 里；{@code tenant_id} 由 {@code deploy/sql/shard/2026-11-06-pi4-01-derive-tenant-id.sql}
+ * 补成可空派生列）：
  * {@code client_id / app_name / api_path / method / request_params / response_code /
  * execution_time / ip / create_time}。刻意<b>没有</b>的条件：
  * <ul>
- *   <li>{@code tenantId} / {@code deleted}：这两列在表里根本不存在，见 {@code ApiLogServiceImpl#pageLogs} 的口径说明；</li>
+ *   <li>{@code tenantId}：列有，但它是 {@code client_id} 的派生物（审计用），租户一律由会话决定，
+ *       不开放成入参 —— 让调用方指定租户就等于跨租户读别人的调用记录；
+ *       {@code deleted} 则确实没有这一列（见 {@code ApiLogServiceImpl#pageLogs} 的口径说明）；</li>
  *   <li>{@code appId}（{@code openapi_app.id}）：日志的 {@code client_id} 指的是 {@code openapi_client.id}
  *       （DDL 注释与 {@code OpenApiController} 写入的都是它），两套凭据面的 id 空间不同，
  *       传应用 id 来查日志只会撞上同号的客户端、给出错的行；</li>
@@ -42,10 +46,17 @@ public class OpenApiLogQueryDTO extends PageQuery {
     /**
      * 时间区间下界（含）。ISO 本地日期时间形状，如 {@code 2026-11-06T00:00:00}，
      * 与 monitor-service {@code /metric/history} 的入参口径一致（都不带时区，按服务端时区解释）。
+     *
+     * <p><b>这个注解不是装饰。</b>Spring Boot 不给裸 {@code LocalDateTime} 查询参数装 ISO 解析器
+     * （默认按 locale 的 SHORT 样式），带 {@code T} 的值会在进入本方法之前就 400
+     * {@code Failed to convert ... for property 'startTime'}——也就是"时间筛选"这个功能在页面上从来没通过。
+     * 全局 {@code spring.mvc.format.date-time} 能治，但那要动 17 个服务的装配；这里只声明这两个字段自己要什么。
      */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime startTime;
 
-    /** 时间区间上界（含） */
+    /** 时间区间上界（含）；口径同 {@link #startTime} */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime endTime;
 
     /**

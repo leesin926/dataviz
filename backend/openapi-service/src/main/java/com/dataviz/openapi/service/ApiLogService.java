@@ -16,15 +16,10 @@ public interface ApiLogService {
     void saveLog(OpenApiLog log);
 
     /**
-     * Get API call statistics
-     */
-    long getClientCallCount(Long clientId);
-
-    /**
      * 管理端读路径：分页查 openapi_log，只回可安全展示的列。
      *
-     * <p>口径见 {@code ApiLogServiceImpl#pageLogs}：租户靠父表 {@code openapi_client} 收口
-     * （日志表本身没有 tenant_id 列），永不回 appSecret / requestParams。
+     * <p>口径见 {@code ApiLogServiceImpl#pageLogs}：租户靠父表 {@code openapi_client} 收口，
+     * 永不回 appSecret / requestParams；打开分片后跨月扇出，结果不完整时必须在响应里说出来。
      */
     PageResult<OpenApiLogVO> pageLogs(OpenApiLogQueryDTO query);
 }

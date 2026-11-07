@@ -4,6 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dataviz.common.mybatis.shard.ShardMode;
+import com.dataviz.common.mybatis.shard.ShardProperties;
+import com.dataviz.common.mybatis.shard.ShardQueryFanout;
+import com.dataviz.common.mybatis.shard.ShardRouteBy;
+import com.dataviz.common.mybatis.shard.ShardRouter;
 import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.core.result.ErrorCode;
 import com.dataviz.common.core.result.PageResult;
@@ -31,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -38,6 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,8 +54,9 @@ import static org.mockito.Mockito.when;
  * 调用日志读路径的三条硬口径：
  * ① 只投影安全列 —— 返回体里既不能有 openapi_client.app_secret，也不能有 request_params 原文
  *    （代理把 params 原样转成请求体，datasource 内部查询里那就是 SQL）；
- * ② 租户靠父表 openapi_client 收口 —— 日志表没有 tenant_id 列（在拦截器黑名单里），
- *    所以可见性来自「当前租户有哪些客户端」，不是日志表自己带条件；
+ * ② 租户靠父表 openapi_client 收口 —— 日志的可见性来自「当前租户有哪些客户端」，不是日志表自己带条件：
+ *    tenant_id 到 PI4 才补成可空派生列（鉴权失败的行天生没有它），且这张表在拦截器黑名单里，
+ *    把租户拼在日志列上会连这些行一起筛掉；
  * ③ 空结果与错误分得开 —— 真的没人调用过 ⇒ total=0 的空表；条件打错 ⇒ 点名报错，
  *    绝不把配置错误显示成「这个 key 没调用过」（API-106 那族「看不见错误就只能误诊」）。
  * 顺带钉住分页形状与排序稳定性。
@@ -64,12 +73,17 @@ class ApiLogServiceImplTest {
     @Mock
     private OpenApiClientMapper clientMapper;
 
+    /** 分片关着时容器里没有 {@code ShardQueryFanout} ⇒ {@code getIfAvailable()} 给 null（下面 setUp 里 stub）。 */
+    @Mock
+    private org.springframework.beans.factory.ObjectProvider<ShardQueryFanout> shardFanoutProvider;
+
     private ApiLogServiceImpl service;
 
     @BeforeEach
     void setUp() {
         MybatisPlusTableInfoHelper.initFor(OpenApiLog.class, OpenApiClient.class);
-        service = new ApiLogServiceImpl(logMapper, clientMapper);
+        lenient().when(shardFanoutProvider.getIfAvailable()).thenReturn(null);
+        service = new ApiLogServiceImpl(logMapper, clientMapper, shardFanoutProvider);
         SecurityContextHolder.setLoginUser(LoginUser.builder().userId(1L).username("admin").tenantId("1").build());
     }
 
@@ -416,6 +430,221 @@ class ApiLogServiceImplTest {
         assertEquals(0L, page.getTotal());
     }
 
+    // ---------- 分片读路径（shard.enabled=true 时才会走到） ----------
+
+    @Test
+    @DisplayName("开着分片：跨三个月的区间要扫三个分片，归并后按全局新→旧出页")
+    void should_fanOutAcrossMonthsWithFlags_when_timeRangeGiven() {
+        stubClients(client(9L, "ak-9"));
+        final AtomicInteger shard = new AtomicInteger();
+        when(logMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
+            int index = shard.getAndIncrement();
+            // 每个分片一行，时间从新到旧（扇出按计划是 202611 → 202610 → 202609）
+            Page<OpenApiLog> page = new Page<OpenApiLog>(1, 10);
+            page.setRecords(Collections.singletonList(
+                    rowAt(30L - index * 10L, LocalDateTime.of(2026, 11 - index, 20, 8, 0))));
+            return page;
+        });
+        when(logMapper.selectCount(any(Wrapper.class))).thenReturn(1L, 2L, 3L);
+
+        PageResult<OpenApiLogVO> result = serviceWithFanout(36).pageLogs(query(
+                LocalDateTime.of(2026, 9, 1, 0, 0), LocalDateTime.of(2026, 11, 30, 0, 0)));
+
+        assertEquals(Boolean.FALSE, result.getTruncated());
+        assertEquals(Integer.valueOf(3), result.getShards());
+        // 区间是调用方给的 ⇒ 不许谎称"窗口是我补的"
+        assertEquals(Boolean.FALSE, result.getWindowDefaulted());
+        assertEquals(6L, result.getTotal());
+        assertEquals(3, result.getRecords().size());
+        assertEquals(Long.valueOf(30L), result.getRecords().get(0).getId());
+        assertEquals(Long.valueOf(10L), result.getRecords().get(2).getId());
+    }
+
+    @Test
+    @DisplayName("完全没给时间：默认收窄成最近 3 个月，并把 windowDefaulted=true 带出去")
+    void should_defaultWindowAndFlagIt_when_neitherStartNorEndGiven() {
+        stubClients(client(9L, "ak-9"));
+        when(logMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
+            Page<OpenApiLog> page = new Page<OpenApiLog>(1, 10);
+            page.setRecords(Collections.emptyList());
+            return page;
+        });
+        when(logMapper.selectCount(any(Wrapper.class))).thenReturn(0L);
+
+        PageResult<OpenApiLogVO> result = serviceWithFanout(36).pageLogs(new OpenApiLogQueryDTO());
+
+        assertEquals(Boolean.TRUE, result.getWindowDefaulted());
+        // 3 个月的回看窗口**跨 4 张月表**：从今天往回推 3 个月落在 3 个多月前的月中，
+        // 那个不完整的月份照样要扫。断言写成 3 会逼实现去做"月份对齐"，那是另一种语义（整月而不是滚动窗口）。
+        assertEquals(Integer.valueOf(4), result.getShards());
+    }
+
+    @Test
+    @DisplayName("扇出被分片上限截断时回 truncated=true，total 只是下界，不能当成一共调用了这么多次")
+    void should_reportTruncation_when_shardCapCutTheScan() {
+        stubClients(client(9L, "ak-9"));
+        when(logMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
+            Page<OpenApiLog> page = new Page<OpenApiLog>(1, 10);
+            page.setRecords(Collections.singletonList(rowAt(1L, LocalDateTime.of(2026, 11, 20, 8, 0))));
+            return page;
+        });
+        when(logMapper.selectCount(any(Wrapper.class))).thenReturn(5L);
+
+        // 上限 2 个分片，区间却有 5 个月 ⇒ 少了 3 个月必须说出来
+        PageResult<OpenApiLogVO> result = serviceWithFanout(2).pageLogs(query(
+                LocalDateTime.of(2026, 7, 1, 0, 0), LocalDateTime.of(2026, 11, 30, 0, 0)));
+
+        assertEquals(Boolean.TRUE, result.getTruncated());
+        assertEquals(Integer.valueOf(2), result.getShards());
+        assertEquals(10L, result.getTotal());
+    }
+
+    @Test
+    @DisplayName("分片关着时行为与本轮之前逐字节相同：一次单表分页，三个分片字段全为 null")
+    void should_keepSingleTablePathUntouched_when_shardingDisabled() {
+        stubClients(client(9L, "ak-9"));
+        stubPageWith(37L, Arrays.asList(logRow(1L, 9L, "/api/model/data", 200)));
+
+        PageResult<OpenApiLogVO> result = service.pageLogs(query(
+                LocalDateTime.of(2026, 11, 1, 0, 0), LocalDateTime.of(2026, 11, 30, 0, 0)));
+
+        assertNull(result.getTruncated());
+        assertNull(result.getShards());
+        assertNull(result.getWindowDefaulted());
+        assertEquals(37L, result.getTotal());
+        verify(logMapper).selectPage(any(Page.class), any(Wrapper.class));
+        verify(logMapper, never()).selectCount(any(Wrapper.class));
+    }
+
+    /**
+     * 扇出的计数 SQL 是我们自己发的第二条，分页插件不会替我们剥掉列投影。
+     * 这一条单测钉的是 wrapper 的形状（投影 + 排序只能出现在行查询里），因为 mock 掉 mapper 之后
+     * 「MP 把投影搬进 COUNT(...)」这件事要到真库跑一次才看得见 —— 本轮的运行时 500 就是这么来的。
+     */
+    @Test
+    @DisplayName("扇出分两条 wrapper：行查询带列白名单与排序，计数只带 WHERE")
+    void should_splitRowAndCountWrappers_when_fanOutCounting() {
+        stubClients(client(9L, "ak-9"));
+        when(logMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
+            Page<OpenApiLog> page = new Page<OpenApiLog>(1, 10);
+            page.setRecords(Collections.emptyList());
+            return page;
+        });
+        when(logMapper.selectCount(any(Wrapper.class))).thenReturn(0L);
+
+        serviceWithFanout(36).pageLogs(query(
+                LocalDateTime.of(2026, 11, 1, 0, 0), LocalDateTime.of(2026, 11, 30, 0, 0)));
+
+        ArgumentCaptor<Wrapper<OpenApiLog>> rowCap = captorForLogWrapper();
+        ArgumentCaptor<Wrapper<OpenApiLog>> countCap = captorForLogWrapper();
+        verify(logMapper, atLeastOnce()).selectPage(any(Page.class), rowCap.capture());
+        verify(logMapper, atLeastOnce()).selectCount(countCap.capture());
+
+        LambdaQueryWrapper<OpenApiLog> row = (LambdaQueryWrapper<OpenApiLog>) rowCap.getValue();
+        assertTrue(hasText(row.getSqlSelect()), "行查询必须带列白名单，否则 request_params 会跟着出来");
+        assertFalse(row.getExpression().getOrderBy().isEmpty(), "行查询必须排序，否则翻页会重行/漏行");
+
+        LambdaQueryWrapper<OpenApiLog> count = (LambdaQueryWrapper<OpenApiLog>) countCap.getValue();
+        assertTrue(!hasText(count.getSqlSelect()),
+                "计数带了列投影，MP 会拼成 COUNT(id, client_id, ...) —— MySQL 1064: " + count.getSqlSelect());
+        assertTrue(count.getExpression().getOrderBy().isEmpty(),
+                "计数带了 ORDER BY：COUNT(...) 后面跟排序在 only_full_group_by 下同样是死路");
+        // 参数表要先把 SQL 渲出来才填得上（MP 3.5.5 的 in/ge 在渲染时才 formatParam），
+        // 所以这里先取 sqlSegment 再断言参数，别指望 wrapper 构造完就有值。
+        String countSql = count.getSqlSegment();
+        assertTrue(countSql.contains("client_id IN") && countSql.contains("create_time >="),
+                "计数不能是裸 COUNT(*)，租户与时间条件都得住着: " + countSql);
+        assertTrue(count.getParamNameValuePairs().size() >= 3,
+                "边界值必须是参数不能拼字符串: " + count.getParamNameValuePairs());
+    }
+
+    /**
+     * 默认窗口不能只体现在"扫哪几张月表"上。最早那张月表里装着整月的行，
+     * 而滚动窗口只覆盖它的后半段；不在 SQL 里画边界，total 就会把窗口外的调用也算进去，
+     * 而调用方看到的是一个看起来完全正常的数字。
+     */
+    @Test
+    @DisplayName("没给时间范围时，服务端补的窗口边界要进 SQL，不能只靠月表名收窄")
+    void should_bindWindowBoundsIntoSql_when_windowIsDefaulted() {
+        stubClients(client(9L, "ak-9"));
+        when(logMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
+            Page<OpenApiLog> page = new Page<OpenApiLog>(1, 10);
+            page.setRecords(Collections.emptyList());
+            return page;
+        });
+        when(logMapper.selectCount(any(Wrapper.class))).thenReturn(0L);
+
+        serviceWithFanout(36).pageLogs(new OpenApiLogQueryDTO());
+
+        ArgumentCaptor<Wrapper<OpenApiLog>> cap = captorForLogWrapper();
+        verify(logMapper, atLeastOnce()).selectCount(cap.capture());
+        LambdaQueryWrapper<OpenApiLog> count = (LambdaQueryWrapper<OpenApiLog>) cap.getValue();
+        String sql = count.getSqlSegment();
+        assertTrue(sql.contains("create_time >=") && sql.contains("create_time <="),
+                "补出来的窗口没进 SQL，最早那张月表整月都会被算进 total: " + sql);
+
+        List<LocalDateTime> bounds = new ArrayList<LocalDateTime>();
+        for (Object value : count.getParamNameValuePairs().values()) {
+            if (value instanceof LocalDateTime) {
+                bounds.add((LocalDateTime) value);
+            }
+        }
+        assertEquals(2, bounds.size(), "窗口两个边界都得是参数，不能拼字符串: " + count.getParamNameValuePairs());
+        Collections.sort(bounds);
+        assertTrue(bounds.get(0).plusMonths(3).isEqual(bounds.get(1)),
+                "默认回看 3 个月：下界+3 个月要正好等于上界，实际 " + bounds);
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    /** 用一份真的分片配置装出 service（实例 url 是假的：Hikari 懒初始化，这些测试不连库）。 */
+    private ApiLogServiceImpl serviceWithFanout(int maxShardsPerRead) {
+        ShardProperties properties = new ShardProperties();
+        properties.setEnabled(true);
+        properties.setMaxShardsPerRead(maxShardsPerRead);
+        ShardProperties.Instance ds0 = new ShardProperties.Instance();
+        ds0.setId("ds0");
+        ds0.setUrl("jdbc:mysql://127.0.0.1:3306/db_openapi");
+        ds0.setUsername("root");
+        ds0.setPassword("unused-in-tests");
+        ShardProperties.Instance ds1 = new ShardProperties.Instance();
+        ds1.setId("ds1");
+        ds1.setUrl("jdbc:mysql://127.0.0.1:3307/db_openapi");
+        ds1.setUsername("root");
+        ds1.setPassword("unused-in-tests");
+        properties.setInstances(Arrays.asList(ds0, ds1));
+
+        ShardProperties.Rule rule = new ShardProperties.Rule();
+        rule.setTable("openapi_log");
+        rule.setMode(ShardMode.MONTH);
+        // 与生产同一条：这张表按月份轮转实例，租户只是审计列
+        rule.setRouteBy(ShardRouteBy.NONE);
+        rule.setBuckets(2);
+        properties.setRules(Collections.singletonList(rule));
+        properties.validate();
+
+        ShardQueryFanout fanout = new ShardQueryFanout(new ShardRouter(properties));
+        @SuppressWarnings("unchecked")
+        org.springframework.beans.factory.ObjectProvider<ShardQueryFanout> provider =
+                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(fanout);
+        return new ApiLogServiceImpl(logMapper, clientMapper, provider);
+    }
+
+    private static OpenApiLog rowAt(long id, LocalDateTime createTime) {
+        return OpenApiLog.builder().id(id).clientId(9L).apiPath("/api/model/data").method("GET")
+                .responseCode(200).createTime(createTime).build();
+    }
+
+    private static OpenApiLogQueryDTO query(LocalDateTime start, LocalDateTime end) {
+        OpenApiLogQueryDTO dto = new OpenApiLogQueryDTO();
+        dto.setStartTime(start);
+        dto.setEndTime(end);
+        return dto;
+    }
+
     // ---------- helpers ----------
 
     private void stubClients(OpenApiClient... clients) {
@@ -455,6 +684,16 @@ class ApiLogServiceImplTest {
     @SuppressWarnings("unchecked")
     private static ArgumentCaptor<Page<OpenApiLog>> captorForPage() {
         return (ArgumentCaptor<Page<OpenApiLog>>) (ArgumentCaptor<?>) ArgumentCaptor.forClass(Page.class);
+    }
+
+    /**
+     * 日志 wrapper 的捕获器。{@code selectPage/selectCount} 的形参声明是 {@code Wrapper<T>}，
+     * 实现里传的是 LambdaQueryWrapper（有 getSqlSelect / getExpression / getParamNameValuePairs），
+     * 断言时在这一个点转型。
+     */
+    @SuppressWarnings("unchecked")
+    private static ArgumentCaptor<Wrapper<OpenApiLog>> captorForLogWrapper() {
+        return (ArgumentCaptor<Wrapper<OpenApiLog>>) (ArgumentCaptor<?>) ArgumentCaptor.forClass(Wrapper.class);
     }
 
     /**

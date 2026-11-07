@@ -13,9 +13,12 @@ import com.dataviz.openapi.mapper.OpenApiLogMapper;
 import com.dataviz.openapi.service.ApiLogService;
 import com.dataviz.openapi.vo.OpenApiLogVO;
 import com.dataviz.common.mybatis.shard.ShardContext;
+import com.dataviz.common.mybatis.shard.ShardQueryFanout;
 import com.dataviz.common.security.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -31,14 +34,16 @@ import java.util.regex.Pattern;
  *
  * <p><b>读路径的两条底座口径，先说清楚，因为它们决定了能给什么条件、能给什么列：</b>
  * <ol>
- *   <li><b>租户</b>：{@code openapi_log} 没有 tenant_id 列，它在
- *       {@code common-mybatis} 的 {@code MybatisPlusConfig.IGNORE_TENANT_TABLES} 黑名单里
- *       （见该清单的「元数据 / 子表 / 日志表（只存明细，不带租户列）」分组），所以拦截器
+ *   <li><b>租户</b>：{@code openapi_log.tenant_id} 是阶段 PI 才补上的<b>派生可空</b>列（pi4-01 从
+ *       {@code openapi_client}/{@code openapi_app} 反查，鉴权失败的行至今与将来都留空），而它在
+ *       {@code common-mybatis} 的 {@code MybatisPlusConfig.IGNORE_TENANT_TABLES} 黑名单里，拦截器
  *       <b>不会</b>给它注入租户条件。同族日志表（{@code etl_task_log} / {@code schedule_job_log} /
  *       {@code alert_notify_log}）的收口方式都是「靠父表定租户」（MybatisPlusConfig 的类注释就是这句），
  *       这里照办：先按会话租户列出可见的 {@code openapi_client}（该表有 tenant_id、由拦截器自动过滤），
- *       再用它的 id 集合圈住日志。租户会话下看不见 {@code client_id} 为 NULL 的历史行 ——
- *       那些行无法归属，宁可不显示也不跨租户显示。</li>
+ *       再用它的 id 集合圈住日志。<br>
+ *       <b>为什么有了这一列还不改走它</b>：可空列当唯一收口会同时犯两种错 —— 历史行（列还没补时写的）
+ *       凭空消失，而"租户号填了但客户端已删"的行凭空可见。父表收口这两条都不成立。
+ *       列本身的用处是审计与分片排障，不是权限边界。</li>
  *   <li><b>deleted=0</b>：{@code application.yml} 全局配了 {@code logic-delete-field: deleted}，
  *       但 {@code openapi_log} 的 DDL 与实体都<b>没有</b> deleted 列/字段，MyBatis-Plus 对没有该字段的
  *       实体不拼逻辑删除条件，所以这里既不需要也没有「deleted=0」可加。不为此往实体补字段 ——
@@ -50,8 +55,8 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ApiLogServiceImpl implements ApiLogService {
 
-    /** 分片层认的逻辑表名；与 {@code @TableName("openapi_log")} 必须同一个字符串，写两处就会各说各话 */
-    private static final String SHARD_TABLE = "openapi_log";
+    /** 分片层认的逻辑表名；与 {@code @TableName("openapi_log")} 必须同一个字符串，所以只在读侧类里写一次 */
+    private static final String SHARD_TABLE = OpenApiLogShardReader.TABLE;
 
     /** result 允许值；SUCCESS 按 2xx 判定，与 OpenApiController 的 is2xxSuccess 同口径 */
     public static final String RESULT_SUCCESS = "SUCCESS";
@@ -68,6 +73,19 @@ public class ApiLogServiceImpl implements ApiLogService {
 
     private final OpenApiLogMapper logMapper;
     private final OpenApiClientMapper clientMapper;
+    /**
+     * 分片扇出执行器。用 {@link ObjectProvider} 而不是直接注入：它只在 {@code shard.enabled=true} 时存在，
+     * 而这一层的立身之本就是"关掉等于不存在"—— 构造期就要求它存在，等于逼每个测试都得配一套分片。
+     */
+    private final ObjectProvider<ShardQueryFanout> shardFanout;
+
+    /**
+     * 调用方没给时间范围时服务端收窄成最近几个月。收窄要同时体现在两处：
+     * 扇出的分片数，以及 SQL 里的 {@code create_time} 边界 —— 最早那张月表装的是整月的行，
+     * 滚动窗口只覆盖它后半段，不画边界 total 就会虚高。单库路径不受这个开关影响。
+     */
+    @Value("${openapi.log.default-query-months:3}")
+    private int defaultQueryMonths = 3;
 
     @Override
     public void saveLog(OpenApiLog apiLog) {
@@ -79,13 +97,6 @@ public class ApiLogServiceImpl implements ApiLogService {
         try (ShardContext.ShardScope scope = ShardContext.open(SHARD_TABLE, when)) {
             logMapper.insert(apiLog);
         }
-    }
-
-    @Override
-    public long getClientCallCount(Long clientId) {
-        LambdaQueryWrapper<OpenApiLog> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(OpenApiLog::getClientId, clientId);
-        return logMapper.selectCount(wrapper);
     }
 
     @Override
@@ -102,20 +113,107 @@ public class ApiLogServiceImpl implements ApiLogService {
             return PageResult.empty(pageNum, pageSize);
         }
 
+        ShardQueryFanout fanout = shardFanout == null ? null : shardFanout.getIfAvailable();
+        if (fanout == null) {
+            // 2) 分片关着 ⇒ 一条单表查询，行为与本轮之前逐字节相同（绝大多数部署与全部现存测试走这条）
+            Page<OpenApiLog> result = logMapper.selectPage(new Page<OpenApiLog>(pageNum, pageSize),
+                    rowWrapper(condition, visibleClientIds, condition.getStartTime(), condition.getEndTime()));
+            return PageResult.of(toVOs(result.getRecords()), result.getTotal(), pageNum, pageSize);
+        }
+
+        // 3) 分片开着 ⇒ 时间范围必须有界：openapi_log 没有租户维度可收窄实例（route-by=NONE），
+        //    不设限就等于"从有记录以来一直扫到当月"，那是一条会在生产挂死页面的查询。
+        Window window = resolveWindow(condition);
+        final LocalDateTime from = window.from;
+        final LocalDateTime to = window.to;
+        OpenApiLogShardReader.ShardOutcome outcome = new OpenApiLogShardReader(fanout, logMapper)
+                .page(() -> rowWrapper(condition, visibleClientIds, from, to),
+                        () -> countWrapper(condition, visibleClientIds, from, to),
+                        from, to, pageNum, pageSize);
+
+        // 不完整必须让前端画得出来：截断时 total 是下界、这一页也可能少行，
+        // 只把已扫到的当成全部 = 用户以为"这个租户就调用了这么多次"（API-23 同族，只是这次是分片）
+        return PageResult.ofSharded(toVOs(outcome.getRecords()), outcome.getTotal(), pageNum, pageSize,
+                outcome.isTruncated(), Math.max(outcome.getScannedShards(), outcome.getCountedShards()),
+                window.defaulted);
+    }
+
+    /** 没给区间时收窄成最近 defaultQueryMonths 个月；给了就照用（倒置区间在 validate 里已经挡了）。 */
+    private Window resolveWindow(OpenApiLogQueryDTO condition) {
+        LocalDateTime to = condition.getEndTime();
+        LocalDateTime from = condition.getStartTime();
+        if (from != null && to != null) {
+            return new Window(from, to, false);
+        }
+        LocalDateTime end = to != null ? to : LocalDateTime.now();
+        LocalDateTime start = from != null ? from : end.minusMonths(Math.max(1, defaultQueryMonths));
+        return new Window(start, end, true);
+    }
+
+    private static List<OpenApiLogVO> toVOs(List<OpenApiLog> rows) {
+        List<OpenApiLogVO> records = new ArrayList<OpenApiLogVO>();
+        for (OpenApiLog row : rows) {
+            records.add(toVO(row));
+        }
+        return records;
+    }
+
+    /** 生效窗口 + 是否由服务端补的。{@code defaulted} 必须一路带到响应，不能只在这层知道。 */
+    private static final class Window {
+        private final LocalDateTime from;
+        private final LocalDateTime to;
+        private final boolean defaulted;
+
+        private Window(LocalDateTime from, LocalDateTime to, boolean defaulted) {
+            this.from = from;
+            this.to = to;
+            this.defaulted = defaulted;
+        }
+    }
+
+    /**
+     * 日志侧的行查询：条件 + 列白名单 + 全局排序。<b>每个分片新建一个</b>（扇出时由
+     * {@code OpenApiLogShardReader} 反复调用）：MP 的分页插件会往 wrapper 上挂中间状态，
+     * 同一个实例喂多个分片会互相污染。时间边界由参数传入，不读 {@code condition} 的原始字段 ——
+     * 扇出要的是 {@link #resolveWindow} 补出来的生效窗口，单表要的是调用方原样给的边界。
+     */
+    private LambdaQueryWrapper<OpenApiLog> rowWrapper(OpenApiLogQueryDTO condition, List<Long> visibleClientIds,
+            LocalDateTime from, LocalDateTime to) {
         LambdaQueryWrapper<OpenApiLog> wrapper = new LambdaQueryWrapper<OpenApiLog>();
         // 列白名单：request_params 不在其中（代理把 params 原样转成 SQL 体，那列可能带凭据内容）
         wrapper.select(OpenApiLog::getId, OpenApiLog::getClientId, OpenApiLog::getAppName,
                 OpenApiLog::getApiPath, OpenApiLog::getMethod, OpenApiLog::getResponseCode,
                 OpenApiLog::getExecutionTime, OpenApiLog::getIp, OpenApiLog::getCreateTime);
+        applyConditions(wrapper, condition, visibleClientIds, from, to);
+        // create_time 同秒的行很多（测试数据就是按分钟造的），补 id 兜底才能保证翻页不重不漏
+        wrapper.orderByDesc(OpenApiLog::getCreateTime).orderByDesc(OpenApiLog::getId);
+        return wrapper;
+    }
 
+    /**
+     * 日志侧的计数查询：<b>只有 WHERE，不带列投影也不带排序</b>。
+     *
+     * <p>这不是风格问题，是分片读路径 500 的根因：MP 的 {@code selectCount} 会把 wrapper 上的
+     * select 投影原样搬进 {@code COUNT(%s)}，两列以上就成了 {@code COUNT(id, client_id, ...)} ——
+     * MySQL 的 COUNT 只接一个表达式，当场 1064。单表路径没踩到，是因为分页插件自己生成 count SQL 时
+     * 会先把投影剥掉；扇出的计数是我们自己发的第二条 SQL，没人替我们剥。
+     * 排序同理：{@code COUNT(...) ... ORDER BY} 在 only_full_group_by 下也是死路。
+     */
+    private LambdaQueryWrapper<OpenApiLog> countWrapper(OpenApiLogQueryDTO condition, List<Long> visibleClientIds,
+            LocalDateTime from, LocalDateTime to) {
+        return applyConditions(new LambdaQueryWrapper<OpenApiLog>(), condition, visibleClientIds, from, to);
+    }
+
+    private LambdaQueryWrapper<OpenApiLog> applyConditions(LambdaQueryWrapper<OpenApiLog> wrapper,
+            OpenApiLogQueryDTO condition, List<Long> visibleClientIds, LocalDateTime from, LocalDateTime to) {
         if (visibleClientIds != null) {
             wrapper.in(OpenApiLog::getClientId, visibleClientIds);
         }
-        if (condition.getStartTime() != null) {
-            wrapper.ge(OpenApiLog::getCreateTime, condition.getStartTime());
+        if (from != null) {
+            wrapper.ge(OpenApiLog::getCreateTime, from);
         }
-        if (condition.getEndTime() != null) {
-            wrapper.le(OpenApiLog::getCreateTime, condition.getEndTime());
+        if (to != null) {
+            wrapper.le(OpenApiLog::getCreateTime, to);
         }
         if (condition.getResponseCode() != null) {
             wrapper.eq(OpenApiLog::getResponseCode, condition.getResponseCode());
@@ -128,15 +226,7 @@ public class ApiLogServiceImpl implements ApiLogService {
             // 没有 service_code 列：它就是 api_path 的 /api/<代码>/ 段，按该列做前缀匹配
             wrapper.likeRight(OpenApiLog::getApiPath, "/api/" + condition.getServiceCode().trim() + "/");
         }
-        // create_time 同秒的行很多（测试数据就是按分钟造的），补 id 兜底才能保证翻页不重不漏
-        wrapper.orderByDesc(OpenApiLog::getCreateTime).orderByDesc(OpenApiLog::getId);
-
-        Page<OpenApiLog> result = logMapper.selectPage(new Page<OpenApiLog>(pageNum, pageSize), wrapper);
-        List<OpenApiLogVO> records = new ArrayList<OpenApiLogVO>();
-        for (OpenApiLog row : result.getRecords()) {
-            records.add(toVO(row));
-        }
-        return PageResult.of(records, result.getTotal(), pageNum, pageSize);
+        return wrapper;
     }
 
     /**
@@ -248,7 +338,7 @@ public class ApiLogServiceImpl implements ApiLogService {
      * 逐字段显式赋值，不用 {@code BeanUtils.copyProperties}：那样一旦实体将来多出敏感字段
      * （requestParams 就在实体上），映射会「自动」把它带上，而这正是不能出面的东西。
      */
-    private OpenApiLogVO toVO(OpenApiLog row) {
+    private static OpenApiLogVO toVO(OpenApiLog row) {
         return OpenApiLogVO.builder()
                 .id(row.getId())
                 .clientId(row.getClientId())

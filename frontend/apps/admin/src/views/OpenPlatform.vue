@@ -193,6 +193,17 @@
           :title="t('openPlatform.logLimitTitle')"
           :description="t('openPlatform.logLimitDesc')"
         />
+        <!-- 分片读路径会把"不完整"如实报出来；这一条必须画在表上方，因为表里的行看起来完全正常 -->
+        <el-alert
+          v-if="logsPartialReason"
+          class="notice"
+          :type="logsPartialReason === 'truncated' ? 'warning' : 'info'"
+          :closable="false"
+          show-icon
+          :title="t(logsPartialText.title, { shards: logsShards })"
+          :description="t(logsPartialText.desc)"
+        />
+
         <el-alert
           class="notice"
           type="warning"
@@ -395,7 +406,7 @@
     OpenApiLogResult,
     OpenApiWebhook,
   } from '@dataviz/shared-types'
-  import { rowsOf, totalOf } from '@dataviz/shared-types'
+  import { rowsOf, shardsOf, totalOf } from '@dataviz/shared-types'
   import {
     createApp,
     createClient,
@@ -465,6 +476,13 @@
   const logs = ref<OpenApiLog[]>([])
   const logsTotal = ref(0)
   const logsLoading = ref(false)
+  /**
+   * 分片读路径的三个可选读数。"后端没说"与"后端说完整"要分得开：
+   * 用 null 而不是 false 起头，否则一个不分片的接口会被画成"结果完整"这种没根据的承诺。
+   */
+  const logsTruncated = ref<boolean | null>(null)
+  const logsWindowDefaulted = ref<boolean | null>(null)
+  const logsShards = ref(0)
   /** 上一次的失败消息，留在页面上：只弹一次 toast 的话，运维会把"读不到"当成"没有调用" */
   const logsError = ref('')
   const logPageNum = ref(1)
@@ -510,6 +528,23 @@
     return 'info'
   }
 
+  /**
+   * 表格上方的"这一页不是全部"是哪一种：
+   * truncated（扫到分片上限被截）优先于 windowDefaulted（服务端替我补了时间窗），
+   * 因为前者意味着连默认窗口内都没查完，后者只是范围比用户以为的小。
+   */
+  const logsPartialReason = computed<'truncated' | 'window' | null>(() => {
+    if (logsTruncated.value === true) return 'truncated'
+    if (logsWindowDefaulted.value === true) return 'window'
+    return null
+  })
+
+  /** 键名走普通字符串而不是拼出来的点号路径：vue-i18n 的扁平键里带 `.` 不会被当路径解析。 */
+  const logsPartialText = computed(() =>
+    logsPartialReason.value === 'truncated'
+      ? { title: 'openPlatform.logPartialTruncatedTitle', desc: 'openPlatform.logPartialTruncatedDesc' }
+      : { title: 'openPlatform.logPartialWindowTitle', desc: 'openPlatform.logPartialWindowDesc' })
+
   function logQuery(): OpenApiLogPageQuery {
     const range = logRange.value
     return {
@@ -532,11 +567,17 @@
       const page = await pageOpenApiLogs(logQuery())
       logs.value = rowsOf(page)
       logsTotal.value = totalOf(page)
+      logsTruncated.value = page.truncated ?? null
+      logsWindowDefaulted.value = page.windowDefaulted ?? null
+      logsShards.value = shardsOf(page)
     } catch (e) {
       // 后端 message 原样显示，不塌成"加载失败"三个字，也不静默给一张空表
       logsError.value = (e as Error).message
       logs.value = []
       logsTotal.value = 0
+      logsTruncated.value = null
+      logsWindowDefaulted.value = null
+      logsShards.value = 0
       ElMessage.error(logsError.value)
     } finally {
       logsLoading.value = false
