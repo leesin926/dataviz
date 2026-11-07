@@ -283,6 +283,9 @@ public class OpenApiAuthFilter extends OncePerRequestFilter {
         try {
             apiLogService.saveLog(OpenApiLog.builder()
                     .clientId(maybeApp == null ? null : maybeApp.getId())
+                    // 归属只在验过签名之后带：maybeApp 为 null 就是外部自己声明的 appKey，
+                    // 那时连租户都不能写，否则拒绝记录里会出现一个"谁都能自称"的租户号
+                    .tenantId(maybeApp == null ? null : maybeApp.getTenantId())
                     .appName(maybeApp == null ? null : maybeApp.getAppName())
                     .apiPath(request.getRequestURI())
                     .method(request.getMethod())

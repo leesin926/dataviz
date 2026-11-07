@@ -24,6 +24,16 @@ public class OpenApiLog {
 
     private Long clientId;
 
+    /**
+     * 调用方所属租户。密钥没验过的拒绝记录（401/403）留空 —— 没验过身份就等于没归属，
+     * 写进去等于让外部自己声称属于某个租户。
+     * <p>
+     * 刻意不加 {@code @TableField(fill = INSERT)}：自动填充那条路把会话租户当 {@code String} 塞，
+     * 而这个字段与库里的列都是 bigint；而且这张表按月份轮转实例（route-by=NONE），
+     * 这一列只是审计维度，不是路由键。
+     */
+    private Long tenantId;
+
     private String appName;
 
     private String apiPath;

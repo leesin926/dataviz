@@ -34,6 +34,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,6 +76,65 @@ class ApiLogServiceImplTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clear();
+    }
+
+    // ---------- 写侧：分片键与归属 ----------
+
+    @Test
+    @DisplayName("写侧自己把分片键说清楚：insert 期间线程上必须有 openapi_log 的绑定，值就是这一行的 create_time")
+    void should_bindShardKeyDuringInsert_when_savingAuditRow() {
+        List<String> seen = new ArrayList<String>();
+        when(logMapper.insert(any(OpenApiLog.class))).thenAnswer(invocation -> {
+            com.dataviz.common.mybatis.shard.ShardContext.Binding binding =
+                    com.dataviz.common.mybatis.shard.ShardContext.current();
+            seen.add(binding == null ? "UNBOUND"
+                    : binding.getLogicalTable() + "/" + binding.getTimeValue());
+            return 1;
+        });
+
+        service.saveLog(OpenApiLog.builder().clientId(9L).tenantId(903L)
+                .createTime(LocalDateTime.of(2026, 11, 6, 10, 15, 30)).build());
+
+        assertEquals(1, seen.size());
+        assertTrue(seen.get(0).startsWith("openapi_log/"),
+                "没绑分片键就插入：打开 shard.enabled 后这条要么被闸门拒绝，要么写进没人读的表 —— " + seen);
+        assertTrue(seen.get(0).contains("2026-11-06T10:15:30"),
+                "分片键必须是这一行自己的时间，不是当前时间（补记历史时两者会差出一个月）: " + seen);
+        assertFalse(com.dataviz.common.mybatis.shard.ShardContext.isBound(),
+                "作用域必须在 insert 之后退干净：线程池复用线程时残留绑定 = 下一个请求写进别人的分片");
+    }
+
+    @Test
+    @DisplayName("create_time 没给时按当前时间绑，不拿 null 去当分片键")
+    void should_fallBackToNow_when_createTimeMissing() {
+        List<Object> values = new ArrayList<Object>();
+        when(logMapper.insert(any(OpenApiLog.class))).thenAnswer(invocation -> {
+            values.add(com.dataviz.common.mybatis.shard.ShardContext.current() == null ? null
+                    : com.dataviz.common.mybatis.shard.ShardContext.current().getTimeValue());
+            return 1;
+        });
+
+        service.saveLog(OpenApiLog.builder().clientId(9L).build());
+
+        assertEquals(1, values.size());
+        assertTrue(values.get(0) instanceof LocalDateTime,
+                "缺 create_time 也要有一个可用的分片键，否则打开分片后这条写不进去: " + values);
+    }
+
+    @Test
+    @DisplayName("归属只跟着验过签名的调用走：拒绝行把 tenant_id/client_id 留空，不替外部编租户")
+    void should_keepIdentityColumnsNull_when_callerWasNotVerified() {
+        List<OpenApiLog> written = new ArrayList<OpenApiLog>();
+        when(logMapper.insert(any(OpenApiLog.class))).thenAnswer(invocation -> {
+            written.add(invocation.getArgument(0));
+            return 1;
+        });
+
+        service.saveLog(OpenApiLog.builder().apiPath("/api/openapi/callback/webhook/test").responseCode(401).build());
+
+        assertEquals(1, written.size());
+        assertNull(written.get(0).getTenantId(), "401 的调用没验过身份，凭空一个租户等于把别人的账记到这个租户头上");
+        assertNull(written.get(0).getClientId());
     }
 
     // ---------- 列白名单 / 不泄露 ----------

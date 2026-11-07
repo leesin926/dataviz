@@ -70,10 +70,12 @@ CREATE TABLE IF NOT EXISTS `db_monitor`.`audit_log_202701` LIKE `db_monitor`.`au
 CREATE TABLE IF NOT EXISTS `db_monitor`.`audit_log_202702` LIKE `db_monitor`.`audit_log`;
 
 -- 回读自检（两实例各跑一次，期望每张逻辑表 7 张月度表）
-SELECT CONCAT('@@MONTH-TABLES ', table_schema, '.', SUBSTRING_INDEX(table_name, '_20', 1),
-              ' = ', COUNT(*)) AS check_line
-FROM information_schema.TABLES
-WHERE table_name REGEXP '_(202608|202609|202610|202611|202612|202701|202702)$'
-  AND table_schema IN ('db_alert', 'db_openapi', 'db_auth', 'db_analysis', 'db_admin', 'db_monitor')
-GROUP BY table_schema, SUBSTRING_INDEX(table_name, '_20', 1)
+-- 用派生表而不是直接 GROUP BY 表达式：MySQL 8 认不出 CONCAT 里的 SUBSTRING_INDEX 与分组列的函数依赖，
+-- 直写会撞 only_full_group_by 报 1055（DDL 已经成功，只有这行自检失败，很容易误判成"建表没成"）
+SELECT CONCAT('@@MONTH-TABLES ', s, '.', b, ' = ', c) AS check_line
+FROM (SELECT table_schema AS s, SUBSTRING_INDEX(table_name, '_20', 1) AS b, COUNT(*) AS c
+      FROM information_schema.TABLES
+      WHERE table_name REGEXP '_(202608|202609|202610|202611|202612|202701|202702)$'
+        AND table_schema IN ('db_alert', 'db_openapi', 'db_auth', 'db_analysis', 'db_admin', 'db_monitor')
+      GROUP BY 1, 2) x
 ORDER BY 1;

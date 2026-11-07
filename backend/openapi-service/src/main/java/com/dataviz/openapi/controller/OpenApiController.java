@@ -91,6 +91,7 @@ public class OpenApiController {
             long executionTime = System.currentTimeMillis() - startTime;
             OpenApiLog apiLog = OpenApiLog.builder()
                     .clientId(client.getId())
+                    .tenantId(client.getTenantId())
                     .appName(client.getAppName())
                     .apiPath(dto.getApiPath())
                     .method(dto.getMethod())
@@ -116,9 +117,9 @@ public class OpenApiController {
     /**
      * 鉴权失败也留痕：只记"谁在什么时候打了哪条路径、被拒于哪个状态码"。
      * <p>
-     * 三处刻意保守：① {@code clientId}/{@code appName} 留空 —— 钥匙都没验过，写进去等于让外部
-     * 自己声称归属；② 不写 {@code requestParams} —— 失败的调用体里可能带着半把口令，
-     * 抄进日志就是二次泄漏；③ 审计本身失败只记 warn，绝不改变对外的 401/403。
+     * 三处刻意保守：① {@code clientId}/{@code appName}/{@code tenantId} 留空 —— 钥匙都没验过，写进去等于让外部
+     * 自己声称归属（也是让一条 401 记录凭空出现在某个租户的账单里）；② 不写 {@code requestParams} ——
+     * 失败的调用体里可能带着半把口令，抄进日志就是二次泄漏；③ 审计本身失败只记 warn，绝不改变对外的 401/403。
      */
     private void recordRefusal(ApiProxyRequestDTO dto, String clientIp, int responseCode, long startTime) {
         try {

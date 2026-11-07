@@ -12,6 +12,7 @@ import com.dataviz.openapi.mapper.OpenApiClientMapper;
 import com.dataviz.openapi.mapper.OpenApiLogMapper;
 import com.dataviz.openapi.service.ApiLogService;
 import com.dataviz.openapi.vo.OpenApiLogVO;
+import com.dataviz.common.mybatis.shard.ShardContext;
 import com.dataviz.common.security.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,9 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ApiLogServiceImpl implements ApiLogService {
 
+    /** 分片层认的逻辑表名；与 {@code @TableName("openapi_log")} 必须同一个字符串，写两处就会各说各话 */
+    private static final String SHARD_TABLE = "openapi_log";
+
     /** result 允许值；SUCCESS 按 2xx 判定，与 OpenApiController 的 is2xxSuccess 同口径 */
     public static final String RESULT_SUCCESS = "SUCCESS";
     public static final String RESULT_FAIL = "FAIL";
@@ -67,7 +71,14 @@ public class ApiLogServiceImpl implements ApiLogService {
 
     @Override
     public void saveLog(OpenApiLog apiLog) {
-        logMapper.insert(apiLog);
+        // 写侧就把分片键说死：这条审计落哪张月表由 create_time 决定（openapi_log 是 route-by=NONE，
+        // 按月份轮转实例，租户只是审计列 —— 因为鉴权失败的行天生没有租户，拿租户当路由键会写不进去）。
+        // shard.enabled=false 时这层绑定没有任何副作用（拦截器没注册，没人读它）；打开后它决定路由，
+        // 缺了就是一条当场拒绝的 400，而不是"写进一张谁都不读的表"。
+        LocalDateTime when = apiLog.getCreateTime() != null ? apiLog.getCreateTime() : LocalDateTime.now();
+        try (ShardContext.ShardScope scope = ShardContext.open(SHARD_TABLE, when)) {
+            logMapper.insert(apiLog);
+        }
     }
 
     @Override
