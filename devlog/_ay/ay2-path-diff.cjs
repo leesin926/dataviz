@@ -9,10 +9,15 @@ const OUT = path.join(AY, process.argv[3] || 'ay2-path-diff.json');
 const live = new Map(); // "GET /ai/status" -> port
 const livePaths = new Map(); // "/ai/status" -> Set<method>
 for (const f of fs.readdirSync(DOCS)) {
-  const port = f.slice(0, 4);
+  if (!/\.json$/.test(f)) continue;
+  // 文件名是 `<port>-<service>.json`；PI1 之后端口是 5 位，不能再按固定 4 个字符切
+  const m = f.match(/^(\d+)-(.+)\.json$/);
+  if (!m) continue;
+  const [, port, name] = m;
   const doc = JSON.parse(fs.readFileSync(path.join(DOCS, f), 'utf8'));
-  // 网关只有 auth / user 两条路由带 StripPrefix=1，这两个服务不带 /api 上下文；其余服务自带 /api
-  const needApi = port === '8081' || port === '8082';
+  // 网关只有 auth / user 两条路由带 StripPrefix=1，这两个服务不带 /api 上下文；其余服务自带 /api。
+  // 按**服务名**判断，不按端口字面量 —— 换端口段时这条口径不该跟着变（PI1 就是把它从 8081/8082 挪到 17081/17082）。
+  const needApi = name === 'auth-service' || name === 'user-service';
   for (const [p0, ops] of Object.entries(doc.paths || {})) {
     const p = needApi ? '/api' + p0 : p0;
     const np = p.replace(/\{[^}]*\}/g, ':x').replace(/\/$/, '');
