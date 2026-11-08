@@ -3082,4 +3082,8 @@ PI5 的 `openapi_log` 是 `route-by=NONE`（按月份串哈希轮转实例），
 
 ⇒ 下一轮开工第一件事不是写代码，是 `git push origin main` 把这几条台账补上。**它们不含任何生产代码，所以"GitHub 上的代码"与"本地验证过的代码"今天是同一份树**（`f940258`，经 `c7357e5` 已在远端）。
 
+**⏩ 同日结案（用户一句"全部推"）**：台账缺口已补平，**`origin/main` = `be8785f` = 本地 `main`**，`git rev-list --left-right --count origin/main...HEAD` = **0 / 0**，工作树干净。远端 `ls-remote` 与本地 `rev-parse` 同一颗 SHA，且 `git ls-tree -r origin/main` 里 PI6 那批文件逐个在（`AlertEventService.java` / `impl/AlertEventServiceImpl.java` / `impl/AlertEventShardReader.java` / `NotifyDispatcherTest.java` / `AlertEventServiceImplTest.java` / `devlog/_pi/pi6-alert-shard-read.cjs` / `pi6-probe.out` / `restart-service-sharded.ps1`）。
+
+**中间那 19 次失败的真实形状值得记一条判据**：同一分钟里 `api.github.com` 回 200、`codeload` 回 301，而 `curl https://github.com` **收到 294,905 字节后才超时** —— 不是连不上，是**传到一半断**。`git push` 那 10 次全部报 `Could not connect to server`（连 TCP 都没建），第 11 次原样重跑就过了。**⇒ 传输型抖动下，失败读数之间可以互相矛盾，重试的依据是"上一分钟还通过"，不是"这一次报错"。** 全程没动 git 配置（试过一次性 `-c http.version=HTTP/1.1 -c http.postBuffer=…` 的命令行覆盖，写在命令里不落到 `.git/config`；实际成功的那次用的是默认参数）。**补一句自我保管**：上面那串 `be8785f` 是**当时读数**，把这一条推上去之后它会前进一格 —— **别抄 SHA，抄等式**：判据永远是 `git rev-list --left-right --count origin/main...HEAD` 打出 `0	0`。
+
 ⇒ **判据：台账里"已推送"必须由远端 ref 的实际读数支撑，不能由"我被允许推"推出来。** 本章上一版写的"已执行"就地更正成这一节。
