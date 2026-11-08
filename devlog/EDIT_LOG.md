@@ -3057,7 +3057,7 @@ PI5 的 `openapi_log` 是 `route-by=NONE`（按月份串哈希轮转实例），
 
 ### 七、交回用户
 
-**待拍**：① **API-174**（基表分歧的三条路）；② 17090 / 17092 要不要继续开着分片（都是我的进程）。
+**待拍**：① **API-174**（基表分歧的三条路）；② 17090 要不要继续开着分片（我的进程）。**就地更正一处陈旧口径**：上一轮留下的"17092 开着分片"已不成立 —— 本机冷启动后**只有 3 个 java 进程在跑**（17081 auth / 17082 user / 17090 alert，都是我为探针起的），17092 与其余 13 个服务都没起；容器侧 19 个由 restart 策略自启，其中 `dataviz-apisix` 在重启循环（连不上 `127.0.0.1:2379` 的 etcd，指向的是它自己容器内的 localhost），**应用网关是 17080 的 Spring Cloud Gateway，不依赖它**，本轮没动。
 **待做（代码侧）**：告警页把 `partial` / `truncated` / `windowDefaulted` 说出来（后端已下发、UI 未接）；其余 4 张分片表（`sys_login_log` / `query_history` / `db_admin.audit_log` / `db_monitor.audit_log`）读侧未接。
 **状态不变**：Z2 信封、Z3/API-95、API-97/34、AA6/AB6/AF4/AG5/AM5、API-117/118、API-130/132~136、API-165、API-169、COMPOSITE 告警规则、`apps/` 层前端零测试、浏览器目视四项。
 
