@@ -3077,9 +3077,9 @@ PI5 的 `openapi_log` 是 `route-by=NONE`（按月份串哈希轮转实例），
 |---|---|
 | `origin/main` | **`c7357e5`** —— 由成功推送的服务器回显 `44b8d4f..c7357e5  main -> main` 与随后 `git ls-remote origin main` = `c7357e5e…` **两次独立读数**确证 |
 | **PI6 的代码在内不在内** | **在内** —— `c7357e5` 是 `f940258` 的后代，用户要的"把没问题的代码提交到 GitHub"这一条**已成立** |
-| 本地 `main` | `14692ff`，**领先远端 2 个提交，都是纯台账**（`6839fe2` 推送状态更正、`14692ff` 登记 API-176） |
-| 收尾时再试 push 与 ls-remote | 均 **exit 128 / `Failed to connect to github.com port 443`** —— 链路又掉了 |
+| 本地 `main` | **`b687b99`** 起，领先远端若干条**纯台账**提交 —— **具体几条不要抄这里的数**，因为记录这个数的那一条本身就会再多出一格。现取用 `git rev-list --count origin/main..HEAD`；文件面自证用 `git diff --name-only origin/main..HEAD`，应只列 `devlog/EDIT_LOG.md` + `docs/10-…` + `docs/12-…` ⇒ **生产代码零** |
+| 收尾时再试 push | **连续 3 次 + 1 次 ls-remote 全部 `Failed to connect to github.com port 443`** —— 链路从"能通"掉回"不通"，不再刷第 4 次 |
 
-⇒ 下一轮开工第一件事不是写代码，是 `git push origin main` 把这 2 条台账补上。**它们不含任何生产代码，所以"GitHub 上的代码"与"本地验证过的代码"今天是同一份树**（`f940258`）。
+⇒ 下一轮开工第一件事不是写代码，是 `git push origin main` 把这几条台账补上。**它们不含任何生产代码，所以"GitHub 上的代码"与"本地验证过的代码"今天是同一份树**（`f940258`，经 `c7357e5` 已在远端）。
 
 ⇒ **判据：台账里"已推送"必须由远端 ref 的实际读数支撑，不能由"我被允许推"推出来。** 本章上一版写的"已执行"就地更正成这一节。
