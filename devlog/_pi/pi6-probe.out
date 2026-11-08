@@ -1,0 +1,28 @@
+login ok（短信登录路径，验证码与 sms:day 都没绕）
+窗口 2026-08-08 16:13:58 .. 2026-11-08 16:13:58 → 月表 202608,202609,202610,202611；租户 1 桶位 0 → dataviz-mysql
+基线：窗口内 2642 行，同月表不带边界 2642 行（相等 ⇒ 本数据集上"边界进 SQL"没有区分力，这一条只能由单测证）
+A 扇出 total: {"status":200,"ok":true,"code":0,"message":"操作成功","total":2642,"records":1,"truncated":false,"shards":4,"windowDefaulted":true,"months":["2026-10"]}
+B 归并顺序：首页月份 ["2026-10"]，最新月表 2026-10，时间非递增 true，首行 2026-10-19T02:29:29
+C stats: {"totalRules":8,"enabledRules":3,"pendingEvents":2409,"acknowledgedEvents":230,"resolvedEvents":3,"totalEvents":2642,"criticalEvents":861,"partial":true}
+C SQL 基线: pending=2409 acknowledged=230 resolved=3 critical=861 enabledRules=3
+D 过滤正交：status=PENDING total=2409（基线 2409）；ruleId=911 total=797（基线 797）
+E 按 id 改状态: {"skipped":false,"id":3543,"month":"202610","ok":true,"httpStatus":200,"before":"PENDING","monthAfter":"ACKNOWLEDGED","logicalBefore":"PENDING","logicalAfter":"PENDING","restored":"PENDING"}
+GAP 租户 903：桶位 1 → dataviz-mysql-2；dataviz-mysql-2 月表里 50 行、dataviz-mysql 月表里 0 行；dataviz-mysql-2 逻辑基表 0 行；租户 903 的可用账号 0 个
+PASS A total = 逐月表同窗口基线（不重不漏）
+PASS A 分片数 = 窗口内月表数 4
+PASS A 未截断且明说窗口是服务端补的
+PASS B 首页整页来自最新非空月表（不是首尾相接）
+PASS B 首页时间非递增
+PASS C partial=true（这四个数不是全历史）
+PASS C 四档计数与 SQL 基线一致
+PASS C 状态三档之和 = 列表 total
+PASS C enabledRules 是真计数不是占位 0（API-175）
+PASS D status 过滤后仍与基线一致
+PASS D ruleId 过滤后仍与基线一致
+PASS E locate+update 打到月表（月表行变 ACKNOWLEDGED）
+PASS E 还原成功（净变化为零）
+PASS GAP ds1 上确有租户 903 的行、ds0 月表上一行都没有
+
+读数：total=2642 基线=2642 分片=4；stats partial=true；E 月表 ACKNOWLEDGED / 基表 PENDING
+分叉（登记，不当失败）：分片打开后状态回写只改月表，逻辑基表 alert_event 那一行仍是 PENDING。把 shard.enabled 关回去会读到旧状态 —— 这是 PI4 保留基表镜像的代价，须另行收口。
+未证（GAP，不当通过）：租户 903 的会话级跨实例读。可用账号 0 个 ⇒ 无法登录成租户 903；ds1 选路只由单测 + 上面的 SQL 行分布证明。

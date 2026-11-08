@@ -30,6 +30,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -223,6 +224,38 @@ class AlertRuleServiceImplTest {
         AlertRuleVO vo = result.getRecords().get(0);
         assertEquals(1, vo.getNotifyGroups().size());
         assertTrue(vo.getNotifyTargetsEmpty());
+    }
+
+    @Test
+    @DisplayName("启用规则计数 - 只数 enabled=true，且计数 wrapper 不带排序与投影")
+    void should_countOnlyEnabledRules_when_countEnabled() {
+        when(alertRuleMapper.selectCount(any())).thenReturn(3L);
+
+        assertEquals(3L, ruleService.countEnabled());
+
+        ArgumentCaptor<com.baomidou.mybatisplus.core.conditions.Wrapper<AlertRule>> captor = captorForRuleWrapper();
+        verify(alertRuleMapper).selectCount(captor.capture());
+        String sql = captor.getValue().getSqlSegment().toLowerCase();
+        assertTrue(sql.contains("enabled"), "计数条件必须落在 enabled 上，实际: " + sql);
+        // API-171 的形状守卫：MP 会把 wrapper 上的排序/投影原样搬进 COUNT(...)，
+        // 排序在 only_full_group_by 下是死路，投影直接 1064。
+        assertFalse(sql.contains("order by"), "计数 wrapper 不该带排序，实际: " + sql);
+        assertNull(captor.getValue().getSqlSelect(), "计数 wrapper 不该带列投影");
+    }
+
+    @Test
+    @DisplayName("启用规则计数 - mapper 返回 null 时读成 0，不是 NPE")
+    void should_returnZero_when_countEnabledGetsNull() {
+        when(alertRuleMapper.selectCount(any())).thenReturn(null);
+
+        assertEquals(0L, ruleService.countEnabled());
+    }
+
+    /** {@code selectCount} 的形参声明是 {@code Wrapper<T>}，实现里传的是 LambdaQueryWrapper。 */
+    @SuppressWarnings("unchecked")
+    private static ArgumentCaptor<com.baomidou.mybatisplus.core.conditions.Wrapper<AlertRule>> captorForRuleWrapper() {
+        return (ArgumentCaptor<com.baomidou.mybatisplus.core.conditions.Wrapper<AlertRule>>) (ArgumentCaptor<?>)
+                ArgumentCaptor.forClass(com.baomidou.mybatisplus.core.conditions.Wrapper.class);
     }
 
     private AlertRule ruleOf(Long id, String name, String type, String channels) {

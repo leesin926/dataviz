@@ -174,6 +174,13 @@ public class AlertRuleServiceImpl implements AlertRuleService {
     }
 
     @Override
+    public long countEnabled() {
+        // 计数 wrapper 不带排序也不带投影：MP 的 selectCount 会把它们原样搬进 COUNT(...)（API-171）
+        Long n = alertRuleMapper.selectCount(new LambdaQueryWrapper<AlertRule>().eq(AlertRule::getEnabled, true));
+        return n == null ? 0L : n;
+    }
+
+    @Override
     @Transactional
     public void enable(Long id) {
         setEnabled(requireRule(id), true);

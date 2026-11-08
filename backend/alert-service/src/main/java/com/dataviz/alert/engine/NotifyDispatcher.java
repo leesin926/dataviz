@@ -10,6 +10,7 @@ import com.dataviz.alert.entity.NotifyChannel;
 import com.dataviz.alert.mapper.AlertNotifyLogMapper;
 import com.dataviz.alert.mapper.NotifyChannelMapper;
 import com.dataviz.alert.service.AlertNotifyTargetService;
+import com.dataviz.common.mybatis.shard.ShardContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,9 @@ import java.util.Map;
 @Slf4j
 @Component
 public class NotifyDispatcher {
+
+    /** 与 {@code @TableName("alert_notify_log")} 与 {@code shard.rules} 三处同一个字符串 */
+    private static final String NOTIFY_LOG_TABLE = "alert_notify_log";
 
     private final Map<String, AlertNotifier> notifiers = new HashMap<>();
     private final NotifyChannelMapper notifyChannelMapper;
@@ -70,10 +74,10 @@ public class NotifyDispatcher {
                 NotifyTargets targets = targetService.resolveTargets(rule, config);
                 recipient = notifier.recipientOf(config, targets);
                 notifier.send(config, rule, event, targets);
-                logResult(event.getId(), channel, recipient, "SUCCESS", null);
+                logResult(event, channel, recipient, "SUCCESS", null);
             } catch (Exception e) {
                 log.error("通知发送失败: channel={}, eventId={}, ruleId={}", channel, event.getId(), rule.getId(), e);
-                logResult(event.getId(), channel, recipient, "FAILED", e.getMessage());
+                logResult(event, channel, recipient, "FAILED", e.getMessage());
             }
         }
     }
@@ -123,15 +127,22 @@ public class NotifyDispatcher {
         }
     }
 
-    private void logResult(Long eventId, String channel, String recipient, String status, String error) {
+    private void logResult(AlertEvent event, String channel, String recipient, String status, String error) {
         AlertNotifyLog record = AlertNotifyLog.builder()
-                .eventId(eventId)
+                .eventId(event.getId())
+                // 租户跟着事件走，不跟会话走：派发是从调度线程发起的，那里没有租户上下文，
+                // 而分片模式打开后这一列就是路由键 —— 空着不是"落默认库"，是当场拒绝
+                .tenantId(event.getTenantId())
                 .channel(channel)
                 .recipient(recipient)
                 .status(status)
                 .errorMessage(error)
                 .createTime(LocalDateTime.now())
                 .build();
-        alertNotifyLogMapper.insert(record);
+        // 路由键先定下来再绑作用域：绑 A 月、写进 B 月 是这类表最贵的一种错（行写成功了，谁都不读它）
+        try (ShardContext.ShardScope scope = ShardContext.open(NOTIFY_LOG_TABLE,
+                record.getTenantId(), record.getCreateTime())) {
+            alertNotifyLogMapper.insert(record);
+        }
     }
 }

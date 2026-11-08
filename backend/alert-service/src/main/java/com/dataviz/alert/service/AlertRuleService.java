@@ -19,6 +19,9 @@ public interface AlertRuleService {
 
     PageResult<AlertRuleVO> page(PageQuery pageQuery, String keyword, String type, String severity);
 
+    /** 启用中的规则数。{@code alert_rule} 不分片，租户由拦截器注入，这里就是一条普通计数。 */
+    long countEnabled();
+
     void enable(Long id);
 
     void disable(Long id);

@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.dataviz.alert.engine.AlertEvaluator;
 import com.dataviz.alert.entity.AlertEvent;
 import com.dataviz.alert.entity.AlertRule;
-import com.dataviz.alert.mapper.AlertEventMapper;
 import com.dataviz.alert.mapper.AlertRuleMapper;
-import com.dataviz.alert.test.MybatisPlusTableInfoHelper;
+import com.dataviz.alert.service.AlertEventService;
 import com.dataviz.alert.service.AlertNotifyService;
+import com.dataviz.alert.test.MybatisPlusTableInfoHelper;
 import com.dataviz.common.redis.util.CacheHelper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -36,11 +37,16 @@ import static org.mockito.Mockito.when;
 /**
  * 阶段 BE1（API-111）的替代判据：假引擎退场后，<b>自动巡检只剩这一个调度器，而且它默认不开</b>。
  * 这里钉的是"开了之后它到底怎么判"，免得下一次把开关一翻就变成另一套没人验证过的行为。
+ *
+ * <p>PI6 起 {@code alert_event} 的每一条 SQL 都从 {@link AlertEventService} 出去（分片模式下每处都要带
+ * 路由键，收到一个服务里才 review 得住），所以这里 mock 的是那个服务而不是 mapper。巡检逻辑与
+ * "这一行落哪张月表"因此解耦；交给下游的两件事本文件各钉一条：事件自带 tenantId + createTime，
+ * 抑制判定按<b>规则的</b>租户问（调度线程没有会话）。
  */
 class AlertCheckServiceImplTest {
 
     private AlertRuleMapper alertRuleMapper;
-    private AlertEventMapper alertEventMapper;
+    private AlertEventService alertEventService;
     private AlertNotifyService alertNotifyService;
     private AlertEvaluator alertEvaluator;
     private CacheHelper cacheHelper;
@@ -54,12 +60,18 @@ class AlertCheckServiceImplTest {
     @BeforeEach
     void setUp() {
         alertRuleMapper = mock(AlertRuleMapper.class);
-        alertEventMapper = mock(AlertEventMapper.class);
+        alertEventService = mock(AlertEventService.class);
         alertNotifyService = mock(AlertNotifyService.class);
         alertEvaluator = mock(AlertEvaluator.class);
         cacheHelper = mock(CacheHelper.class);
-        checkService = new AlertCheckServiceImpl(alertRuleMapper, alertEventMapper,
+        checkService = new AlertCheckServiceImpl(alertRuleMapper, alertEventService,
                 alertNotifyService, alertEvaluator, cacheHelper);
+        // create() 就是"写进去并拿到自增 id"那一步；这里按 mapper 的语义模拟成"回填 id 后原样返回"
+        when(alertEventService.create(any(AlertEvent.class))).thenAnswer(inv -> {
+            AlertEvent e = inv.getArgument(0);
+            e.setId(501L);
+            return e;
+        });
     }
 
     private void enable() {
@@ -91,7 +103,7 @@ class AlertCheckServiceImplTest {
         // When
         checkService.checkAllRules();
         // Then
-        verifyNoInteractions(alertRuleMapper, alertEvaluator, alertEventMapper, alertNotifyService, cacheHelper);
+        verifyNoInteractions(alertRuleMapper, alertEvaluator, alertEventService, alertNotifyService, cacheHelper);
     }
 
     @Test
@@ -101,17 +113,13 @@ class AlertCheckServiceImplTest {
         AlertRule r = rule(7L, null);
         stubRules(r);
         when(alertEvaluator.evaluate(r)).thenReturn(new AlertEvaluator.Result(new BigDecimal("820"), true, null));
-        when(alertEventMapper.insert(any(AlertEvent.class))).thenAnswer(inv -> {
-            inv.<AlertEvent>getArgument(0).setId(501L);
-            return 1;
-        });
 
         // When
         checkService.checkAllRules();
 
         // Then：事件字段取自规则本身，消息带当前值与阈值，状态是待处理
         ArgumentCaptor<AlertEvent> captor = ArgumentCaptor.forClass(AlertEvent.class);
-        verify(alertEventMapper).insert(captor.capture());
+        verify(alertEventService).create(captor.capture());
         AlertEvent event = captor.getValue();
         assertEquals(7L, event.getRuleId());
         assertEquals(501L, event.getId());
@@ -122,6 +130,9 @@ class AlertCheckServiceImplTest {
         assertTrue(event.getMessage().contains("大区销售额跌破 1000"), event.getMessage());
         assertTrue(event.getMessage().contains("820"), event.getMessage());
         assertTrue(event.getMessage().contains("1000"), event.getMessage());
+        // 分表键必须在交给写入口之前就有值：createTime 平时由 FieldFill.INSERT 在 mapper 内部才填，
+        // 而路由要的是"这一行落哪个月"，晚一步填就是按 A 月路由、写进 B 月
+        assertNotNull(event.getCreateTime(), "事件必须带着 create_time 交给写入口，否则分片路由无键可用");
         verify(alertNotifyService).notify(event);
         // duration 为空即"立即"，不该去写越界起始时刻
         verify(cacheHelper, never()).set(anyString(), any(), anyLong(), any(TimeUnit.class));
@@ -141,7 +152,7 @@ class AlertCheckServiceImplTest {
 
         // Then：只登记首次越界时刻，不生成事件、不发通知
         verify(cacheHelper).set(eq("alert:breach:8"), any(), eq(600L), eq(TimeUnit.SECONDS));
-        verify(alertEventMapper, never()).insert(any(AlertEvent.class));
+        verify(alertEventService, never()).create(any(AlertEvent.class));
         verifyNoInteractions(alertNotifyService);
     }
 
@@ -153,13 +164,12 @@ class AlertCheckServiceImplTest {
         stubRules(r);
         when(alertEvaluator.evaluate(r)).thenReturn(new AlertEvaluator.Result(new BigDecimal("1"), true, null));
         when(cacheHelper.get("alert:breach:9")).thenReturn(System.currentTimeMillis() - 200_000L);
-        when(alertEventMapper.insert(any(AlertEvent.class))).thenReturn(1);
 
         // When
         checkService.checkAllRules();
 
         // Then
-        verify(alertEventMapper).insert(any(AlertEvent.class));
+        verify(alertEventService).create(any(AlertEvent.class));
         verify(alertNotifyService).notify(any(AlertEvent.class));
     }
 
@@ -170,14 +180,38 @@ class AlertCheckServiceImplTest {
         AlertRule r = rule(10L, 0);
         stubRules(r);
         when(alertEvaluator.evaluate(r)).thenReturn(new AlertEvaluator.Result(new BigDecimal("1"), true, null));
-        when(alertEventMapper.selectCount(any(Wrapper.class))).thenReturn(1L);
+        when(alertEventService.hasOpenEvent(10L, 1L)).thenReturn(true);
 
         // When
         checkService.checkAllRules();
 
         // Then：抑制重复告警，不刷第二条
-        verify(alertEventMapper, never()).insert(any(AlertEvent.class));
+        verify(alertEventService, never()).create(any(AlertEvent.class));
         verifyNoInteractions(alertNotifyService);
+    }
+
+    /**
+     * 抑制判定必须按<b>规则的租户</b>问，不能自己去看会话：巡检跑在调度线程上，那里没有租户上下文，
+     * 而分片模式下"没有租户"不是"扫默认库"、是当场拒绝 —— 那一拒绝会让抑制永远失效，
+     * 一条没人认领的告警就每分钟刷一条。
+     */
+    @Test
+    @DisplayName("重复告警抑制按规则的租户问，不依赖会话（调度线程没有租户）")
+    void should_askSuppressionWithRuleTenant_when_scheduledThreadHasNoSession() {
+        // Given
+        enable();
+        AlertRule r = rule(21L, 0);
+        r.setTenantId(903L);
+        stubRules(r);
+        when(alertEvaluator.evaluate(r)).thenReturn(new AlertEvaluator.Result(new BigDecimal("1"), true, null));
+        when(alertEventService.hasOpenEvent(21L, 903L)).thenReturn(true);
+
+        // When
+        checkService.checkAllRules();
+
+        // Then
+        verify(alertEventService).hasOpenEvent(21L, 903L);
+        verify(alertEventService, never()).create(any(AlertEvent.class));
     }
 
     @Test
@@ -193,7 +227,7 @@ class AlertCheckServiceImplTest {
 
         // Then：计时重新开始，否则下次真越界会拿旧的起点立刻满足 duration
         verify(cacheHelper).delete("alert:breach:11");
-        verify(alertEventMapper, never()).insert(any(AlertEvent.class));
+        verify(alertEventService, never()).create(any(AlertEvent.class));
     }
 
     @Test
@@ -208,7 +242,7 @@ class AlertCheckServiceImplTest {
         checkService.checkAllRules();
 
         // Then：不生成事件；本轮不清计时（一次空结果不该抹掉已经累计的越界时长）
-        verify(alertEventMapper, never()).insert(any(AlertEvent.class));
+        verify(alertEventService, never()).create(any(AlertEvent.class));
         verify(cacheHelper, never()).delete(anyString());
     }
 
@@ -222,7 +256,6 @@ class AlertCheckServiceImplTest {
         stubRules(bad, good);
         when(alertEvaluator.evaluate(bad)).thenThrow(new IllegalStateException("数据源不可达"));
         when(alertEvaluator.evaluate(good)).thenReturn(new AlertEvaluator.Result(new BigDecimal("1"), true, null));
-        when(alertEventMapper.insert(any(AlertEvent.class))).thenReturn(1);
 
         // When：不向外抛
         checkService.checkAllRules();
@@ -230,7 +263,7 @@ class AlertCheckServiceImplTest {
         // Then：坏的那条也被评估过（异常来自评估器），一条规则失败不带走其余
         verify(alertEvaluator).evaluate(bad);
         verify(alertEvaluator).evaluate(good);
-        verify(alertEventMapper).insert(any(AlertEvent.class));
+        verify(alertEventService).create(any(AlertEvent.class));
     }
 
     @Test
@@ -244,7 +277,8 @@ class AlertCheckServiceImplTest {
         checkService.checkRule(15L);
 
         // Then
-        verifyNoInteractions(alertEvaluator, alertEventMapper, alertNotifyService);
+        verifyNoInteractions(alertEvaluator, alertNotifyService);
+        verify(alertEventService, never()).create(any(AlertEvent.class));
     }
 
     @Test
@@ -256,7 +290,8 @@ class AlertCheckServiceImplTest {
         checkService.checkRule(16L);
 
         // Then
-        verifyNoInteractions(alertEvaluator, alertEventMapper, alertNotifyService);
+        verifyNoInteractions(alertEvaluator, alertNotifyService);
+        verify(alertEventService, never()).create(any(AlertEvent.class));
     }
 
     @Test
@@ -265,7 +300,6 @@ class AlertCheckServiceImplTest {
         AlertRule r = rule(17L, 0);
         when(alertRuleMapper.selectById(17L)).thenReturn(r);
         when(alertEvaluator.evaluate(r)).thenReturn(new AlertEvaluator.Result(new BigDecimal("2"), true, null));
-        when(alertEventMapper.insert(any(AlertEvent.class))).thenReturn(1);
 
         // When
         checkService.checkRule(17L);
@@ -291,6 +325,6 @@ class AlertCheckServiceImplTest {
         verify(alertRuleMapper).selectList(captor.capture());
         String sqlSegment = captor.getValue().getSqlSegment();
         assertTrue(sqlSegment.toLowerCase().contains("enabled"), sqlSegment);
-        verifyNoInteractions(alertEventMapper, alertNotifyService);
+        verifyNoInteractions(alertEventService, alertNotifyService);
     }
 }

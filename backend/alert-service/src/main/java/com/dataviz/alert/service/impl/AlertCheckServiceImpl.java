@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.dataviz.alert.engine.AlertEvaluator;
 import com.dataviz.alert.entity.AlertEvent;
 import com.dataviz.alert.entity.AlertRule;
-import com.dataviz.alert.mapper.AlertEventMapper;
 import com.dataviz.alert.mapper.AlertRuleMapper;
 import com.dataviz.alert.service.AlertCheckService;
+import com.dataviz.alert.service.AlertEventService;
 import com.dataviz.alert.service.AlertNotifyService;
 import com.dataviz.common.redis.util.CacheHelper;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,11 @@ public class AlertCheckServiceImpl implements AlertCheckService {
     private static final String BREACH_KEY_PREFIX = "alert:breach:";
 
     private final AlertRuleMapper alertRuleMapper;
-    private final AlertEventMapper alertEventMapper;
+    /**
+     * {@code alert_event} 的每一条 SQL（生成事件、抑制计数）都从这里出去：分片开启后
+     * 每一处都要带路由键，收在一个服务里才 review 得住。
+     */
+    private final AlertEventService alertEventService;
     private final AlertNotifyService alertNotifyService;
     private final AlertEvaluator alertEvaluator;
     private final CacheHelper cacheHelper;
@@ -99,7 +103,7 @@ public class AlertCheckServiceImpl implements AlertCheckService {
             return;
         }
 
-        if (hasPendingEvent(rule.getId())) {
+        if (alertEventService.hasOpenEvent(rule.getId(), rule.getTenantId())) {
             log.info("规则 {} 仍有未处理事件，抑制重复告警", rule.getId());
             return;
         }
@@ -128,12 +132,6 @@ public class AlertCheckServiceImpl implements AlertCheckService {
         return now - firstAt >= durationSeconds * 1000L;
     }
 
-    private boolean hasPendingEvent(Long ruleId) {
-        LambdaQueryWrapper<AlertEvent> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AlertEvent::getRuleId, ruleId).eq(AlertEvent::getStatus, "PENDING");
-        return alertEventMapper.selectCount(wrapper) > 0;
-    }
-
     private String breachKey(Long ruleId) {
         return BREACH_KEY_PREFIX + ruleId;
     }
@@ -151,7 +149,11 @@ public class AlertCheckServiceImpl implements AlertCheckService {
                 .tenantId(rule.getTenantId())
                 .createTime(LocalDateTime.now())
                 .build();
-        alertEventMapper.insert(event);
+        // SQL 与分片绑定都在 AlertEventService 里：这一行落哪张月表、哪个实例，由它按事件自己的
+        // (tenantId, createTime) 决定。调度线程没有会话，所以路由键必须来自规则本身 ——
+        // 租户为空的老规则在分片模式下会被当场拒绝（ShardInnerInterceptor 点名表名），
+        // 而 checkAllRules 对每条规则单独兜异常，一条坏规则不会带走整轮巡检。
+        alertEventService.create(event);
         log.info("生成告警事件: id={}, ruleId={}, severity={}, value={}",
                 event.getId(), rule.getId(), rule.getSeverity(), triggerValue);
 

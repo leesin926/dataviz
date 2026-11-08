@@ -20,11 +20,14 @@ spring:
     timeout: 5000ms
 
 # 分库分表（阶段 PI）。默认关：关掉时 ShardConfiguration 一个 bean 都不建，本服务的行为与今天逐字节一致。
-# 打开后要付的账，写在读侧注释里，不是"改一个字就能开"：
-#   - 写侧已经接好（ApiLogServiceImpl.saveLog 用 create_time 绑分片键），开与不开都不影响现有行数；
-#   - 读侧 pageLogs / getClientCallCount 还没接扇出：前者在无时间范围时会变成不设上限的多分片扫描，
-#     后者是"删客户端前的调用数守卫"，扇出被 shard.max-shards-per-read 截断时它会少算 —— 那是能放过删除的错方向。
-# 所以真要打开，先做 PI5 的读侧改造（时间窗默认值 + truncated 可见 + 守卫改成 EXISTS 扇出），别只改这里。
+# ⏩ 2026-11-07 PI5/PI6 已把这里欠的账付掉，下面三条现在是事实而不是计划：
+#   - 写侧：ApiLogServiceImpl.saveLog 用「这一行自己的」create_time 绑分片键；
+#   - 读侧：pageLogs 走 OpenApiLogShardReader 扇出归并，没给时间范围时收窄成最近 N 个月
+#     （openapi.log.default-query-months），并把 truncated / shards / windowDefaulted 一路带到响应，
+#     前端画出"这一页不完整"（API-168 结案）；
+#   - 原本登记的第二处"删除前计数守卫 getClientCallCount 扇出会少算"：全仓 main/test 零调用方，
+#     是个死方法，已删除而不是加分片 —— 不存在的守卫不会算错数。
+# 开与不开都不影响现有行数：回填是复制不是移动，逻辑基表始终是真相。
 shard:
   enabled: ${SHARD_ENABLED:false}
   max-shards-per-read: 36

@@ -19,6 +19,36 @@ spring:
     database: 0
     timeout: 5000ms
 
+# 分库分表（阶段 PI6）。默认关：关掉时 ShardConfiguration 一个 bean 都不建，本服务行为与今天逐字节一致。
+# 这两张表的路由是 route-by=TENANT（与 openapi_log 的 NONE 不同）：一个租户的所有事件都落同一个实例，
+# 于是"按租户查只打一个实例"，扫的是那个实例上窗口内的各张月表。⇒ 租户为空的老规则在打开后会当场被
+# ShardInnerInterceptor 拒绝（点名表名，不是静默写错库），而 checkAllRules 对每条规则单独兜异常。
+# 时间窗 alert.event.query-months 的默认值不是保守，是物理边界：月表只按 deploy/sql/shard 的窗口
+# （202608~202702）建出来，把窗口拉到没建过的月份就是 Table doesn't exist。调大之前先建表。
+shard:
+  enabled: ${SHARD_ENABLED:false}
+  max-shards-per-read: 36
+  instances:
+    - id: ds0
+      url: jdbc:mysql://localhost:3306/db_alert?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: ${DB_PASSWORD:root123456}
+    - id: ds1
+      url: jdbc:mysql://localhost:3307/db_alert?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: ${DB_PASSWORD:root123456}
+  rules:
+    - table: alert_event
+      mode: MONTH
+      time-column: create_time
+      route-by: TENANT
+      buckets: 2
+    - table: alert_notify_log
+      mode: MONTH
+      time-column: create_time
+      route-by: TENANT
+      buckets: 2
+
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   global-config:
@@ -48,3 +78,9 @@ alert:
   # （DINGTALK/WEBHOOK 会发出真实 HTTP 请求，请先把 notify_channel 里的地址换成可信目标）
   check:
     enabled: ${ALERT_CHECK_ENABLED:false}
+  event:
+    # 分片模式下的读窗口（月）：列表 / 状态计数 / 按 id 定位 / 重复告警抑制都按它收窄，
+    # 且响应必须带 windowDefaulted / partial（API-173：窗口只选表不画边界，total 就会虚高）。
+    # 默认 3 不是保守，是物理边界 —— 月表只按 deploy/sql/shard 的窗口建出来（202608~202702），
+    # 调大之前必须先建月表，否则不是"多扫几张表"而是 Table doesn't exist。
+    query-months: ${ALERT_EVENT_QUERY_MONTHS:3}

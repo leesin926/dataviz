@@ -1,26 +1,17 @@
 package com.dataviz.alert.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataviz.alert.dto.AlertEventAckDTO;
-import com.dataviz.alert.entity.AlertEvent;
-import com.dataviz.alert.mapper.AlertEventMapper;
+import com.dataviz.alert.service.AlertEventService;
 import com.dataviz.alert.service.AlertRuleService;
 import com.dataviz.alert.vo.AlertEventVO;
 import com.dataviz.alert.vo.AlertStatsVO;
-import com.dataviz.common.core.exception.BizException;
 import com.dataviz.common.core.result.PageQuery;
 import com.dataviz.common.core.result.PageResult;
 import com.dataviz.common.core.result.R;
 import com.dataviz.common.security.annotation.RequiresPermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -30,40 +21,26 @@ import java.util.stream.Collectors;
 @RequiresPermission("alert:read")
 public class AlertEventController {
 
-    private final AlertEventMapper alertEventMapper;
+    private final AlertEventService alertEventService;
     private final AlertRuleService alertRuleService;
 
+    /**
+     * 分页只负责把参数递下去：<b>SQL 与分片绑定都在 {@link AlertEventService} 里</b>，
+     * 控制器不碰 mapper（分片打开后每一处 SQL 都得带路由键，收到一处才 review 得住）。
+     */
     @GetMapping("/page")
     public R<PageResult<AlertEventVO>> page(PageQuery pageQuery,
                                             @RequestParam(required = false) Long ruleId,
                                             @RequestParam(required = false) String status,
                                             @RequestParam(required = false) String severity) {
-        Page<AlertEvent> page = new Page<>(pageQuery.getPageNum(), pageQuery.getPageSize());
-        LambdaQueryWrapper<AlertEvent> wrapper = new LambdaQueryWrapper<>();
-        if (ruleId != null) {
-            wrapper.eq(AlertEvent::getRuleId, ruleId);
-        }
-        if (status != null && !status.trim().isEmpty()) {
-            wrapper.eq(AlertEvent::getStatus, status);
-        }
-        if (severity != null && !severity.trim().isEmpty()) {
-            wrapper.eq(AlertEvent::getSeverity, severity);
-        }
-        wrapper.orderByDesc(AlertEvent::getCreateTime);
-        Page<AlertEvent> result = alertEventMapper.selectPage(page, wrapper);
-        List<AlertEventVO> records = result.getRecords().stream().map(this::toVO).collect(Collectors.toList());
-        return R.ok(PageResult.of(records, result.getTotal(), pageQuery.getPageNum(), pageQuery.getPageSize()));
+        return R.ok(alertEventService.page(ruleId, status, severity,
+                pageQuery.getPageNum(), pageQuery.getPageSize()));
     }
 
     @PostMapping("/acknowledge")
     @RequiresPermission("alert:write")
     public R<Void> acknowledge(@RequestBody AlertEventAckDTO dto) {
-        AlertEvent event = alertEventMapper.selectById(dto.getId());
-        if (event == null) {
-            throw new BizException("Alert event not found: " + dto.getId());
-        }
-        event.setStatus("ACKNOWLEDGED");
-        alertEventMapper.updateById(event);
+        alertEventService.markStatus(dto.getId(), "ACKNOWLEDGED", false);
         log.info("Acknowledged alert event: id={}", dto.getId());
         return R.ok();
     }
@@ -71,13 +48,7 @@ public class AlertEventController {
     @PostMapping("/resolve")
     @RequiresPermission("alert:write")
     public R<Void> resolve(@RequestBody AlertEventAckDTO dto) {
-        AlertEvent event = alertEventMapper.selectById(dto.getId());
-        if (event == null) {
-            throw new BizException("Alert event not found: " + dto.getId());
-        }
-        event.setStatus("RESOLVED");
-        event.setResolvedAt(LocalDateTime.now());
-        alertEventMapper.updateById(event);
+        alertEventService.markStatus(dto.getId(), "RESOLVED", true);
         log.info("Resolved alert event: id={}", dto.getId());
         return R.ok();
     }
@@ -85,31 +56,20 @@ public class AlertEventController {
     @GetMapping("/stats")
     public R<AlertStatsVO> getStats() {
         long totalRules = alertRuleService.page(new PageQuery(), null, null, null).getTotal();
-        long pendingCount = alertEventMapper.selectCount(
-                new LambdaQueryWrapper<AlertEvent>().eq(AlertEvent::getStatus, "PENDING"));
-        long acknowledgedCount = alertEventMapper.selectCount(
-                new LambdaQueryWrapper<AlertEvent>().eq(AlertEvent::getStatus, "ACKNOWLEDGED"));
-        long resolvedCount = alertEventMapper.selectCount(
-                new LambdaQueryWrapper<AlertEvent>().eq(AlertEvent::getStatus, "RESOLVED"));
-        long criticalCount = alertEventMapper.selectCount(
-                new LambdaQueryWrapper<AlertEvent>().eq(AlertEvent::getSeverity, "CRITICAL"));
-        long totalEvents = pendingCount + acknowledgedCount + resolvedCount;
+        AlertEventService.EventCounts counts = alertEventService.counts();
+        long totalEvents = counts.getPending() + counts.getAcknowledged() + counts.getResolved();
 
         AlertStatsVO stats = AlertStatsVO.builder()
                 .totalRules(totalRules)
-                .enabledRules(0L) // Would need a separate query for enabled count
-                .pendingEvents(pendingCount)
-                .acknowledgedEvents(acknowledgedCount)
-                .resolvedEvents(resolvedCount)
+                .enabledRules(alertRuleService.countEnabled())
+                .pendingEvents(counts.getPending())
+                .acknowledgedEvents(counts.getAcknowledged())
+                .resolvedEvents(counts.getResolved())
                 .totalEvents(totalEvents)
-                .criticalEvents(criticalCount)
+                .criticalEvents(counts.getCritical())
+                // 分片打开时这四个数都只是服务端窗口内的数；不标出来就会被读成"建库以来一共这些"
+                .partial(counts.isPartial())
                 .build();
         return R.ok(stats);
-    }
-
-    private AlertEventVO toVO(AlertEvent event) {
-        AlertEventVO vo = new AlertEventVO();
-        BeanUtils.copyProperties(event, vo);
-        return vo;
     }
 }
