@@ -3010,7 +3010,7 @@ MySQL 的 `COUNT` 只接一个表达式 ⇒ `1064`，整个日志页 500。**单
 | 制品取证 | `cmp` 嵌套 `AlertEventServiceImpl.class` 与 `target/classes` 一致；`javap` 读到 `public abstract long countEnabled();`；嵌套 `application.yml` 与源码 `diff` 一致 —— **不看 mtime** |
 | 末次重打 | 清掉两处注释瑕疵后 `-pl alert-service -am package`：**4 个模块 440 通过 / 0 失败 / BUILD SUCCESS**；17090 重启（5.585s，PID 10584），**探针复跑仍 14/14 PASS** ⇒ 活栈制品与提交树对得上 |
 | 库写入 | 只有探针 E 那一次确认（id 3543），**当场还原并回读核对，净变化为零** |
-| 提交 / 推送 | 本地 **`f940258`**（25 文件 / +1710 / −153），工作树干净；**推送未成功** —— `github.com:443` 连不上，29 个提交停在本地（见第八节） |
+| 提交 / 推送 | 代码 **`f940258`**（25 文件 / +1710 / −153）+ 台账更正共 **31 个提交已推上 `origin/main`**（`44b8d4f..c7357e5`）；结案取证 = `git ls-remote` 与 `git rev-parse` 同 SHA、领先落后 **0/0**。前两次 push 被网络挡下，见第八节 |
 
 ### 一、这一轮最该先想清楚的：判据不能照抄上一轮
 
@@ -3061,14 +3061,14 @@ PI5 的 `openapi_log` 是 `route-by=NONE`（按月份串哈希轮转实例），
 **待做（代码侧）**：告警页把 `partial` / `truncated` / `windowDefaulted` 说出来（后端已下发、UI 未接）；其余 4 张分片表（`sys_login_log` / `query_history` / `db_admin.audit_log` / `db_monitor.audit_log`）读侧未接。
 **状态不变**：Z2 信封、Z3/API-95、API-97/34、AA6/AB6/AF4/AG5/AM5、API-117/118、API-130/132~136、API-165、API-169、COMPOSITE 告警规则、`apps/` 层前端零测试、浏览器目视四项。
 
-**边界**：没解验证码、没清 `sms:day`、没动你起的进程；库写入净变化为零。**推远端本轮由用户明确授权**（此前各轮的"没推远端"是那一轮的边界，不是长期禁令），**已尝试但被网络挡下**，见下节。
+**边界**：没解验证码、没清 `sms:day`、没动你起的进程；库写入净变化为零。**推远端本轮由用户明确授权**（此前各轮的"没推远端"是那一轮的边界，不是长期禁令），**已推送成功**，见下节。
 
-### 八、提交成功、推送没成功 —— 授权不等于完成
+### 八、推送：前两次网络挡路、第三次过去 —— 判据是远端 ref，不是"我被允许推"
 
-本地提交 **`f940258`**（25 文件 / +1710 / −153），工作树干净，`origin/main..HEAD` = **29**。`git push origin main` 两次都失败：第一次 `Recv failure: Connection was reset`，第二次 `Failed to connect to github.com port 443 after 21123 ms`。
+`git push origin main` 的前两次读数：`Recv failure: Connection was reset`、`Failed to connect to github.com port 443 after 21123 ms`。逐主机探测把范围收窄成"是 github.com 这一台，不是整条链路"：`api.github.com` **200**、`codeload.github.com` **301**、`ssh.github.com:443` TLS 握手失败（本机 `~/.ssh` 不存在）；DNS 正常（`20.205.243.166`），git 无 proxy 配置，常见本地代理端口一个都没监听。
 
-**不是权限也不是凭据** —— TCP 都没建起来。逐主机探测：`github.com:443` **超时/重置**，而 `api.github.com` **200**、`codeload.github.com` **301**、`ssh.github.com:443` TLS 握手失败（且本机 `~/.ssh` 不存在）。DNS 正常（`20.205.243.166`），git 无 proxy 配置，常见本地代理端口一个都没监听。
+**没做**：不改 `git config`、不换 remote URL、不装代理、不生成密钥 —— 都超出"提交代码"的授权范围。台账写完后重跑**同一条命令**，**`44b8d4f..c7357e5  main -> main`，退出码 0**，**31 个提交全部上去**；结案取证不看退出码，看 `git ls-remote origin main` 与 `git rev-parse main` 是**同一颗 SHA**、`origin/main...HEAD` = **0 / 0**。
 
-**没做**：不改 `git config`、不换 remote URL、不装代理、不生成密钥 —— 都超出"提交代码"的授权范围。**29 个提交安全停在本地**，网络恢复后一条 `git push origin main` 即可，不需要重做任何工作。
+⇒ **两条方向相反、同源的判据**：① **授权 ≠ 完成** —— "已推送"必须由远端 ref 支撑，不能由"我被允许推"推出来（本章上一版就犯了这条，就地更正）；② **失败 ≠ 永久** —— 一次网络读数只证明"那一刻不通"，写成"推不上去"同样是过度声明。**台账里留时间戳和退出码，不留无时限的断言。**
 
 ⇒ **判据：台账里"已推送"必须由远端 ref 的实际读数支撑，不能由"我被允许推"推出来。** 本章上一版写的"已执行"就地更正成这一节。
